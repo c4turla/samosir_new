@@ -364,17 +364,17 @@ watch(timeFilter, () => {
 
     <div class="space-y-6">
         <!-- Page Title -->
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
             <div class="flex items-center justify-between">
                 <div>
-                    <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Dashboard SAMOSIR</h1>
-                    <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">Sistem Informasi Pelabuhan Perikanan Nusantara Sibolga</p>
+                    <h1 class="text-xl font-bold text-gray-900 dark:text-white">Dashboard SAMOSIR</h1>
+                    <p class="mt-1 text-xs text-gray-600 dark:text-gray-400">Sistem Informasi Pelabuhan Perikanan Nusantara Sibolga</p>
                 </div>
                 <div class="flex items-center space-x-4">
-                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Filter:</label>
+                    <label class="text-xs font-medium text-gray-700 dark:text-gray-300">Filter:</label>
                     <select 
                         v-model="timeFilter"
-                        class="px-4 py-2 bg-gray-100 dark:bg-gray-700 border-0 rounded-lg text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                        class="px-3 py-1.5 bg-gray-100 dark:bg-gray-700 border-0 rounded-lg text-xs text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
                     >
                         <option v-for="option in filterOptions" :key="option.value" :value="option.value">
                             {{ option.label }}
@@ -385,23 +385,23 @@ watch(timeFilter, () => {
         </div>
 
         <!-- Statistics Cards -->
-        <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <!-- Total Vessels -->
             <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg transition-colors group hover:shadow-lg">
-                    <div class="p-5">
+                    <div class="p-3">
                         <div class="flex items-center">
                             <div class="flex-shrink-0">
-                                <div class="bg-blue-500 rounded-md p-3 group-hover:scale-110 transition-transform">
-                                    <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <div class="bg-blue-500 rounded-md p-2 group-hover:scale-110 transition-transform">
+                                    <svg class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
                                     </svg>
                                 </div>
                             </div>
-                            <div class="ml-5 w-0 flex-1">
+                            <div class="ml-3 w-0 flex-1">
                                 <dl>
-                                    <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Total Kapal</dt>
+                                    <dt class="text-xs font-medium text-gray-500 dark:text-gray-400 truncate">Total Kapal</dt>
                                     <dd class="flex items-baseline">
-                                        <div class="text-2xl font-semibold text-gray-900 dark:text-white">{{ stats.total_vessels }}</div>
+                                        <div class="text-lg font-semibold text-gray-900 dark:text-white">{{ stats.total_vessels }}</div>
                                     </dd>
                                 </dl>
                             </div>
@@ -411,20 +411,20 @@ watch(timeFilter, () => {
 
                 <!-- Active Vessels -->
                 <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg transition-colors group hover:shadow-lg">
-                    <div class="p-5">
+                    <div class="p-3">
                         <div class="flex items-center">
                             <div class="flex-shrink-0">
-                                <div class="bg-green-500 rounded-md p-3 group-hover:scale-110 transition-transform">
-                                    <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <div class="bg-green-500 rounded-md p-2 group-hover:scale-110 transition-transform">
+                                    <svg class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
                                 </div>
                             </div>
-                            <div class="ml-5 w-0 flex-1">
+                            <div class="ml-3 w-0 flex-1">
                                 <dl>
-                                    <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Kapal Aktif</dt>
+                                    <dt class="text-xs font-medium text-gray-500 dark:text-gray-400 truncate">Kapal Aktif</dt>
                                     <dd class="flex items-baseline">
-                                        <div class="text-2xl font-semibold text-gray-900 dark:text-white">{{ stats.active_vessels }}</div>
+                                        <div class="text-lg font-semibold text-gray-900 dark:text-white">{{ stats.active_vessels }}</div>
                                     </dd>
                                 </dl>
                             </div>
@@ -434,20 +434,20 @@ watch(timeFilter, () => {
 
                 <!-- Pending Vessels -->
                 <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg transition-colors group hover:shadow-lg">
-                    <div class="p-5">
+                    <div class="p-3">
                         <div class="flex items-center">
                             <div class="flex-shrink-0">
-                                <div class="bg-yellow-500 rounded-md p-3 group-hover:scale-110 transition-transform">
-                                    <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <div class="bg-yellow-500 rounded-md p-2 group-hover:scale-110 transition-transform">
+                                    <svg class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
                                 </div>
                             </div>
-                            <div class="ml-5 w-0 flex-1">
+                            <div class="ml-3 w-0 flex-1">
                                 <dl>
-                                    <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Pending Approval</dt>
+                                    <dt class="text-xs font-medium text-gray-500 dark:text-gray-400 truncate">Pending Approval</dt>
                                     <dd class="flex items-baseline">
-                                        <div class="text-2xl font-semibold text-gray-900 dark:text-white">{{ stats.pending_vessels }}</div>
+                                        <div class="text-lg font-semibold text-gray-900 dark:text-white">{{ stats.pending_vessels }}</div>
                                     </dd>
                                 </dl>
                             </div>
@@ -457,20 +457,20 @@ watch(timeFilter, () => {
 
                 <!-- Total Users -->
                 <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg transition-colors group hover:shadow-lg">
-                    <div class="p-5">
+                    <div class="p-3">
                         <div class="flex items-center">
                             <div class="flex-shrink-0">
-                                <div class="bg-purple-500 rounded-md p-3 group-hover:scale-110 transition-transform">
-                                    <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <div class="bg-purple-500 rounded-md p-2 group-hover:scale-110 transition-transform">
+                                    <svg class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                                     </svg>
                                 </div>
                             </div>
-                            <div class="ml-5 w-0 flex-1">
+                            <div class="ml-3 w-0 flex-1">
                                 <dl>
-                                    <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Total Pengguna</dt>
+                                    <dt class="text-xs font-medium text-gray-500 dark:text-gray-400 truncate">Total Pengguna</dt>
                                     <dd class="flex items-baseline">
-                                        <div class="text-2xl font-semibold text-gray-900 dark:text-white">{{ stats.total_users }}</div>
+                                        <div class="text-lg font-semibold text-gray-900 dark:text-white">{{ stats.total_users }}</div>
                                     </dd>
                                 </dl>
                             </div>
@@ -480,23 +480,23 @@ watch(timeFilter, () => {
             </div>
 
             <!-- Second Row Stats -->
-            <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 <!-- Arrivals Today -->
                 <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg transition-colors group hover:shadow-lg">
-                    <div class="p-5">
+                    <div class="p-3">
                         <div class="flex items-center">
                             <div class="flex-shrink-0">
-                                <div class="bg-indigo-500 rounded-md p-3 group-hover:scale-110 transition-transform">
-                                    <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <div class="bg-indigo-500 rounded-md p-2 group-hover:scale-110 transition-transform">
+                                    <svg class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
                                     </svg>
                                 </div>
                             </div>
-                            <div class="ml-5 w-0 flex-1">
+                            <div class="ml-3 w-0 flex-1">
                                 <dl>
-                                    <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Kedatangan Hari Ini</dt>
+                                    <dt class="text-xs font-medium text-gray-500 dark:text-gray-400 truncate">Kedatangan Hari Ini</dt>
                                     <dd class="flex items-baseline">
-                                        <div class="text-2xl font-semibold text-gray-900 dark:text-white">{{ stats.arrivals_today }}</div>
+                                        <div class="text-lg font-semibold text-gray-900 dark:text-white">{{ stats.arrivals_today }}</div>
                                     </dd>
                                 </dl>
                             </div>
@@ -506,20 +506,20 @@ watch(timeFilter, () => {
 
                 <!-- Departures Today -->
                 <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg transition-colors group hover:shadow-lg">
-                    <div class="p-5">
+                    <div class="p-3">
                         <div class="flex items-center">
                             <div class="flex-shrink-0">
-                                <div class="bg-red-500 rounded-md p-3 group-hover:scale-110 transition-transform">
-                                    <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <div class="bg-red-500 rounded-md p-2 group-hover:scale-110 transition-transform">
+                                    <svg class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
                                     </svg>
                                 </div>
                             </div>
-                            <div class="ml-5 w-0 flex-1">
+                            <div class="ml-3 w-0 flex-1">
                                 <dl>
-                                    <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Keberangkatan Hari Ini</dt>
+                                    <dt class="text-xs font-medium text-gray-500 dark:text-gray-400 truncate">Keberangkatan Hari Ini</dt>
                                     <dd class="flex items-baseline">
-                                        <div class="text-2xl font-semibold text-gray-900 dark:text-white">{{ stats.departures_today }}</div>
+                                        <div class="text-lg font-semibold text-gray-900 dark:text-white">{{ stats.departures_today }}</div>
                                     </dd>
                                 </dl>
                             </div>
@@ -529,20 +529,20 @@ watch(timeFilter, () => {
 
                 <!-- Vessels at Port -->
                 <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg transition-colors group hover:shadow-lg">
-                    <div class="p-5">
+                    <div class="p-3">
                         <div class="flex items-center">
                             <div class="flex-shrink-0">
-                                <div class="bg-cyan-500 rounded-md p-3 group-hover:scale-110 transition-transform">
-                                    <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <div class="bg-cyan-500 rounded-md p-2 group-hover:scale-110 transition-transform">
+                                    <svg class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
                                     </svg>
                                 </div>
                             </div>
-                            <div class="ml-5 w-0 flex-1">
+                            <div class="ml-3 w-0 flex-1">
                                 <dl>
-                                    <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Kapal Tambat</dt>
+                                    <dt class="text-xs font-medium text-gray-500 dark:text-gray-400 truncate">Kapal Tambat</dt>
                                     <dd class="flex items-baseline">
-                                        <div class="text-2xl font-semibold text-gray-900 dark:text-white">{{ stats.vessels_at_port }}</div>
+                                        <div class="text-lg font-semibold text-gray-900 dark:text-white">{{ stats.vessels_at_port }}</div>
                                     </dd>
                                 </dl>
                             </div>
@@ -552,20 +552,20 @@ watch(timeFilter, () => {
 
                 <!-- Vessels Unloading -->
                 <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg transition-colors group hover:shadow-lg">
-                    <div class="p-5">
+                    <div class="p-3">
                         <div class="flex items-center">
                             <div class="flex-shrink-0">
-                                <div class="bg-orange-500 rounded-md p-3 group-hover:scale-110 transition-transform">
-                                    <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <div class="bg-orange-500 rounded-md p-2 group-hover:scale-110 transition-transform">
+                                    <svg class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                                     </svg>
                                 </div>
                             </div>
-                            <div class="ml-5 w-0 flex-1">
+                            <div class="ml-3 w-0 flex-1">
                                 <dl>
-                                    <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Kapal Bongkar</dt>
+                                    <dt class="text-xs font-medium text-gray-500 dark:text-gray-400 truncate">Kapal Bongkar</dt>
                                     <dd class="flex items-baseline">
-                                        <div class="text-2xl font-semibold text-gray-900 dark:text-white">{{ stats.vessels_unloading }}</div>
+                                        <div class="text-lg font-semibold text-gray-900 dark:text-white">{{ stats.vessels_unloading }}</div>
                                     </dd>
                                 </dl>
                             </div>
@@ -575,64 +575,64 @@ watch(timeFilter, () => {
             </div>
 
             <!-- Charts Section -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <!-- Arrivals & Departures Line Chart -->
-                <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6 transition-colors">
-                    <div class="flex items-center justify-between mb-4">
-                        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Statistik Kedatangan & Keberangkatan</h2>
+                <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-4 transition-colors">
+                    <div class="flex items-center justify-between mb-3">
+                        <h2 class="text-sm font-semibold text-gray-900 dark:text-white">Statistik Kedatangan & Keberangkatan</h2>
                         <div class="flex items-center space-x-2">
                             <div class="flex items-center">
-                                <div class="w-3 h-3 bg-blue-500 rounded-full mr-2"></div>
-                                <span class="text-xs text-gray-600 dark:text-gray-400">Kedatangan</span>
+                                <div class="w-2 h-2 bg-blue-500 rounded-full mr-1"></div>
+                                <span class="text-[10px] text-gray-600 dark:text-gray-400">Kedatangan</span>
                             </div>
                             <div class="flex items-center">
-                                <div class="w-3 h-3 bg-red-500 rounded-full mr-2"></div>
-                                <span class="text-xs text-gray-600 dark:text-gray-400">Keberangkatan</span>
+                                <div class="w-2 h-2 bg-red-500 rounded-full mr-1"></div>
+                                <span class="text-[10px] text-gray-600 dark:text-gray-400">Keberangkatan</span>
                             </div>
                         </div>
                     </div>
-                    <VChart :option="arrivalsChartOption" class="chart" autoresize />
+                    <VChart :option="arrivalsChartOption" class="chart-sm" autoresize />
                 </div>
 
                 <!-- Vessel Status Pie Chart -->
-                <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6 transition-colors">
-                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Distribusi Status Kapal</h2>
-                    <VChart :option="vesselStatusOption" class="chart" autoresize />
+                <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-4 transition-colors">
+                    <h2 class="text-sm font-semibold text-gray-900 dark:text-white mb-3">Distribusi Status Kapal</h2>
+                    <VChart :option="vesselStatusOption" class="chart-sm" autoresize />
                 </div>
             </div>
 
             <!-- Top Landing Sites Chart -->
-            <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6 transition-colors">
-                <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Top Lokasi Pendaratan</h2>
-                <VChart :option="landingSitesOption" class="chart" autoresize />
+            <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-4 transition-colors">
+                <h2 class="text-sm font-semibold text-gray-900 dark:text-white mb-3">Top Lokasi Pendaratan</h2>
+                <VChart :option="landingSitesOption" class="chart-sm" autoresize />
             </div>
 
             <!-- Tables Section -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <!-- Recent Arrivals -->
                 <div class="bg-white dark:bg-gray-800 shadow rounded-lg transition-colors">
-                    <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Kedatangan Terbaru</h2>
+                    <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+                        <h2 class="text-sm font-semibold text-gray-900 dark:text-white">Kedatangan Terbaru</h2>
                     </div>
                     <div class="overflow-x-auto max-h-64">
                         <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                             <thead class="bg-gray-50 dark:bg-gray-700 sticky top-0">
                                 <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Kapal</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Tanggal</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+                                    <th class="px-4 py-2 text-left text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Kapal</th>
+                                    <th class="px-4 py-2 text-left text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Tanggal</th>
+                                    <th class="px-4 py-2 text-left text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                                 <tr v-for="arrival in recentArrivals" :key="arrival.id" class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm font-medium text-gray-900 dark:text-white">{{ arrival.vessel?.vessel_name }}</div>
+                                    <td class="px-4 py-3 whitespace-nowrap">
+                                        <div class="text-xs font-medium text-gray-900 dark:text-white">{{ arrival.vessel?.vessel_name }}</div>
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm text-gray-900 dark:text-white">{{ formatTanggalPendek(arrival.arrival_date) }}</div>
+                                    <td class="px-4 py-3 whitespace-nowrap">
+                                        <div class="text-xs text-gray-900 dark:text-white">{{ formatTanggalPendek(arrival.arrival_date) }}</div>
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
+                                    <td class="px-4 py-3 whitespace-nowrap">
+                                        <span class="px-2 inline-flex text-[10px] leading-4 font-semibold rounded-full"
                                               :class="{
                                                   'bg-blue-100 text-blue-800': arrival.status === 'TAMBAT',
                                                   'bg-yellow-100 text-yellow-800': arrival.status === 'BONGKAR',
@@ -643,7 +643,7 @@ watch(timeFilter, () => {
                                     </td>
                                 </tr>
                                 <tr v-if="recentArrivals.length === 0">
-                                    <td colspan="3" class="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
+                                    <td colspan="3" class="px-4 py-3 text-center text-xs text-gray-500 dark:text-gray-400">
                                         Tidak ada data kedatangan
                                     </td>
                                 </tr>
@@ -654,28 +654,28 @@ watch(timeFilter, () => {
 
                 <!-- Recent Departures -->
                 <div class="bg-white dark:bg-gray-800 shadow rounded-lg transition-colors">
-                    <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Keberangkatan Terbaru</h2>
+                    <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+                        <h2 class="text-sm font-semibold text-gray-900 dark:text-white">Keberangkatan Terbaru</h2>
                     </div>
                     <div class="overflow-x-auto max-h-64">
                         <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                             <thead class="bg-gray-50 dark:bg-gray-700 sticky top-0">
                                 <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Kapal</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Tanggal</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+                                    <th class="px-4 py-2 text-left text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Kapal</th>
+                                    <th class="px-4 py-2 text-left text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Tanggal</th>
+                                    <th class="px-4 py-2 text-left text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                                 <tr v-for="departure in recentDepartures" :key="departure.id" class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm font-medium text-gray-900 dark:text-white">{{ departure.vessel?.vessel_name }}</div>
+                                    <td class="px-4 py-3 whitespace-nowrap">
+                                        <div class="text-xs font-medium text-gray-900 dark:text-white">{{ departure.vessel?.vessel_name }}</div>
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm text-gray-900 dark:text-white">{{ formatTanggalPendek(departure.departure_date) }}</div>
+                                    <td class="px-4 py-3 whitespace-nowrap">
+                                        <div class="text-xs text-gray-900 dark:text-white">{{ formatTanggalPendek(departure.departure_date) }}</div>
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
+                                    <td class="px-4 py-3 whitespace-nowrap">
+                                        <span class="px-2 inline-flex text-[10px] leading-4 font-semibold rounded-full"
                                               :class="{
                                                   'bg-green-100 text-green-800': departure.status === 'Sesuai Jadwal',
                                                   'bg-yellow-100 text-yellow-800': departure.status === 'Terlambat',
@@ -686,7 +686,7 @@ watch(timeFilter, () => {
                                     </td>
                                 </tr>
                                 <tr v-if="recentDepartures.length === 0">
-                                    <td colspan="3" class="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
+                                    <td colspan="3" class="px-4 py-3 text-center text-xs text-gray-500 dark:text-gray-400">
                                         Tidak ada data keberangkatan
                                     </td>
                                 </tr>
@@ -698,36 +698,36 @@ watch(timeFilter, () => {
 
             <!-- Pending Vessels -->
             <div class="bg-white dark:bg-gray-800 shadow rounded-lg transition-colors">
-                <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Pending Approval Kapal</h2>
+                <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+                    <h2 class="text-sm font-semibold text-gray-900 dark:text-white">Pending Approval Kapal</h2>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                         <thead class="bg-gray-50 dark:bg-gray-700">
                             <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Nama Kapal</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Pemilik</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">GT</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Alat Tangkap</th>
+                                <th class="px-4 py-2 text-left text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Nama Kapal</th>
+                                <th class="px-4 py-2 text-left text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Pemilik</th>
+                                <th class="px-4 py-2 text-left text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">GT</th>
+                                <th class="px-4 py-2 text-left text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Alat Tangkap</th>
                             </tr>
                         </thead>
                         <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                             <tr v-for="vessel in pendingVessels" :key="vessel.id" class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm font-medium text-gray-900 dark:text-white">{{ vessel.vessel_name }}</div>
+                                <td class="px-4 py-3 whitespace-nowrap">
+                                    <div class="text-xs font-medium text-gray-900 dark:text-white">{{ vessel.vessel_name }}</div>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm text-gray-900 dark:text-white">{{ vessel.owner_name }}</div>
+                                <td class="px-4 py-3 whitespace-nowrap">
+                                    <div class="text-xs text-gray-900 dark:text-white">{{ vessel.owner_name }}</div>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm text-gray-900 dark:text-white">{{ vessel.gt }}</div>
+                                <td class="px-4 py-3 whitespace-nowrap">
+                                    <div class="text-xs text-gray-900 dark:text-white">{{ vessel.gt }}</div>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm text-gray-900 dark:text-white">{{ vessel.fishing_gear }}</div>
+                                <td class="px-4 py-3 whitespace-nowrap">
+                                    <div class="text-xs text-gray-900 dark:text-white">{{ vessel.fishing_gear }}</div>
                                 </td>
                             </tr>
                             <tr v-if="pendingVessels.length === 0">
-                                <td colspan="4" class="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
+                                <td colspan="4" class="px-4 py-3 text-center text-xs text-gray-500 dark:text-gray-400">
                                     Tidak ada kapal yang menunggu approval
                                 </td>
                             </tr>
@@ -741,5 +741,9 @@ watch(timeFilter, () => {
 <style scoped>
 .chart {
     height: 320px;
+}
+
+.chart-sm {
+    height: 240px;
 }
 </style>

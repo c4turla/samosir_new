@@ -7,7 +7,7 @@ const page = usePage()
 const flash = computed(() => page.props.flash || {})
 
 const props = defineProps({
-    vessels: {
+    arrivals: {
         type: Object,
         required: true
     }
@@ -15,96 +15,110 @@ const props = defineProps({
 
 const search = ref(new URLSearchParams(window.location.search).get('search') || '')
 const status = ref(new URLSearchParams(window.location.search).get('status') || '')
+const dateFrom = ref(new URLSearchParams(window.location.search).get('date_from') || '')
+const dateTo = ref(new URLSearchParams(window.location.search).get('date_to') || '')
 
-watch([search, status], ([searchValue, statusValue]) => {
-    router.get('/vessels', { search: searchValue, status: statusValue }, {
+watch([search, status, dateFrom, dateTo], () => {
+    router.get('/arrivals', { 
+        search: search.value, 
+        status: status.value, 
+        date_from: dateFrom.value,
+        date_to: dateTo.value
+    }, {
         preserveState: true,
         replace: true
     })
 })
 
-const deleteVessel = (id) => {
-    if (confirm('Apakah Anda yakin ingin menghapus kapal ini?')) {
-        router.delete(`/vessels/${id}`)
+const deleteArrival = (id) => {
+    if (confirm('Apakah Anda yakin ingin menghapus data kedatangan ini?')) {
+        router.delete(`/arrivals/${id}`)
     }
 }
 
-const approveVessel = (id) => {
-    if (confirm('Apakah Anda yakin ingin menyetujui kapal ini?')) {
-        router.put(`/vessels/${id}/approve`)
+const approveArrival = (id) => {
+    if (confirm('Apakah Anda yakin ingin menyetujui kedatangan ini?')) {
+        router.put(`/arrivals/${id}/approve`)
     }
 }
 
-const rejectVessel = (id) => {
-    if (confirm('Apakah Anda yakin ingin menolak kapal ini?')) {
-        router.put(`/vessels/${id}/reject`)
+const rejectArrival = (id) => {
+    if (confirm('Apakah Anda yakin ingin menolak kedatangan ini?')) {
+        router.put(`/arrivals/${id}/reject`)
     }
 }
 
 const getStatusBadgeClass = (status) => {
     switch (status) {
-        case 'approved':
-            return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-        case 'rejected':
-            return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-        default:
+        case 'TAMBAT':
+            return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+        case 'BONGKAR':
             return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
-    }
-}
-
-const getStatusLabel = (status) => {
-    switch (status) {
-        case 'approved':
-            return 'Disetujui'
-        case 'rejected':
-            return 'Ditolak'
-        default:
-            return 'Menunggu'
-    }
-}
-
-const getSipiBadgeClass = (sipiStatus) => {
-    switch (sipiStatus) {
-        case 'active':
+        case 'SELESAI':
             return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-        case 'expired':
-            return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
         default:
             return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
     }
 }
 
-// Track hovered vessel for photo preview
-const hoveredVessel = ref(null)
+const getApprovalBadgeClass = (status) => {
+    if (status === true || status === '1' || status === 1) {
+        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+    } else {
+        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+    }
+}
+
+const formatTanggal = (dateString) => {
+    if (!dateString) return '-'
+    
+    const options = { 
+        day: 'numeric', 
+        month: 'short', 
+        year: 'numeric' 
+    }
+    
+    try {
+        const date = new Date(dateString)
+        return date.toLocaleDateString('id-ID', options)
+    } catch (error) {
+        return dateString
+    }
+}
+
+const formatWaktu = (timeString) => {
+    if (!timeString) return '-'
+    return timeString.substring(0, 5) // Format HH:MM
+}
 </script>
 
 <template>
     <AppLayout>
-        <Head title="Daftar Kapal - SAMOSIR" />
+        <Head title="Kedatangan Kapal - SAMOSIR" />
 
         <div class="max-w-7xl mx-auto">
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
                 <div>
-                    <h1 class="text-xl font-bold text-gray-900 dark:text-white">Daftar Kapal</h1>
+                    <h1 class="text-xl font-bold text-gray-900 dark:text-white">Kedatangan Kapal</h1>
                     <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                        Kelola data kapal di sistem
+                        Kelola data kedatangan kapal di pelabuhan
                     </p>
                 </div>
                 <Link
-                    href="/vessels/create"
+                    href="/arrivals/create"
                     class="inline-flex items-center px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors duration-200 text-xs"
                 >
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                     </svg>
-                    Tambah Kapal
+                    Catat Kedatangan
                 </Link>
             </div>
 
             <!-- Search & Filter Box -->
             <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-3 mb-4">
-                <div class="flex flex-col md:flex-row gap-4">
-                    <div class="relative flex-1">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div class="relative md:col-span-1">
                         <svg
                             class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400"
                             fill="none"
@@ -121,27 +135,43 @@ const hoveredVessel = ref(null)
                         <input
                             v-model="search"
                             type="text"
-                            placeholder="Cari berdasarkan nama kapal, pemilik, nomor lisensi, atau jenis..."
+                            placeholder="Cari kapal atau dermaga..."
                             class="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 dark:bg-gray-700 transition-colors text-xs"
                         />
                     </div>
-                    <div class="relative min-w-[200px]">
+                    <div class="relative">
                         <select
                             v-model="status"
-                            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 dark:bg-gray-700 transition-colors appearance-none cursor-pointer text-xs"
+                            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 dark:bg-gray-700 transition-colors appearance-none cursor-pointer text-xs"
                         >
                             <option value="">Semua Status</option>
-                            <option value="pending">Menunggu</option>
-                            <option value="approved">Disetujui</option>
-                            <option value="rejected">Ditolak</option>
+                            <option value="TAMBAT">Tambat</option>
+                            <option value="BONGKAR">Bongkar</option>
+                            <option value="SELESAI">Selesai</option>
                         </select>
                         <svg class="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                         </svg>
                     </div>
+                    <div class="relative">
+                        <input
+                            v-model="dateFrom"
+                            type="date"
+                            placeholder="Dari tanggal..."
+                            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 dark:bg-gray-700 transition-colors text-xs"
+                        />
+                    </div>
+                    <div class="relative">
+                        <input
+                            v-model="dateTo"
+                            type="date"
+                            placeholder="Sampai tanggal..."
+                            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 dark:bg-gray-700 transition-colors text-xs"
+                        />
+                    </div>
                 </div>
-                <p v-if="vessels.data && vessels.data.length > 0 && vessels.total > 0" class="text-xs text-gray-600 dark:text-gray-400 mt-2">
-                    Menampilkan {{ vessels.from }} - {{ vessels.to }} dari total {{ vessels.total }} data
+                <p v-if="arrivals.data && arrivals.data.length > 0 && arrivals.total > 0" class="text-xs text-gray-600 dark:text-gray-400 mt-2">
+                    Menampilkan {{ arrivals.from }} - {{ arrivals.to }} dari total {{ arrivals.total }} data
                 </p>
                 
                 <!-- Flash Messages -->
@@ -164,25 +194,22 @@ const hoveredVessel = ref(null)
                         <thead class="bg-gray-50 dark:bg-gray-700">
                             <tr>
                                 <th class="px-4 py-2 text-left text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                    Nama Kapal
+                                    Tanggal
                                 </th>
                                 <th class="px-4 py-2 text-left text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                    Pemilik
+                                    Kapal
                                 </th>
                                 <th class="px-4 py-2 text-left text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                    Nomor Lisensi
+                                    Asal
                                 </th>
                                 <th class="px-4 py-2 text-left text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                    Jenis Kapal
+                                    Dermaga
                                 </th>
                                 <th class="px-4 py-2 text-left text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                    GT
+                                    Status
                                 </th>
                                 <th class="px-4 py-2 text-left text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                    Status SIPI
-                                </th>
-                                <th class="px-4 py-2 text-left text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                    Status Kapal
+                                    Approval
                                 </th>
                                 <th class="px-4 py-2 text-right text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                     Aksi
@@ -190,66 +217,53 @@ const hoveredVessel = ref(null)
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-                            <tr v-for="vessel in (vessels.data || [])" :key="vessel.id" class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                            <tr v-for="arrival in (arrivals.data || [])" :key="arrival.id" class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                                 <td class="px-4 py-3 whitespace-nowrap">
-                                    <div class="flex items-center relative">
+                                    <div>
+                                        <p class="text-xs font-medium text-gray-900 dark:text-white">
+                                            {{ formatTanggal(arrival.arrival_date) }}
+                                        </p>
+                                        <p class="text-[10px] text-gray-500 dark:text-gray-400">
+                                            {{ formatWaktu(arrival.arrival_time) }}
+                                        </p>
+                                    </div>
+                                </td>
+                                <td class="px-4 py-3">
+                                    <div class="flex items-center">
                                         <svg class="w-6 h-6 text-blue-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
                                         </svg>
-                                        <span 
-                                            class="text-xs font-medium text-gray-900 dark:text-white cursor-help hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-                                            @mouseenter="hoveredVessel = vessel.id"
-                                            @mouseleave="hoveredVessel = null"
-                                        >
-                                            {{ vessel.vessel_name }}
-                                        </span>
-                                        
-                                        <!-- Photo Preview Tooltip -->
-                                        <transition name="fade">
-                                            <div 
-                                                v-if="hoveredVessel === vessel.id && vessel.vessel_photo_url"
-                                                class="absolute left-0 top-full mt-2 z-50 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden"
-                                            >
-                                                <img 
-                                                    :src="vessel.vessel_photo_url" 
-                                                    :alt="vessel.vessel_name"
-                                                    class="w-64 h-48 object-cover"
-                                                />
-                                                <div class="px-3 py-2 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
-                                                    <p class="text-xs font-medium text-gray-900 dark:text-white">{{ vessel.vessel_name }}</p>
-                                                    <p class="text-xs text-gray-500 dark:text-gray-400">{{ vessel.owner_name }}</p>
-                                                </div>
-                                            </div>
-                                        </transition>
+                                        <div>
+                                            <p class="text-xs font-medium text-gray-900 dark:text-white">
+                                                {{ arrival.vessel?.vessel_name }}
+                                            </p>
+                                            <p class="text-[10px] text-gray-500 dark:text-gray-400">
+                                                {{ arrival.vessel?.license_number || '-' }}
+                                            </p>
+                                        </div>
                                     </div>
                                 </td>
                                 <td class="px-4 py-3 text-xs text-gray-600 dark:text-gray-400">
-                                    {{ vessel.owner_name }}
-                                </td>
-                                <td class="px-4 py-3 whitespace-nowrap text-xs text-gray-600 dark:text-gray-400">
-                                    {{ vessel.license_number || '-' }}
+                                    {{ arrival.origin || '-' }}
                                 </td>
                                 <td class="px-4 py-3 text-xs text-gray-600 dark:text-gray-400">
-                                    {{ vessel.vessel_type || '-' }}
-                                </td>
-                                <td class="px-4 py-3 whitespace-nowrap text-xs text-gray-600 dark:text-gray-400">
-                                    {{ vessel.gt || '-' }}
+                                    {{ arrival.landingSite?.site_name || '-' }}
                                 </td>
                                 <td class="px-4 py-3 whitespace-nowrap">
-                                    <span :class="['inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium', getSipiBadgeClass(vessel.sipi_status)]">
-                                        {{ vessel.sipi_status_text }}
+                                    <span :class="['inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium', getStatusBadgeClass(arrival.status)]">
+                                        {{ arrival.status }}
                                     </span>
                                 </td>
                                 <td class="px-4 py-3 whitespace-nowrap">
-                                    <span :class="['inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium', getStatusBadgeClass(vessel.approval_status)]">
-                                        {{ getStatusLabel(vessel.approval_status) }}
+                                    <span :class="['inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium', getApprovalBadgeClass(arrival.approval_status)]">
+                                        {{ arrival.approval_status ? 'Disetujui' : 'Menunggu' }}
                                     </span>
                                 </td>
                                 <td class="px-4 py-3 whitespace-nowrap text-right">
                                     <div class="flex items-center justify-end gap-2">
                                         <Link
-                                            v-if="vessel.approval_status === 'pending'"
-                                            @click.prevent="approveVessel(vessel.id)"
+                                            v-if="!arrival.approval_status"
+                                            @click.prevent="approveArrival(arrival.id)"
                                             class="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300"
                                             title="Setujui"
                                         >
@@ -258,17 +272,7 @@ const hoveredVessel = ref(null)
                                             </svg>
                                         </Link>
                                         <Link
-                                            v-if="vessel.approval_status === 'pending'"
-                                            @click.prevent="rejectVessel(vessel.id)"
-                                            class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
-                                            title="Tolak"
-                                        >
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                            </svg>
-                                        </Link>
-                                        <Link
-                                            :href="`/vessels/${vessel.id}/edit`"
+                                            :href="`/arrivals/${arrival.id}/edit`"
                                             class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
                                             title="Edit"
                                         >
@@ -277,7 +281,7 @@ const hoveredVessel = ref(null)
                                             </svg>
                                         </Link>
                                         <button
-                                            @click="deleteVessel(vessel.id)"
+                                            @click="deleteArrival(arrival.id)"
                                             class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
                                             title="Hapus"
                                         >
@@ -288,17 +292,17 @@ const hoveredVessel = ref(null)
                                     </div>
                                 </td>
                             </tr>
-                            <tr v-if="!vessels.data || vessels.data.length === 0">
-                                <td colspan="8" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
+                            <tr v-if="!arrivals.data || arrivals.data.length === 0">
+                                <td colspan="7" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
                                     <svg class="w-10 h-10 mx-auto mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
                                     </svg>
-                                    <p class="text-xs">Tidak ada data kapal yang ditemukan</p>
+                                    <p class="text-xs">Tidak ada data kedatangan kapal yang ditemukan</p>
                                     <Link
-                                        href="/vessels/create"
+                                        href="/arrivals/create"
                                         class="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 mt-2 inline-block text-xs"
                                     >
-                                        Tambah kapal pertama
+                                        Catat kedatangan pertama
                                     </Link>
                                 </td>
                             </tr>
@@ -307,40 +311,40 @@ const hoveredVessel = ref(null)
                 </div>
 
                 <!-- Pagination -->
-                <div v-if="vessels.last_page > 1" class="bg-gray-50 dark:bg-gray-700 px-3 py-2 border-t border-gray-200 dark:border-gray-600 sm:px-4">
+                <div v-if="arrivals.last_page > 1" class="bg-gray-50 dark:bg-gray-700 px-3 py-2 border-t border-gray-200 dark:border-gray-600 sm:px-4">
                     <div class="flex flex-col sm:flex-row items-center justify-between">
                         <div class="text-xs text-gray-700 dark:text-gray-300 mb-2 sm:mb-0">
-                            Halaman {{ vessels.current_page }} dari {{ vessels.last_page }}
+                            Halaman {{ arrivals.current_page }} dari {{ arrivals.last_page }}
                         </div>
                         <div class="flex space-x-2">
                             <Link
-                                v-if="vessels.prev_page_url"
-                                :href="vessels.prev_page_url"
+                                v-if="arrivals.prev_page_url"
+                                :href="arrivals.prev_page_url"
                                 class="px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
                             >
                                 Sebelumnya
                             </Link>
                             <span
-                                v-for="page in Math.min(vessels.last_page, 5)"
+                                v-for="page in Math.min(arrivals.last_page, 5)"
                                 :key="page"
                                 class="px-2 py-1 text-xs border rounded-md transition-colors"
                                 :class="[
-                                    page === vessels.current_page
+                                    page === arrivals.current_page
                                         ? 'bg-blue-600 text-white border-blue-600'
                                         : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600'
                                 ]"
                             >
                                 <Link
-                                    v-if="Math.abs(page - vessels.current_page) <= 2"
-                                    :href="`${vessels.path}?page=${page}${search ? '&search=' + search : ''}${status ? '&status=' + status : ''}`"
+                                    v-if="Math.abs(page - arrivals.current_page) <= 2"
+                                    :href="`${arrivals.path}?page=${page}${search ? '&search=' + search : ''}${status ? '&status=' + status : ''}${dateFrom ? '&date_from=' + dateFrom : ''}${dateTo ? '&date_to=' + dateTo : ''}`"
                                     class="block"
                                 >
                                     {{ page }}
                                 </Link>
                             </span>
                             <Link
-                                v-if="vessels.next_page_url"
-                                :href="vessels.next_page_url"
+                                v-if="arrivals.next_page_url"
+                                :href="arrivals.next_page_url"
                                 class="px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
                             >
                                 Selanjutnya
@@ -352,16 +356,3 @@ const hoveredVessel = ref(null)
         </div>
     </AppLayout>
 </template>
-
-<style scoped>
-/* Fade Transition */
-.fade-enter-active,
-.fade-leave-active {
-    transition: opacity 0.2s ease;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-    opacity: 0;
-}
-</style>

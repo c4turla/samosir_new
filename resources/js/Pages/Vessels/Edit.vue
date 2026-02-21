@@ -1,7 +1,7 @@
 <script setup>
 import { Head, Link, useForm, usePage } from '@inertiajs/vue3'
 import AppLayout from '../../Layouts/AppLayout.vue'
-import { computed } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 
 const page = usePage()
 const flash = computed(() => page.props.flash || {})
@@ -13,6 +13,19 @@ const props = defineProps({
     }
 })
 
+const photoPreview = ref(null)
+const photoInput = ref(null)
+
+// Format date for HTML5 date input (YYYY-MM-DD)
+const formatDateForInput = (date) => {
+    if (!date) return ''
+    const d = new Date(date)
+    const year = d.getFullYear()
+    const month = String(d.getMonth() + 1).padStart(2, '0')
+    const day = String(d.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
+}
+
 const form = useForm({
     vessel_name: props.vessel.vessel_name,
     owner_name: props.vessel.owner_name,
@@ -21,19 +34,42 @@ const form = useForm({
     fishing_gear: props.vessel.fishing_gear || '',
     selar_mark: props.vessel.selar_mark || '',
     vessel_type: props.vessel.vessel_type || '',
-    sipi_date: props.vessel.sipi_date || '',
-    sipi_end_date: props.vessel.sipi_end_date || '',
+    sipi_date: formatDateForInput(props.vessel.sipi_date),
+    sipi_end_date: formatDateForInput(props.vessel.sipi_end_date),
     length: props.vessel.length || '',
     loa: props.vessel.loa || '',
     siup_number: props.vessel.siup_number || '',
-    vessel_photo: props.vessel.vessel_photo || '',
+    vessel_photo: '',
     qr_code: props.vessel.qr_code || '',
     approval_status: props.vessel.approval_status || 'pending',
     notes: props.vessel.notes || '',
 })
 
+// Set initial photo preview
+onMounted(() => {
+    if (props.vessel.vessel_photo_url) {
+        photoPreview.value = props.vessel.vessel_photo_url
+    } else if (props.vessel.vessel_photo) {
+        photoPreview.value = props.vessel.vessel_photo
+    }
+})
+
+const handlePhotoChange = (event) => {
+    const file = event.target.files[0]
+    if (file) {
+        form.vessel_photo = file
+        const reader = new FileReader()
+        reader.onload = (e) => {
+            photoPreview.value = e.target.result
+        }
+        reader.readAsDataURL(file)
+    }
+}
+
 const submit = () => {
-    form.put(`/vessels/${props.vessel.id}`)
+    form.put(`/vessels/${props.vessel.id}`, {
+        forceFormData: true
+    })
 }
 </script>
 
@@ -279,13 +315,39 @@ const submit = () => {
                         <label for="vessel_photo" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                             Foto Kapal
                         </label>
-                        <input
-                            id="vessel_photo"
-                            type="text"
-                            v-model="form.vessel_photo"
-                            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 dark:bg-gray-700 transition-colors"
-                            placeholder="URL foto kapal"
-                        />
+                        <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 dark:border-gray-600 border-dashed rounded-lg hover:border-gray-400 dark:hover:border-gray-500 transition-colors">
+                            <div class="space-y-1 text-center">
+                                <!-- Photo Preview -->
+                                <div v-if="photoPreview" class="mb-4">
+                                    <img :src="photoPreview" alt="Preview" class="h-48 w-auto mx-auto object-cover rounded-lg border border-gray-200 dark:border-gray-600" />
+                                </div>
+                                
+                                <!-- Upload Icon -->
+                                <div v-else class="flex justify-center">
+                                    <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
+                                        <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                    </svg>
+                                </div>
+                                
+                                <div class="flex text-sm text-gray-600 dark:text-gray-400">
+                                    <label for="vessel_photo" class="relative cursor-pointer bg-white dark:bg-gray-800 rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500">
+                                        <span>Upload file</span>
+                                        <input
+                                            id="vessel_photo"
+                                            ref="photoInput"
+                                            type="file"
+                                            accept="image/*"
+                                            class="sr-only"
+                                            @change="handlePhotoChange"
+                                        />
+                                    </label>
+                                    <p class="pl-1">atau drag and drop</p>
+                                </div>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">
+                                    PNG, JPG, GIF hingga 10MB
+                                </p>
+                            </div>
+                        </div>
                         <div v-if="form.errors.vessel_photo" class="mt-2 text-sm text-red-600 dark:text-red-400">
                             {{ form.errors.vessel_photo }}
                         </div>

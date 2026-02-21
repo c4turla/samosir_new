@@ -63,9 +63,9 @@ onUnmounted(() => {
 
 <template>
     <header class="sticky top-0 z-10 bg-white dark:bg-gray-800 shadow-sm">
-        <div class="flex items-center justify-between px-4 sm:px-6 lg:px-8 h-16">
+        <div class="flex items-center justify-between px-3 sm:px-4 lg:px-6 h-14">
             <!-- Left Section -->
-            <div class="flex items-center space-x-4">
+            <div class="flex items-center space-x-3">
                 <!-- Collapse Sidebar Button -->
                 <button
                     v-show="isSidebarOpen"
@@ -73,28 +73,28 @@ onUnmounted(() => {
                     class="hidden lg:block text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
                     :title="isSidebarCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'"
                 >
-                    <svg v-if="isSidebarCollapsed" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg v-if="isSidebarCollapsed" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
                     </svg>
-                    <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16M20 12H4" />
                     </svg>
                 </button>
                 <!-- Search -->
-                <div class="hidden md:flex items-center bg-gray-100 dark:bg-gray-700 rounded-lg px-4 py-2">
-                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="hidden md:flex items-center bg-gray-100 dark:bg-gray-700 rounded-lg px-3 py-1.5">
+                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
                     <input
                         type="text"
                         placeholder="Search..."
-                        class="bg-transparent border-none outline-none ml-2 text-sm text-gray-700 dark:text-gray-200 placeholder-gray-400 w-64"
+                        class="bg-transparent border-none outline-none ml-2 text-xs text-gray-700 dark:text-gray-200 placeholder-gray-400 w-48"
                     />
                 </div>
             </div>
 
             <!-- Right Section -->
-            <div class="flex items-center space-x-3 sm:space-x-4">
+            <div class="flex items-center space-x-2 sm:space-x-3">
                 <!-- Dark Mode Toggle -->
                 <button
                     @click="emit('toggle-dark-mode')"

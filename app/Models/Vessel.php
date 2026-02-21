@@ -27,6 +27,8 @@ class Vessel extends Model
         'approved_at' => 'datetime',
     ];
 
+    protected $appends = ['sipi_status', 'sipi_status_text', 'vessel_photo_url'];
+
     // Accessors
     public function getSipiStatusAttribute()
     {
@@ -53,6 +55,21 @@ class Vessel extends Model
             'expired' => 'red',
             default => 'gray'
         };
+    }
+
+    public function getVesselPhotoUrlAttribute()
+    {
+        if (!$this->vessel_photo) {
+            return null;
+        }
+        
+        // If it's already a full URL, return it as is
+        if (str_starts_with($this->vessel_photo, 'http://') || str_starts_with($this->vessel_photo, 'https://')) {
+            return $this->vessel_photo;
+        }
+        
+        // Otherwise, prepend the public storage URL
+        return asset('storage/' . $this->vessel_photo);
     }
 
     // Relationships

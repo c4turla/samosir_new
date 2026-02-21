@@ -94,7 +94,7 @@ const menuItems = computed(() => {
       open: false,
     },
     {
-      title: 'Unloading',
+      title: 'Tambat Labuh',
       icon: 'ri-download-cloud-2-line',
       to: '/unloadings',
       open: false,

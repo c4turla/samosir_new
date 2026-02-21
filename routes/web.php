@@ -9,6 +9,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\FishSpeciesController;
 use App\Http\Controllers\LandingSiteController;
 use App\Http\Controllers\VesselController;
+use App\Http\Controllers\ArrivalController;
 
 // Guest routes (no authentication required)
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
@@ -77,5 +78,17 @@ Route::middleware('auth')->group(function () {
         Route::post('/{vessel}/assign-manager', [VesselController::class, 'assignManager'])->name('vessels.assign-manager');
         Route::put('/{vessel}/managers/{user}', [VesselController::class, 'updateManager'])->name('vessels.update-manager');
         Route::delete('/{vessel}/managers/{user}', [VesselController::class, 'removeManager'])->name('vessels.remove-manager');
+    });
+    
+    // Arrivals routes
+    Route::prefix('arrivals')->group(function () {
+        Route::get('/', [ArrivalController::class, 'index'])->name('arrivals.index');
+        Route::get('/create', [ArrivalController::class, 'create'])->name('arrivals.create');
+        Route::post('/', [ArrivalController::class, 'store'])->name('arrivals.store');
+        Route::get('/{arrival}/edit', [ArrivalController::class, 'edit'])->name('arrivals.edit');
+        Route::put('/{arrival}', [ArrivalController::class, 'update'])->name('arrivals.update');
+        Route::delete('/{arrival}', [ArrivalController::class, 'destroy'])->name('arrivals.destroy');
+        Route::put('/{arrival}/approve', [ArrivalController::class, 'approve'])->name('arrivals.approve');
+        Route::put('/{arrival}/reject', [ArrivalController::class, 'reject'])->name('arrivals.reject');
     });
 });

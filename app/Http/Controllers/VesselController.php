@@ -62,11 +62,16 @@ class VesselController extends Controller
             'length' => 'nullable|string|max:5',
             'loa' => 'nullable|string|max:5',
             'siup_number' => 'nullable|string|max:50',
-            'vessel_photo' => 'nullable|string|max:250',
+            'vessel_photo' => 'nullable|file|image|max:10240', // 10MB max
             'qr_code' => 'nullable|string|max:255',
             'approval_status' => 'required|in:pending,approved,rejected',
             'notes' => 'nullable|string',
         ]);
+
+        // Handle file upload
+        if ($request->hasFile('vessel_photo')) {
+            $validated['vessel_photo'] = $request->file('vessel_photo')->store('vessel-photos', 'public');
+        }
 
         $validated['registered_by'] = auth()->id();
         $validated['approval_status'] = 'approved';
@@ -83,12 +88,12 @@ class VesselController extends Controller
     public function edit(Vessel $vessel)
     {
         return Inertia::render('Vessels/Edit', [
-            'vessel' => $vessel,
+            'vessel' => $vessel->append('vessel_photo_url'),
         ]);
     }
 
     /**
-     * Update the specified resource in storage.
+     * Update specified resource in storage.
      */
     public function update(Request $request, Vessel $vessel)
     {
@@ -105,11 +110,16 @@ class VesselController extends Controller
             'length' => 'nullable|string|max:5',
             'loa' => 'nullable|string|max:5',
             'siup_number' => 'nullable|string|max:50',
-            'vessel_photo' => 'nullable|string|max:250',
+            'vessel_photo' => 'nullable|file|image|max:10240', // 10MB max
             'qr_code' => 'nullable|string|max:255',
             'approval_status' => 'required|in:pending,approved,rejected',
             'notes' => 'nullable|string',
         ]);
+
+        // Handle file upload
+        if ($request->hasFile('vessel_photo')) {
+            $validated['vessel_photo'] = $request->file('vessel_photo')->store('vessel-photos', 'public');
+        }
 
         // Handle approval status changes
         if ($vessel->approval_status !== $request->approval_status) {
