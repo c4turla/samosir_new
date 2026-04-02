@@ -27,6 +27,7 @@ const formatDateForInput = (date) => {
 }
 
 const form = useForm({
+    _method: 'put', // Tambahkan ini
     vessel_name: props.vessel.vessel_name,
     owner_name: props.vessel.owner_name,
     license_number: props.vessel.license_number || '',
@@ -40,7 +41,7 @@ const form = useForm({
     loa: props.vessel.loa || '',
     siup_number: props.vessel.siup_number || '',
     vessel_photo: '',
-    qr_code: props.vessel.qr_code || '',
+  //  qr_code: props.vessel.qr_code || '',
     approval_status: props.vessel.approval_status || 'pending',
     notes: props.vessel.notes || '',
 })
@@ -67,7 +68,7 @@ const handlePhotoChange = (event) => {
 }
 
 const submit = () => {
-    form.put(`/vessels/${props.vessel.id}`, {
+    form.post(`/vessels/${props.vessel.id}`, {
         forceFormData: true
     })
 }
@@ -354,7 +355,7 @@ const submit = () => {
                     </div>
 
                     <!-- QR Code -->
-                    <div>
+<!--                     <div>
                         <label for="qr_code" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                             QR Code
                         </label>
@@ -369,7 +370,7 @@ const submit = () => {
                             {{ form.errors.qr_code }}
                         </div>
                     </div>
-
+ -->
                     <!-- Status Approval -->
                     <div>
                         <label for="approval_status" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">

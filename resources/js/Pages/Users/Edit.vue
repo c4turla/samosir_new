@@ -29,153 +29,155 @@ const updateUser = () => {
   <AppLayout>
     <Head title="Edit User" />
 
-    <div class="mb-6">
-      <div class="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
-        <Link :href="route('users.index')" class="hover:text-gray-700 dark:hover:text-gray-200">
-          Users
-        </Link>
-        <span>/</span>
-        <span class="text-gray-900 dark:text-white">Edit User</span>
+    <div class="max-w-4xl mx-auto">
+      <div class="mb-4">
+        <h1 class="text-xl font-bold text-gray-900 dark:text-white">Edit User</h1>
+        <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">
+          Edit informasi user {{ user.name }}
+        </p>
       </div>
-      <h1 class="text-2xl font-bold text-gray-900 dark:text-white mt-2">Edit User</h1>
-      <p class="text-gray-600 dark:text-gray-400">Edit informasi user {{ user.name }}</p>
-    </div>
 
-    <form @submit.prevent="updateUser">
-      <div class="space-y-12 bg-white dark:bg-gray-800 shadow-sm ring-1 ring-gray-900/5 dark:ring-gray-700 sm:rounded-xl">
-        <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6 px-4 py-6 sm:p-8">
-          <!-- Name -->
-          <div class="sm:col-span-3">
-            <label for="name" class="block text-sm/6 font-medium text-gray-900 dark:text-white">Nama Lengkap</label>
-            <div class="mt-2">
+      <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+        <form @submit.prevent="updateUser" class="space-y-6">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Name -->
+            <div>
+              <label for="name" class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Nama Lengkap <span class="text-red-500">*</span>
+              </label>
               <input
                 id="name"
                 v-model="form.name"
                 type="text"
                 placeholder="Masukkan nama lengkap"
-                class="block w-full rounded-md border-0 px-3 py-1.5 text-gray-900 dark:text-white dark:bg-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 dark:ring-gray-600 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm/6"
+                required
+                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 dark:bg-gray-700"
               />
+              <div v-if="form.errors.name" class="mt-1 text-sm text-red-600 dark:text-red-400">
+                {{ form.errors.name }}
+              </div>
             </div>
-            <p v-if="form.errors.name" class="mt-1 text-sm text-red-600 dark:text-red-400">
-              {{ form.errors.name }}
-            </p>
-          </div>
 
-          <!-- Email -->
-          <div class="sm:col-span-3">
-            <label for="email" class="block text-sm/6 font-medium text-gray-900 dark:text-white">Email</label>
-            <div class="mt-2">
+            <!-- Email -->
+            <div>
+              <label for="email" class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Email <span class="text-red-500">*</span>
+              </label>
               <input
                 id="email"
                 v-model="form.email"
                 type="email"
                 placeholder="user@example.com"
-                class="block w-full rounded-md border-0 px-3 py-1.5 text-gray-900 dark:text-white dark:bg-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 dark:ring-gray-600 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm/6"
+                required
+                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 dark:bg-gray-700"
               />
+              <div v-if="form.errors.email" class="mt-1 text-sm text-red-600 dark:text-red-400">
+                {{ form.errors.email }}
+              </div>
             </div>
-            <p v-if="form.errors.email" class="mt-1 text-sm text-red-600 dark:text-red-400">
-              {{ form.errors.email }}
-            </p>
-          </div>
 
-          <!-- Role -->
-          <div class="sm:col-span-3">
-            <label for="role" class="block text-sm/6 font-medium text-gray-900 dark:text-white">Role</label>
-            <div class="mt-2">
+            <!-- Role -->
+            <div>
+              <label for="role" class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Role <span class="text-red-500">*</span>
+              </label>
               <select
                 id="role"
                 v-model="form.role"
-                class="block w-full rounded-md border-0 px-3 py-1.5 text-gray-900 dark:text-white dark:bg-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 dark:ring-gray-600 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm/6"
+                required
+                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 dark:bg-gray-700"
               >
                 <option value="petugas">Petugas</option>
                 <option value="syahbandar">Syahbandar</option>
                 <option value="admin">Admin</option>
               </select>
+              <div v-if="form.errors.role" class="mt-1 text-sm text-red-600 dark:text-red-400">
+                {{ form.errors.role }}
+              </div>
             </div>
-            <p v-if="form.errors.role" class="mt-1 text-sm text-red-600 dark:text-red-400">
-              {{ form.errors.role }}
-            </p>
-          </div>
 
-          <!-- Phone -->
-          <div class="sm:col-span-3">
-            <label for="phone" class="block text-sm/6 font-medium text-gray-900 dark:text-white">No. Telepon</label>
-            <div class="mt-2">
+            <!-- Phone -->
+            <div>
+              <label for="phone" class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
+                No. Telepon
+              </label>
               <input
                 id="phone"
                 v-model="form.phone"
                 type="text"
                 placeholder="08123456789"
-                class="block w-full rounded-md border-0 px-3 py-1.5 text-gray-900 dark:text-white dark:bg-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 dark:ring-gray-600 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm/6"
+                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 dark:bg-gray-700"
               />
+              <div v-if="form.errors.phone" class="mt-1 text-sm text-red-600 dark:text-red-400">
+                {{ form.errors.phone }}
+              </div>
             </div>
-            <p v-if="form.errors.phone" class="mt-1 text-sm text-red-600 dark:text-red-400">
-              {{ form.errors.phone }}
-            </p>
-          </div>
 
-          <!-- Address -->
-          <div class="col-span-full">
-            <label for="address" class="block text-sm/6 font-medium text-gray-900 dark:text-white">Alamat</label>
-            <div class="mt-2">
+            <!-- Address -->
+            <div class="col-span-full">
+              <label for="address" class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Alamat
+              </label>
               <textarea
                 id="address"
                 v-model="form.address"
                 rows="3"
                 placeholder="Masukkan alamat lengkap"
-                class="block w-full rounded-md border-0 px-3 py-1.5 text-gray-900 dark:text-white dark:bg-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 dark:ring-gray-600 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm/6"
+                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 dark:bg-gray-700 resize-none"
               ></textarea>
+              <div v-if="form.errors.address" class="mt-1 text-sm text-red-600 dark:text-red-400">
+                {{ form.errors.address }}
+              </div>
             </div>
-            <p v-if="form.errors.address" class="mt-1 text-sm text-red-600 dark:text-red-400">
-              {{ form.errors.address }}
-            </p>
-          </div>
 
-          <!-- Change Password Section -->
-          <div class="col-span-full">
-            <div class="border-t border-gray-900/10 dark:border-gray-700 pt-8">
-              <h2 class="text-base font-semibold leading-7 text-gray-900 dark:text-white">Ganti Password</h2>
-              <p class="mt-1 text-sm leading-6 text-gray-600 dark:text-gray-400">
-                Kosongkan jika tidak ingin mengubah password user ini.
-              </p>
+            <!-- Change Password Section -->
+            <div class="col-span-full">
+              <div class="border-t border-gray-200 dark:border-gray-700 pt-6">
+                <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-4 pb-2">
+                  Ganti Password
+                </h3>
+                <p class="text-xs text-gray-600 dark:text-gray-400 mb-4">
+                  Kosongkan jika tidak ingin mengubah password user ini.
+                </p>
 
-              <div class="mt-2">
-                <label for="password" class="block text-sm/6 font-medium text-gray-900 dark:text-white">Password Baru</label>
-                <div class="mt-2">
+                <div>
+                  <label for="password" class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Password Baru
+                  </label>
                   <input
                     id="password"
                     v-model="form.password"
                     type="password"
                     placeholder="Minimal 8 karakter"
-                    class="block w-full rounded-md border-0 px-3 py-1.5 text-gray-900 dark:text-white dark:bg-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 dark:ring-gray-600 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm/6"
+                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 dark:bg-gray-700"
                   />
+                  <div v-if="form.errors.password" class="mt-1 text-sm text-red-600 dark:text-red-400">
+                    {{ form.errors.password }}
+                  </div>
                 </div>
-                <p v-if="form.errors.password" class="mt-1 text-sm text-red-600 dark:text-red-400">
-                  {{ form.errors.password }}
-                </p>
               </div>
             </div>
           </div>
-        </div>
 
-        <!-- Action Buttons -->
-        <div class="flex items-center justify-end gap-x-6 border-t border-gray-900/10 dark:border-gray-700 px-4 py-4 sm:px-8">
-          <Link
-            :href="route('users.index')"
-            class="text-sm/6 font-semibold text-gray-900 dark:text-gray-300 hover:text-gray-700 dark:hover:text-white"
-          >
-            Batal
-          </Link>
-          <button
-            type="submit"
-            :disabled="form.processing"
-            class="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <span v-if="form.processing">Menyimpan...</span>
-            <span v-else>Update User</span>
-          </button>
-        </div>
+          <!-- Action Buttons -->
+          <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <Link
+              :href="route('users.index')"
+              class="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200 text-sm"
+            >
+              Batal
+            </Link>
+            <button
+              type="submit"
+              :disabled="form.processing"
+              class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 text-sm"
+            >
+              <span v-if="form.processing">Menyimpan...</span>
+              <span v-else>Update User</span>
+            </button>
+          </div>
+        </form>
       </div>
-    </form>
+    </div>
   </AppLayout>
 </template>

@@ -10,7 +10,7 @@ class LandingSite extends Model
     protected $table = 'landing_sites';
 
     protected $fillable = [
-        'name', 'location', 'latitude', 'longitude', 'is_active'
+        'site_name', 'address', 'distance', 'latitude', 'longitude', 'site_type', 'is_active'
     ];
 
     protected $casts = [

@@ -10,6 +10,7 @@ const props = defineProps({
 })
 
 const form = useForm({
+     _method: 'put', // Tambahkan ini
     site_name: props.landingSite.site_name,
     address: props.landingSite.address || '',
     distance: props.landingSite.distance || '',
@@ -20,7 +21,7 @@ const form = useForm({
 })
 
 const submit = () => {
-    form.put(`/landing-sites/${props.landingSite.id}`)
+    form.post(`/landing-sites/${props.landingSite.id}`)
 }
 </script>
 

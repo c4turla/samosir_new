@@ -53,7 +53,7 @@ class ArrivalController extends Controller
     public function create()
     {
         return Inertia::render('Arrivals/Create', [
-            'vessels' => \App\Models\Vessel::where('approval_status', false)
+            'vessels' => \App\Models\Vessel::whereDate('sipi_end_date', '>=', now()) // Tambahan filter tanggal
                 ->select('id', 'vessel_name', 'license_number')
                 ->orderBy('vessel_name')
                 ->get(),
@@ -79,6 +79,7 @@ class ArrivalController extends Controller
             'arrival_date' => 'required|date',
             'arrival_time' => 'nullable|date_format:H:i:s',
             'landing_site_id' => 'nullable|exists:landing_sites,id',
+            'mutu' => 'nullable|string|max:50',
             'fish_quality' => 'nullable|string|max:50',
             'average_price' => 'nullable|numeric|min:0',
             'waste_volume' => 'nullable|integer|min:0',
@@ -144,6 +145,7 @@ class ArrivalController extends Controller
             'arrival_date' => 'required|date',
             'arrival_time' => 'nullable|date_format:H:i:s',
             'landing_site_id' => 'nullable|exists:landing_sites,id',
+            'mutu' => 'nullable|string|max:50',
             'fish_quality' => 'nullable|string|max:50',
             'average_price' => 'nullable|numeric|min:0',
             'waste_volume' => 'nullable|integer|min:0',

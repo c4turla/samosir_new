@@ -22,7 +22,7 @@ return new class extends Migration
             $table->integer('fish_temperature')->nullable();
             $table->integer('hold_temperature')->nullable();
             
-            $table->enum('status', ['TAMBAT', 'BONGKAR', 'SELESAI'])->default('TAMBAT');
+            $table->enum('status', ['TAMBAT', 'LABUH', 'BONGKAR', 'MENGISI PERBEKALAN', 'PERBAIKAN', 'SELESAI'])->default('TAMBAT');
             $table->enum('approval_status', ['0', '1'])->default('0');
             
             $table->foreignId('approved_by')->nullable()->constrained('users')->nullOnDelete();

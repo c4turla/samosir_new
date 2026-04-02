@@ -10,6 +10,9 @@ use App\Http\Controllers\FishSpeciesController;
 use App\Http\Controllers\LandingSiteController;
 use App\Http\Controllers\VesselController;
 use App\Http\Controllers\ArrivalController;
+use App\Http\Controllers\DepartureController;
+use App\Http\Controllers\UnloadingController;
+use App\Http\Controllers\ApprovalController;
 
 // Guest routes (no authentication required)
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
@@ -90,5 +93,34 @@ Route::middleware('auth')->group(function () {
         Route::delete('/{arrival}', [ArrivalController::class, 'destroy'])->name('arrivals.destroy');
         Route::put('/{arrival}/approve', [ArrivalController::class, 'approve'])->name('arrivals.approve');
         Route::put('/{arrival}/reject', [ArrivalController::class, 'reject'])->name('arrivals.reject');
+    });
+    
+    // Departures routes
+    Route::prefix('departures')->group(function () {
+        Route::get('/', [DepartureController::class, 'index'])->name('departures.index');
+        Route::get('/create', [DepartureController::class, 'create'])->name('departures.create');
+        Route::post('/', [DepartureController::class, 'store'])->name('departures.store');
+        Route::get('/{departure}/edit', [DepartureController::class, 'edit'])->name('departures.edit');
+        Route::put('/{departure}', [DepartureController::class, 'update'])->name('departures.update');
+        Route::delete('/{departure}', [DepartureController::class, 'destroy'])->name('departures.destroy');
+        Route::post('/{departure}/approve', [DepartureController::class, 'approve'])->name('departures.approve');
+        Route::post('/{departure}/reject', [DepartureController::class, 'reject'])->name('departures.reject');
+    });
+    
+    // Unloadings routes
+    Route::prefix('unloadings')->group(function () {
+        Route::get('/', [UnloadingController::class, 'index'])->name('unloadings.index');
+        Route::get('/create', [UnloadingController::class, 'create'])->name('unloadings.create');
+        Route::post('/', [UnloadingController::class, 'store'])->name('unloadings.store');
+        Route::get('/{unloading}/edit', [UnloadingController::class, 'edit'])->name('unloadings.edit');
+        Route::put('/{unloading}', [UnloadingController::class, 'update'])->name('unloadings.update');
+        Route::delete('/{unloading}', [UnloadingController::class, 'destroy'])->name('unloadings.destroy');
+    });
+    
+    // Approval routes (syahbandar only)
+    Route::prefix('approval')->group(function () {
+        Route::get('/', [ApprovalController::class, 'index'])->name('approval.index');
+        Route::post('/{unloading}/approve', [ApprovalController::class, 'approve'])->name('approval.approve');
+        Route::post('/{unloading}/reject', [ApprovalController::class, 'reject'])->name('approval.reject');
     });
 });

@@ -14,7 +14,7 @@ class Arrival extends Model
     protected $table = 'arrivals';
 
     protected $fillable = [
-        'vessel_id', 'origin', 'arrival_date', 'arrival_time', 'landing_site_id',
+        'vessel_id', 'origin', 'arrival_date', 'arrival_time', 'landing_site_id', 'mutu',
         'fish_quality', 'average_price', 'waste_volume', 'fish_temperature',
         'hold_temperature', 'status', 'approval_status', 'approved_by',
         'approved_at', 'input_by', 'notes', 'is_processed'
@@ -55,6 +55,11 @@ class Arrival extends Model
     public function catches(): HasMany
     {
         return $this->hasMany(ArrivalCatch::class);
+    }
+
+    public function unloading(): HasMany
+    {
+        return $this->hasMany(Unloading::class);
     }
 
     // Scopes

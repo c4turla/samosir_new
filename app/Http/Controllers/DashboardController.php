@@ -10,10 +10,9 @@ use App\Models\Arrival;
 use App\Models\Departure;
 use Carbon\Carbon;
 
-class DashboardController extends Controller
-{
+class DashboardController extends Controller{
     /**
-     * Display the dashboard.
+     * Display dashboard.
      */
     public function index()
     {
@@ -53,8 +52,10 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
 
-        // Monthly statistics chart data
+        // Get statistics data for different filters
         $monthlyStats = $this->getMonthlyStatistics();
+        $weeklyStats = $this->getWeeklyStatistics();
+        $yearlyStats = $this->getYearlyStatistics();
 
         // Vessel status distribution
         $vesselStatusDistribution = [
@@ -84,6 +85,8 @@ class DashboardController extends Controller
             'recentDepartures' => $recentDepartures,
             'pendingVessels' => $pendingVessels,
             'monthlyStats' => $monthlyStats,
+            'weeklyStats' => $weeklyStats,
+            'yearlyStats' => $yearlyStats,
             'vesselStatusDistribution' => $vesselStatusDistribution,
             'arrivalStatusDistribution' => $arrivalStatusDistribution,
             'topLandingSites' => $topLandingSites,
@@ -91,7 +94,55 @@ class DashboardController extends Controller
     }
 
     /**
-     * Get monthly statistics for the current year.
+     * Get weekly statistics for current week.
+     */
+    private function getWeeklyStatistics()
+    {
+        $startOfWeek = Carbon::now()->startOfWeek();
+        $endOfWeek = Carbon::now()->endOfWeek();
+
+        // Get arrivals by day for current week
+        $arrivals = Arrival::select(
+            DB::raw('DATE(arrival_date) as date'),
+            DB::raw('count(*) as count')
+        )
+            ->whereBetween('arrival_date', [$startOfWeek, $endOfWeek])
+            ->groupBy('date')
+            ->orderBy('date')
+            ->pluck('count', 'date');
+
+        // Get departures by day for current week
+        $departures = Departure::select(
+            DB::raw('DATE(departure_date) as date'),
+            DB::raw('count(*) as count')
+        )
+            ->whereBetween('departure_date', [$startOfWeek, $endOfWeek])
+            ->groupBy('date')
+            ->orderBy('date')
+            ->pluck('count', 'date');
+
+        // Create array for each day of the week
+        $days = [];
+        $dayNames = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+        
+        for ($i = 0; $i < 7; $i++) {
+            $date = $startOfWeek->copy()->addDays($i);
+            $dateString = $date->format('Y-m-d');
+            
+            $days[] = [
+                'day' => $i + 1,
+                'day_name' => $dayNames[$i],
+                'date' => $dateString,
+                'arrivals' => $arrivals->get($dateString, 0),
+                'departures' => $departures->get($dateString, 0),
+            ];
+        }
+
+        return $days;
+    }
+
+    /**
+     * Get monthly statistics for current year with Indonesian month names.
      */
     private function getMonthlyStatistics()
     {
@@ -115,16 +166,60 @@ class DashboardController extends Controller
             ->orderBy('month')
             ->pluck('count', 'month');
 
+        // Indonesian month names
+        $monthNames = [
+            'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+            'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+        ];
+
         $months = [];
         for ($i = 1; $i <= 12; $i++) {
             $months[] = [
                 'month' => $i,
-                'month_name' => Carbon::create()->month($i)->format('M'),
+                'month_name' => $monthNames[$i - 1],
                 'arrivals' => $arrivals->get($i, 0),
                 'departures' => $departures->get($i, 0),
             ];
         }
 
         return $months;
+    }
+
+    /**
+     * Get yearly statistics for last 5 years.
+     */
+    private function getYearlyStatistics()
+    {
+        $currentYear = Carbon::now()->year;
+        $startYear = $currentYear - 4; // Last 5 years including current
+
+        $arrivals = Arrival::select(
+            DB::raw('YEAR(arrival_date) as year'),
+            DB::raw('count(*) as count')
+        )
+            ->whereBetween(DB::raw('YEAR(arrival_date)'), [$startYear, $currentYear])
+            ->groupBy('year')
+            ->orderBy('year')
+            ->pluck('count', 'year');
+
+        $departures = Departure::select(
+            DB::raw('YEAR(departure_date) as year'),
+            DB::raw('count(*) as count')
+        )
+            ->whereBetween(DB::raw('YEAR(departure_date)'), [$startYear, $currentYear])
+            ->groupBy('year')
+            ->orderBy('year')
+            ->pluck('count', 'year');
+
+        $years = [];
+        for ($i = $startYear; $i <= $currentYear; $i++) {
+            $years[] = [
+                'year' => $i,
+                'arrivals' => $arrivals->get($i, 0),
+                'departures' => $departures->get($i, 0),
+            ];
+        }
+
+        return $years;
     }
 }

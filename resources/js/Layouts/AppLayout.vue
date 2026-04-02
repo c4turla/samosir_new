@@ -42,6 +42,8 @@ watch(darkMode, (newValue) => {
   } else {
     document.documentElement.classList.remove('dark')
   }
+  // Emit custom event for child components
+  window.dispatchEvent(new CustomEvent('darkModeChanged', { detail: { darkMode: newValue } }))
 }, { immediate: true })
 
 // Initialize dark mode
@@ -94,9 +96,12 @@ const menuItems = computed(() => {
       open: false,
     },
     {
-      title: 'Tambat Labuh',
+      title: 'Penimbangan Ikan',
       icon: 'ri-download-cloud-2-line',
-      to: '/unloadings',
+      items: [
+        { title: 'Daftar Penimbangan', icon: 'ri-list-check', to: '/unloadings' },
+        ...(user.value?.role === 'syahbandar' ? [{ title: 'Approval Penimbangan', icon: 'ri-check-double-line', to: '/approval' }] : []),
+      ],
       open: false,
     },
     {

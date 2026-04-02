@@ -10,7 +10,7 @@ class FishSpecies extends Model
     protected $table = 'fish_species';
 
     protected $fillable = [
-        'name', 'scientific_name', 'code', 'category'
+        'species_name', 'local_name', 'scientific_name', 'category', 'is_active'
     ];
 
     // Relationships

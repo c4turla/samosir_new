@@ -1,32 +1,11 @@
 <script setup>
 import { Head } from '@inertiajs/vue3';
 import AppLayout from '../../Layouts/AppLayout.vue';
-import { ref, provide, watch, onMounted } from 'vue';
-import { use } from 'echarts/core';
-import { CanvasRenderer } from 'echarts/renderers';
-import {
-    TitleComponent,
-    TooltipComponent,
-    LegendComponent,
-    GridComponent
-} from 'echarts/components';
-import { LineChart, BarChart, PieChart } from 'echarts/charts';
-import VChart, { THEME_KEY } from 'vue-echarts';
+import { ref, watch, onMounted, onUnmounted, nextTick } from 'vue';
+import Highcharts from 'highcharts';
+import 'highcharts/highcharts-more';
 
-// Register ECharts components
-use([
-    CanvasRenderer,
-    TitleComponent,
-    TooltipComponent,
-    LegendComponent,
-    GridComponent,
-    LineChart,
-    BarChart,
-    PieChart
-]);
 
-// Provide theme based on dark mode
-provide(THEME_KEY, ref(localStorage.getItem('darkMode') === 'true' ? 'dark' : 'light'));
 
 defineOptions({
   layout: AppLayout
@@ -38,6 +17,8 @@ const props = defineProps({
     recentDepartures: Array,
     pendingVessels: Array,
     monthlyStats: Array,
+    weeklyStats: Array,
+    yearlyStats: Array,
     vesselStatusDistribution: Object,
     arrivalStatusDistribution: Object,
     topLandingSites: Array,
@@ -51,11 +32,351 @@ const filterOptions = [
     { value: 'yearly', label: 'Tahunan' },
 ];
 
-// Chart Options
-const arrivalsChartOption = ref({});
-const departuresChartOption = ref({});
-const vesselStatusOption = ref({});
-const landingSitesOption = ref({});
+// Chart refs
+const arrivalsChartRef = ref(null);
+const vesselStatusChartRef = ref(null);
+const landingSitesChartRef = ref(null);
+
+// Chart instances
+let arrivalsChartInstance = null;
+let vesselStatusChartInstance = null;
+let landingSitesChartInstance = null;
+
+// Dark mode detection
+const isDarkMode = ref(localStorage.getItem('darkMode') === 'true');
+
+// Chart render counter to force re-render
+const chartRenderKey = ref(0);
+
+// Listen for dark mode changes
+const handleDarkModeChange = () => {
+    isDarkMode.value = localStorage.getItem('darkMode') === 'true';
+    updateAllCharts();
+};
+
+// Update chart themes
+const updateChartTheme = (options, isDark) => {
+    const theme = isDark ? {
+        chart: {
+            backgroundColor: 'transparent',
+            style: { color: '#ffffff' }
+        },
+        title: { style: { color: '#ffffff' } },
+        xAxis: {
+            labels: { style: { color: '#d1d5db' } },
+            title: { style: { color: '#9ca3af' } },
+            gridLineColor: '#374151'
+        },
+        yAxis: {
+            labels: { style: { color: '#d1d5db' } },
+            title: { style: { color: '#9ca3af' } },
+            gridLineColor: '#374151'
+        },
+        legend: {
+            itemStyle: { color: '#d1d5db' }
+        },
+        tooltip: {
+            backgroundColor: 'rgba(31, 41, 55, 0.95)',
+            style: { color: '#ffffff' },
+            borderColor: '#4b5563'
+        }
+    } : {
+        chart: {
+            backgroundColor: 'transparent',
+            style: { color: '#1f2937' }
+        },
+        title: { style: { color: '#1f2937' } },
+        xAxis: {
+            labels: { style: { color: '#4b5563' } },
+            title: { style: { color: '#6b7280' } },
+            gridLineColor: '#e5e7eb'
+        },
+        yAxis: {
+            labels: { style: { color: '#4b5563' } },
+            title: { style: { color: '#6b7280' } },
+            gridLineColor: '#e5e7eb'
+        },
+        legend: {
+            itemStyle: { color: '#4b5563' }
+        },
+        tooltip: {
+            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+            style: { color: '#1f2937' },
+            borderColor: '#3b82f6'
+        }
+    };
+
+    return Highcharts.merge(options, theme);
+};
+
+// Render arrivals chart
+const renderArrivalsChart = () => {
+    if (!arrivalsChartRef.value) return;
+    
+    // Destroy existing chart
+    if (arrivalsChartInstance) {
+        arrivalsChartInstance.destroy();
+    }
+    
+    // Get data based on filter
+    let stats;
+    if (timeFilter.value === 'weekly') {
+        stats = props.weeklyStats;
+    } else if (timeFilter.value === 'yearly') {
+        stats = props.yearlyStats;
+    } else {
+        stats = props.monthlyStats;
+    }
+    
+    console.log('Rendering chart with filter:', timeFilter.value);
+    console.log('Stats data:', stats);
+    
+    const arrivalsData = formatChartData(stats, timeFilter.value);
+    console.log('Formatted data:', arrivalsData);
+    
+    const options = updateChartTheme(getArrivalsChartConfig(arrivalsData), isDarkMode.value);
+    
+    arrivalsChartInstance = Highcharts.chart(arrivalsChartRef.value, options);
+};
+
+// Render vessel status chart
+const renderVesselStatusChart = () => {
+    if (!vesselStatusChartRef.value) return;
+    
+    // Destroy existing chart
+    if (vesselStatusChartInstance) {
+        vesselStatusChartInstance.destroy();
+    }
+    
+    const options = updateChartTheme(getVesselStatusChartConfig(), isDarkMode.value);
+    
+    vesselStatusChartInstance = Highcharts.chart(vesselStatusChartRef.value, options);
+};
+
+// Render landing sites chart
+const renderLandingSitesChart = () => {
+    // Check if we have data
+    if (!props.topLandingSites || props.topLandingSites.length === 0) {
+        return;
+    }
+    
+    if (!landingSitesChartRef.value) return;
+    
+    // Destroy existing chart
+    if (landingSitesChartInstance) {
+        landingSitesChartInstance.destroy();
+    }
+    
+    const options = updateChartTheme(getLandingSitesChartConfig(), isDarkMode.value);
+    landingSitesChartInstance = Highcharts.chart(landingSitesChartRef.value, options);
+};
+
+// Update all charts with current theme
+const updateAllCharts = async () => {
+    // Force re-render by incrementing key
+    chartRenderKey.value++;
+    
+    await nextTick();
+    
+    renderArrivalsChart();
+    renderVesselStatusChart();
+    renderLandingSitesChart();
+};
+
+// Get chart configurations
+const getArrivalsChartConfig = (data) => {
+    // Debug: log data
+    console.log('Filter:', timeFilter.value);
+    console.log('Categories:', data.categories);
+    console.log('Arrivals:', data.arrivals);
+    console.log('Departures:', data.departures);
+    
+    return {
+        chart: {
+            type: 'area',
+            style: {
+                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+            }
+        },
+        title: { text: null },
+        xAxis: {
+            type: 'category',
+            categories: data.categories,
+            labels: {
+                rotation: timeFilter.value === 'yearly' ? 0 : -45,
+                style: { fontSize: '10px' }
+            }
+        },
+        yAxis: {
+            title: { text: 'Jumlah', style: { fontSize: '11px' } }
+        },
+        tooltip: {
+            shared: true,
+            crosshairs: true,
+            useHTML: true,
+            style: { fontSize: '11px' }
+        },
+        legend: {
+            enabled: true,
+            align: 'center',
+            verticalAlign: 'bottom',
+            layout: 'horizontal',
+            itemStyle: { fontSize: '11px' }
+        },
+        plotOptions: {
+            area: {
+                stacking: 'undefined',
+                lineColor: '#666666',
+                lineWidth: 1,
+                marker: {
+                    lineWidth: 1,
+                    lineColor: '#666666',
+                    radius: 4
+                }
+            }
+        },
+        credits: { enabled: false },
+        series: [
+            {
+                name: 'Kedatangan',
+                data: data.arrivals,
+                color: '#3B82F6',
+                fillOpacity: 0.3,
+                zIndex: 2,
+                type: 'area'
+            },
+            {
+                name: 'Keberangkatan',
+                data: data.departures,
+                color: '#EF4444',
+                fillOpacity: 0.3,
+                zIndex: 1,
+                type: 'area'
+            }
+        ]
+    };
+};
+
+const getVesselStatusChartConfig = () => {
+    return {
+        chart: {
+            type: 'pie',
+            style: {
+                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+            }
+        },
+        title: { text: null },
+        tooltip: {
+            pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b> ({point.y} kapal)',
+            style: { fontSize: '11px' }
+        },
+        plotOptions: {
+            pie: {
+                allowPointSelect: true,
+                cursor: 'pointer',
+                borderRadius: 8,
+                borderWidth: 2,
+                borderColor: isDarkMode.value ? '#374151' : '#ffffff',
+                dataLabels: {
+                    enabled: true,
+                    format: '<b>{point.name}</b>: {point.y}',
+                    style: {
+                        fontSize: '11px',
+                        fontWeight: '500',
+                        color: isDarkMode.value ? '#ffffff' : '#1f2937'
+                    }
+                },
+                showInLegend: true
+            }
+        },
+        legend: {
+            align: 'right',
+            verticalAlign: 'middle',
+            layout: 'vertical',
+            itemStyle: { fontSize: '11px' }
+        },
+        credits: { enabled: false },
+        series: [{
+            name: 'Status',
+            colorByPoint: true,
+            data: [
+                {
+                    name: 'Disetujui',
+                    y: props.vesselStatusDistribution?.approved || 0,
+                    color: '#10B981'
+                },
+                {
+                    name: 'Pending',
+                    y: props.vesselStatusDistribution?.pending || 0,
+                    color: '#F59E0B'
+                },
+                {
+                    name: 'Ditolak',
+                    y: props.vesselStatusDistribution?.rejected || 0,
+                    color: '#EF4444'
+                }
+            ]
+        }]
+    };
+};
+
+const getLandingSitesChartConfig = () => {
+    const sites = props.topLandingSites.map((item, index) => `Top ${index + 1}`);
+    const counts = props.topLandingSites.map(item => item.count);
+    const names = props.topLandingSites.map(item => item.landing_site?.name || '-');
+
+    return {
+        chart: {
+            type: 'column',
+            style: {
+                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+            }
+        },
+        title: { text: null },
+        xAxis: {
+            categories: sites,
+            labels: {
+                rotation: 0,
+                style: { fontSize: '10px' }
+            }
+        },
+        yAxis: {
+            min: 0,
+            title: { text: 'Jumlah Kedatangan', style: { fontSize: '11px' } }
+        },
+        tooltip: {
+            formatter: function() {
+                return `${names[this.point.index]}: ${this.y} kedatangan`;
+            },
+            style: { fontSize: '11px' }
+        },
+        plotOptions: {
+            column: {
+                borderRadius: 8,
+                borderWidth: 0,
+                pointWidth: 40,
+                color: {
+                    linearGradient: {
+                        x1: 0,
+                        x2: 0,
+                        y1: 0,
+                        y2: 1
+                    },
+                    stops: [
+                        [0, '#3B82F6'],
+                        [1, '#1E40AF']
+                    ]
+                }
+            }
+        },
+        legend: { enabled: false },
+        credits: { enabled: false },
+        series: [{
+            name: 'Kedatangan',
+            data: counts
+        }]
+    };
+};
 
 // Format tanggal ke format Indonesia
 const formatTanggal = (dateString) => {
@@ -99,8 +420,8 @@ const formatChartData = (stats, filter) => {
     if (!stats || stats.length === 0) return { categories: [], arrivals: [], departures: [] };
     
     const categories = stats.map(item => {
-        if (filter === 'weekly') return `Minggu ${item.week || item.month}`;
-        if (filter === 'yearly') return `Tahun ${item.year || item.month}`;
+        if (filter === 'weekly') return item.day_name || item.day;
+        if (filter === 'yearly') return `Tahun ${item.year}`;
         return item.month_name || item.month;
     });
     
@@ -110,252 +431,47 @@ const formatChartData = (stats, filter) => {
     return { categories, arrivals, departures };
 };
 
-// Vessel Status Pie Chart
-const updateVesselStatusChart = () => {
-    vesselStatusOption.value = {
-        tooltip: {
-            trigger: 'item',
-            formatter: '{a} <br/>{b}: {c} ({d}%)'
-        },
-        legend: {
-            orient: 'vertical',
-            left: 'left',
-            data: ['Disetujui', 'Pending', 'Ditolak']
-        },
-        series: [
-            {
-                name: 'Status Kapal',
-                type: 'pie',
-                radius: ['40%', '70%'],
-                avoidLabelOverlap: false,
-                itemStyle: {
-                    borderRadius: 10,
-                    borderColor: '#fff',
-                    borderWidth: 2
-                },
-                label: {
-                    show: true,
-                    position: 'outside',
-                    formatter: '{b}: {c}'
-                },
-                emphasis: {
-                    label: {
-                        show: true,
-                        fontSize: 16,
-                        fontWeight: 'bold'
-                    },
-                    itemStyle: {
-                        shadowBlur: 10,
-                        shadowOffsetX: 0,
-                        shadowColor: 'rgba(0, 0, 0, 0.5)',
-                    },
-                },
-                data: [
-                    { value: props.vesselStatusDistribution?.approved || 0, name: 'Disetujui', itemStyle: { color: '#10B981' } },
-                    { value: props.vesselStatusDistribution?.pending || 0, name: 'Pending', itemStyle: { color: '#F59E0B' } },
-                    { value: props.vesselStatusDistribution?.rejected || 0, name: 'Ditolak', itemStyle: { color: '#EF4444' } }
-                ]
-            }
-        ]
-    };
-};
-
-// Landing Sites Bar Chart
-const updateLandingSitesChart = () => {
-    if (!props.topLandingSites || props.topLandingSites.length === 0) {
-        landingSitesOption.value = {};
-        return;
-    }
-
-    const sites = props.topLandingSites.map((item, index) => `Top ${index + 1}`);
-    const counts = props.topLandingSites.map(item => item.count);
-    const names = props.topLandingSites.map(item => item.landing_site?.name || '-');
-
-    landingSitesOption.value = {
-        tooltip: {
-            trigger: 'axis',
-            formatter: function(params) {
-                return `${names[params[0].dataIndex]}: ${params[0].value} kedatangan`;
-            }
-        },
-        grid: {
-            left: '3%',
-            right: '4%',
-            bottom: '3%',
-            containLabel: true
-        },
-        xAxis: {
-            type: 'category',
-            data: sites,
-            axisLabel: {
-                rotate: 0
-            }
-        },
-        yAxis: {
-            type: 'value'
-        },
-        series: [
-            {
-                name: 'Kedatangan',
-                type: 'bar',
-                data: counts,
-                itemStyle: {
-                    borderRadius: [8, 8, 0, 0],
-                    color: {
-                        type: 'linear',
-                        x: 0,
-                        y: 0,
-                        x2: 0,
-                        y2: 1,
-                        colorStops: [
-                            { offset: 0, color: '#3B82F6' },
-                            { offset: 1, color: '#1E40AF' }
-                        ]
-                    }
-                },
-                emphasis: {
-                    itemStyle: {
-                        color: '#60A5FA',
-                        shadowBlur: 10,
-                        shadowOffsetX: 0,
-                        shadowColor: 'rgba(0, 0, 0, 0.5)',
-                    }
-                }
-            }
-        ]
-    };
-};
-
-// Arrivals Line Chart
-const updateArrivalsChart = () => {
-    const data = formatChartData(props.monthlyStats, timeFilter.value);
-
-    arrivalsChartOption.value = {
-        tooltip: {
-            trigger: 'axis',
-            formatter: function(params) {
-                let result = `<div style="font-weight:bold;margin-bottom:5px">${params[0].name}</div>`;
-                params.forEach(param => {
-                    result += `<div style="display:flex;justify-content:space-between;align-items:center;margin:2px 0">
-                        <span style="margin-right:15px;display:inline-flex;align-items:center">
-                            <span style="display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:8px;background:${param.color}"></span>
-                            ${param.seriesName}
-                        </span>
-                        <span style="font-weight:bold">${param.value}</span>
-                    </div>`;
-                });
-                return result;
-            }
-        },
-        legend: {
-            data: ['Kedatangan', 'Keberangkatan']
-        },
-        grid: {
-            left: '3%',
-            right: '4%',
-            bottom: '3%',
-            containLabel: true
-        },
-        xAxis: {
-            type: 'category',
-            boundaryGap: false,
-            data: data.categories,
-            axisLabel: {
-                rotate: timeFilter.value === 'yearly' ? 0 : 45
-            }
-        },
-        yAxis: {
-            type: 'value'
-        },
-        series: [
-            {
-                name: 'Kedatangan',
-                type: 'line',
-                smooth: true,
-                data: data.arrivals,
-                lineStyle: {
-                    width: 3,
-                    color: '#3B82F6'
-                },
-                areaStyle: {
-                    color: {
-                        type: 'linear',
-                        x: 0,
-                        y: 0,
-                        x2: 0,
-                        y2: 1,
-                        colorStops: [
-                            { offset: 0, color: 'rgba(59, 130, 246, 0.3)' },
-                            { offset: 1, color: 'rgba(59, 130, 246, 0.05)' }
-                        ]
-                    }
-                },
-                itemStyle: {
-                    color: '#3B82F6'
-                },
-                emphasis: {
-                    focus: 'series',
-                    itemStyle: {
-                        color: '#60A5FA',
-                        borderColor: '#3B82F6',
-                        borderWidth: 2,
-                        shadowBlur: 10,
-                        shadowOffsetX: 0,
-                        shadowColor: 'rgba(0, 0, 0, 0.5)',
-                    }
-                }
-            },
-            {
-                name: 'Keberangkatan',
-                type: 'line',
-                smooth: true,
-                data: data.departures,
-                lineStyle: {
-                    width: 3,
-                    color: '#EF4444'
-                },
-                areaStyle: {
-                    color: {
-                        type: 'linear',
-                        x: 0,
-                        y: 0,
-                        x2: 0,
-                        y2: 1,
-                        colorStops: [
-                            { offset: 0, color: 'rgba(239, 68, 68, 0.3)' },
-                            { offset: 1, color: 'rgba(239, 68, 68, 0.05)' }
-                        ]
-                    }
-                },
-                itemStyle: {
-                    color: '#EF4444'
-                },
-                emphasis: {
-                    focus: 'series',
-                    itemStyle: {
-                        color: '#F87171',
-                        borderColor: '#EF4444',
-                        borderWidth: 2,
-                        shadowBlur: 10,
-                        shadowOffsetX: 0,
-                        shadowColor: 'rgba(0, 0, 0, 0.5)',
-                    }
-                }
-            }
-        ]
-    };
-};
-
 // Initialize charts on mount
-onMounted(() => {
-    updateArrivalsChart();
-    updateVesselStatusChart();
-    updateLandingSitesChart();
+onMounted(async () => {
+    // Listen for dark mode changes
+    window.addEventListener('storage', handleDarkModeChange);
+    
+    // Listen for custom event from AppLayout
+    window.addEventListener('darkModeChanged', handleDarkModeChange);
+    
+    // Initialize charts
+    await nextTick();
+    updateAllCharts();
+});
+
+// Cleanup event listeners and charts
+onUnmounted(() => {
+    window.removeEventListener('storage', handleDarkModeChange);
+    window.removeEventListener('darkModeChanged', handleDarkModeChange);
+    
+    // Destroy charts
+    if (arrivalsChartInstance) {
+        arrivalsChartInstance.destroy();
+    }
+    if (vesselStatusChartInstance) {
+        vesselStatusChartInstance.destroy();
+    }
+    if (landingSitesChartInstance) {
+        landingSitesChartInstance.destroy();
+    }
 });
 
 // Update chart when time filter changes
-watch(timeFilter, () => {
-    updateArrivalsChart();
+watch(timeFilter, async () => {
+    await nextTick();
+    updateAllCharts();
+});
+
+// Watch for dark mode changes via localStorage
+watch(() => localStorage.getItem('darkMode'), async () => {
+    isDarkMode.value = localStorage.getItem('darkMode') === 'true';
+    await nextTick();
+    updateAllCharts();
 });
 </script>
 
@@ -574,38 +690,43 @@ watch(timeFilter, () => {
                 </div>
             </div>
 
-            <!-- Charts Section -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <!-- Arrivals & Departures Line Chart -->
-                <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-4 transition-colors">
-                    <div class="flex items-center justify-between mb-3">
-                        <h2 class="text-sm font-semibold text-gray-900 dark:text-white">Statistik Kedatangan & Keberangkatan</h2>
-                        <div class="flex items-center space-x-2">
-                            <div class="flex items-center">
-                                <div class="w-2 h-2 bg-blue-500 rounded-full mr-1"></div>
-                                <span class="text-[10px] text-gray-600 dark:text-gray-400">Kedatangan</span>
-                            </div>
-                            <div class="flex items-center">
-                                <div class="w-2 h-2 bg-red-500 rounded-full mr-1"></div>
-                                <span class="text-[10px] text-gray-600 dark:text-gray-400">Keberangkatan</span>
-                            </div>
+        <!-- Arrivals & Departures Line Chart -->            
+            <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-4 transition-colors">
+                <div class="flex items-center justify-between mb-3">
+                    <h2 class="text-sm font-semibold text-gray-900 dark:text-white">Statistik Kedatangan & Keberangkatan</h2>
+                    <div class="flex items-center space-x-2">
+                        <div class="flex items-center">
+                            <div class="w-2 h-2 bg-blue-500 rounded-full mr-1"></div>
+                            <span class="text-[10px] text-gray-600 dark:text-gray-400">Kedatangan</span>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-2 h-2 bg-red-500 rounded-full mr-1"></div>
+                            <span class="text-[10px] text-gray-600 dark:text-gray-400">Keberangkatan</span>
                         </div>
                     </div>
-                    <VChart :option="arrivalsChartOption" class="chart-sm" autoresize />
                 </div>
-
-                <!-- Vessel Status Pie Chart -->
-                <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-4 transition-colors">
-                    <h2 class="text-sm font-semibold text-gray-900 dark:text-white mb-3">Distribusi Status Kapal</h2>
-                    <VChart :option="vesselStatusOption" class="chart-sm" autoresize />
-                </div>
+                <div ref="arrivalsChartRef" :key="`arrivals-${chartRenderKey}`" class="chart-sm"></div>
             </div>
 
+            <!-- Charts Section -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <!-- Top Landing Sites Chart -->
             <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-4 transition-colors">
-                <h2 class="text-sm font-semibold text-gray-900 dark:text-white mb-3">Top Lokasi Pendaratan</h2>
-                <VChart :option="landingSitesOption" class="chart-sm" autoresize />
+                    <h2 class="text-sm font-semibold text-gray-900 dark:text-white mb-3">Top Lokasi Pendaratan</h2>
+                    <div v-if="topLandingSites && topLandingSites.length > 0" ref="landingSitesChartRef" :key="`landing-${chartRenderKey}`" class="chart-sm"></div>
+                    <div v-else class="text-center text-gray-500 dark:text-gray-400 py-8">
+                        Tidak ada data lokasi pendaratan
+                    </div>
             </div>
+
+            <!-- Vessel Status Pie Chart -->
+            <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-4 transition-colors">
+                <h2 class="text-sm font-semibold text-gray-900 dark:text-white mb-3">Distribusi Status Kapal</h2>
+                <div ref="vesselStatusChartRef" :key="`status-${chartRenderKey}`" class="chart-sm"></div>
+            </div>
+        </div>
+
+
 
             <!-- Tables Section -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -740,10 +861,14 @@ watch(timeFilter, () => {
 
 <style scoped>
 .chart {
-    height: 320px;
+    height: 420px;
 }
 
 .chart-sm {
-    height: 240px;
+    height: 440px;
+}
+
+.highcharts-container {
+    height: 100%;
 }
 </style>

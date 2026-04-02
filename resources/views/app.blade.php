@@ -4,6 +4,7 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title inertia>{{ config('app.name', 'SAMOSIR') }}</title>
+        <link rel="shortcut icon" type="image/png" sizes="32x32" href="/img/favicon-32x32.png">
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.googleapis.com">

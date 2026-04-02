@@ -26,6 +26,7 @@ const form = useForm({
     arrival_date: new Date().toISOString().split('T')[0],
     arrival_time: '',
     landing_site_id: '',
+    mutu: '',
     fish_quality: '',
     average_price: '',
     waste_volume: '',
@@ -195,11 +196,19 @@ const cancel = () => {
 
                     <!-- Informasi Ikan -->
                     <div class="mb-6">
-                        <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-4 pb-2 border-b border-gray-200 dark:border-gray-700">Informasi Ikan</h3>
+                        <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-4 pb-2 border-b border-gray-200 dark:border-gray-700">Informasi Tambahan</h3>
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div>
-                                <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Kualitas Ikan</label>
-                                <input v-model="form.fish_quality" type="text" placeholder="Contoh: Segar" :class="['w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500', form.errors.fish_quality ? 'border-red-500' : 'border-gray-300 dark:border-gray-600', 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white']" />
+                                <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Produk</label>
+                                <select 
+                                    v-model="form.fish_quality" 
+                                    :class="['w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500', form.errors.fish_quality ? 'border-red-500' : 'border-gray-300 dark:border-gray-600', 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white']"
+                                >
+                                    <option value="" disabled>Pilih Produk</option>
+                                    <option value="Segar">Segar</option>
+                                    <option value="Beku">Beku</option>
+                                    <option value="Olahan">Olahan</option>
+                                </select>
                             </div>
                             <div>
                                 <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Harga Rata-rata (Rp)</label>
@@ -217,6 +226,18 @@ const cancel = () => {
                                 <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Suhu Palka (°C)</label>
                                 <input v-model="form.hold_temperature" type="number" placeholder="0" :class="['w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500', form.errors.hold_temperature ? 'border-red-500' : 'border-gray-300 dark:border-gray-600', 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white']" />
                             </div>
+                                                        <div>
+                                <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Mutu</label>
+                                <select 
+                                    v-model="form.mutu" 
+                                    :class="['w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500', form.errors.mutu ? 'border-red-500' : 'border-gray-300 dark:border-gray-600', 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white']"
+                                >
+                                    <option value="" disabled>Pilih Mutu</option>
+                                    <option value="I">I</option>
+                                    <option value="II">II</option>
+                                    <option value="III">III</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
 
@@ -228,7 +249,10 @@ const cancel = () => {
                                 <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Status Kedatangan <span class="text-red-500">*</span></label>
                                 <select v-model="form.status" :class="['w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500', form.errors.status ? 'border-red-500' : 'border-gray-300 dark:border-gray-600', 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white']" required>
                                     <option value="TAMBAT">Tambat</option>
+                                    <option value="LABUH">Labuh</option>
                                     <option value="BONGKAR">Bongkar</option>
+                                    <option value="MENGISI PERBEKALAN">Mengisi Perbekalan</option>
+                                    <option value="PERBAIKAN">Perbaikan</option>
                                     <option value="SELESAI">Selesai</option>
                                 </select>
                             </div>
