@@ -6,6 +6,7 @@ import Sidebar from '../Components/Sidebar.vue'
 import Header from '../Components/Header.vue'
 import UserProfile from '../Components/UserProfile.vue'
 import LogoutConfirmModal from '../Components/LogoutConfirmModal.vue'
+import ToastNotification from '../Components/ToastNotification.vue'
 
 const page = usePage()
 
@@ -57,6 +58,12 @@ const menuItems = computed(() => {
       title: 'Dashboard',
       icon: 'ri-dashboard-line',
       to: '/',
+      open: false,
+    },
+    {
+      title: 'Posisi Kapal',
+      icon: 'ri-map-pin-2-line',
+      to: '/vessel-positions',
       open: false,
     },
     {
@@ -208,5 +215,8 @@ const closeLogoutModal = () => {
       @close="closeLogoutModal"
       @confirm="closeLogoutModal"
     />
+
+    <!-- Global Toast Notifications -->
+    <ToastNotification />
   </div>
 </template>

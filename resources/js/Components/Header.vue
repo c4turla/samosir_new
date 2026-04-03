@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onUnmounted, watch } from 'vue'
 import { route } from 'ziggy-js'
+import { Link } from '@inertiajs/vue3'
 
 const props = defineProps({
     user: {
@@ -26,6 +27,14 @@ const emit = defineEmits(['toggle-dark-mode', 'toggle-sidebar-collapse', 'logout
 const showProfileDropdown = ref(false)
 const dropdownRef = ref(null)
 
+// Search State
+const searchQuery = ref('')
+const searchResults = ref([])
+const isSearching = ref(false)
+const showSearchDropdown = ref(false)
+const searchDropdownRef = ref(null)
+let debounceTimeout = null
+
 const toggleDropdown = (event) => {
     event.stopPropagation()
     showProfileDropdown.value = !showProfileDropdown.value
@@ -35,30 +44,67 @@ const closeDropdown = () => {
     showProfileDropdown.value = false
 }
 
+const closeSearchDropdown = () => {
+    showSearchDropdown.value = false
+}
+
 const handleLogout = () => {
     closeDropdown()
     emit('logout')
 }
 
 const handleClickOutside = (event) => {
-    if (!showProfileDropdown.value) return
-    if (dropdownRef.value && !dropdownRef.value.contains(event.target)) {
+    let clickedOutside = false
+    
+    if (showProfileDropdown.value && dropdownRef.value && !dropdownRef.value.contains(event.target)) {
         closeDropdown()
+        clickedOutside = true
     }
+    
+    if (showSearchDropdown.value && searchDropdownRef.value && !searchDropdownRef.value.contains(event.target)) {
+        closeSearchDropdown()
+        clickedOutside = true
+    }
+    
+    return clickedOutside
 }
-
-// Watch for dropdown state changes to add/remove event listener
-watch(showProfileDropdown, (newValue) => {
-    if (newValue) {
-        document.addEventListener('click', handleClickOutside)
-    } else {
-        document.removeEventListener('click', handleClickOutside)
-    }
-})
 
 onUnmounted(() => {
     document.removeEventListener('click', handleClickOutside)
 })
+
+document.addEventListener('click', handleClickOutside)
+
+watch(searchQuery, (newQuery) => {
+    if (!newQuery.trim()) {
+        searchResults.value = []
+        showSearchDropdown.value = false
+        return
+    }
+
+    isSearching.value = true
+    showSearchDropdown.value = true
+
+    clearTimeout(debounceTimeout)
+    debounceTimeout = setTimeout(async () => {
+        try {
+            const response = await fetch(`/api/search?q=${encodeURIComponent(newQuery)}`)
+            if (response.ok) {
+                searchResults.value = await response.json()
+            }
+        } catch (e) {
+            console.error('Search error', e)
+        } finally {
+            isSearching.value = false
+        }
+    }, 300)
+})
+
+// Navigation helper will close the dropdown
+const handleSearchNavigation = (item) => {
+    closeSearchDropdown()
+    searchQuery.value = ''
+}
 </script>
 
 <template>
@@ -81,15 +127,69 @@ onUnmounted(() => {
                     </svg>
                 </button>
                 <!-- Search -->
-                <div class="hidden md:flex items-center bg-gray-100 dark:bg-gray-700 rounded-lg px-3 py-1.5">
-                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="hidden md:flex items-center bg-gray-100 dark:bg-gray-700 rounded-lg px-3 py-1.5 relative" ref="searchDropdownRef">
+                    <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
                     <input
+                        v-model="searchQuery"
+                        @focus="searchQuery.trim().length > 0 && (showSearchDropdown = true)"
                         type="text"
-                        placeholder="Search..."
-                        class="bg-transparent border-none outline-none ml-2 text-xs text-gray-700 dark:text-gray-200 placeholder-gray-400 w-48"
+                        placeholder="Cari kapal, jenis ikan..."
+                        class="bg-transparent border-none outline-none ml-2 text-xs text-gray-700 dark:text-gray-200 placeholder-gray-400 w-52 sm:w-64 focus:ring-0 p-0"
                     />
+                    
+                    <!-- Loading Spinner -->
+                    <svg v-if="isSearching" class="animate-spin ml-2 h-4 w-4 text-blue-500 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                    </svg>
+                    
+                    <!-- Search Dropdown -->
+                    <Transition
+                        enter-active-class="transition ease-out duration-200"
+                        enter-from-class="opacity-0 scale-95 translate-y-[-10px]"
+                        enter-to-class="opacity-100 scale-100 translate-y-0"
+                        leave-active-class="transition ease-in duration-150"
+                        leave-from-class="opacity-100 scale-100 translate-y-0"
+                        leave-to-class="opacity-0 scale-95 translate-y-[-10px]"
+                    >
+                        <div
+                            v-if="showSearchDropdown && searchQuery.trim().length > 0"
+                            class="absolute left-0 top-full mt-2 w-[400px] max-h-[70vh] overflow-y-auto rounded-lg bg-white dark:bg-gray-800 shadow-2xl ring-1 ring-gray-900/5 dark:ring-gray-700 divide-y divide-gray-100 dark:divide-gray-700 z-[9999]"
+                        >
+                            <!-- Empty State -->
+                            <div v-if="!isSearching && searchResults.length === 0" class="p-5 text-center">
+                                <svg class="mx-auto h-8 w-8 text-gray-400 dark:text-gray-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                <p class="text-sm font-medium text-gray-900 dark:text-white">Tidak ada hasil ditemukan</p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Coba gunakan kata kunci pencarian yang lain.</p>
+                            </div>
+                            
+                            <!-- Search Results -->
+                            <template v-else>
+                                <div v-for="(group, idx) in searchResults" :key="idx" class="py-2">
+                                    <h3 class="px-4 py-1.5 text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/80 sticky top-0">
+                                        {{ group.group }}
+                                    </h3>
+                                    <ul class="mt-1">
+                                        <li v-for="item in group.items" :key="item.url">
+                                            <Link
+                                                :href="item.url"
+                                                @click="handleSearchNavigation(item)"
+                                                class="flex flex-col px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer group"
+                                            >
+                                                <div class="flex items-center justify-between">
+                                                    <span class="text-sm font-medium text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{{ item.title }}</span>
+                                                    <svg class="w-4 h-4 text-gray-300 dark:text-gray-600 group-hover:text-blue-500 opacity-0 group-hover:opacity-100 transition-all -translate-x-2 group-hover:translate-x-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+                                                </div>
+                                                <span class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ item.subtitle }}</span>
+                                            </Link>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </template>
+                        </div>
+                    </Transition>
                 </div>
             </div>
 

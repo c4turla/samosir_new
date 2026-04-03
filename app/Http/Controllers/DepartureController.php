@@ -104,6 +104,22 @@ class DepartureController extends Controller
     }
 
     /**
+     * Display the specified resource.
+     */
+    public function show(\Illuminate\Http\Request $request, Departure $departure)
+    {
+        $departure->load(['vessel', 'landingSite']);
+        
+        if (($request->wantsJson() || $request->ajax()) && !$request->header('X-Inertia')) {
+            return response()->json($departure);
+        }
+        
+        return Inertia::render('Departures/Show', [
+            'departure' => $departure
+        ]);
+    }
+
+    /**
      * Show the form for editing the specified resource.
      */
     public function edit(Departure $departure)

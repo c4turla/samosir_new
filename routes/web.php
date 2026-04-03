@@ -13,6 +13,8 @@ use App\Http\Controllers\ArrivalController;
 use App\Http\Controllers\DepartureController;
 use App\Http\Controllers\UnloadingController;
 use App\Http\Controllers\ApprovalController;
+use App\Http\Controllers\GlobalSearchController;
+use App\Http\Controllers\VesselPositionController;
 
 // Guest routes (no authentication required)
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
@@ -21,7 +23,9 @@ Route::post('/login', [AuthController::class, 'login'])->name('login.store');
 // Protected routes (authentication required)
 Route::middleware('auth')->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/vessel-positions', [VesselPositionController::class, 'index'])->name('vessel-positions.index');
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+    Route::get('/api/search', [GlobalSearchController::class, 'search'])->name('search');
     
     // Profile routes
     Route::prefix('profile')->group(function () {
@@ -88,6 +92,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/', [ArrivalController::class, 'index'])->name('arrivals.index');
         Route::get('/create', [ArrivalController::class, 'create'])->name('arrivals.create');
         Route::post('/', [ArrivalController::class, 'store'])->name('arrivals.store');
+        Route::get('/{arrival}', [ArrivalController::class, 'show'])->name('arrivals.show');
         Route::get('/{arrival}/edit', [ArrivalController::class, 'edit'])->name('arrivals.edit');
         Route::put('/{arrival}', [ArrivalController::class, 'update'])->name('arrivals.update');
         Route::delete('/{arrival}', [ArrivalController::class, 'destroy'])->name('arrivals.destroy');
@@ -100,6 +105,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/', [DepartureController::class, 'index'])->name('departures.index');
         Route::get('/create', [DepartureController::class, 'create'])->name('departures.create');
         Route::post('/', [DepartureController::class, 'store'])->name('departures.store');
+        Route::get('/{departure}', [DepartureController::class, 'show'])->name('departures.show');
         Route::get('/{departure}/edit', [DepartureController::class, 'edit'])->name('departures.edit');
         Route::put('/{departure}', [DepartureController::class, 'update'])->name('departures.update');
         Route::delete('/{departure}', [DepartureController::class, 'destroy'])->name('departures.destroy');

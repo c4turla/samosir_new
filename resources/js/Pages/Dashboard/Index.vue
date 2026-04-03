@@ -21,7 +21,12 @@ const props = defineProps({
     yearlyStats: Array,
     vesselStatusDistribution: Object,
     arrivalStatusDistribution: Object,
-    topLandingSites: Array,
+    topSitesWeekly: Array,
+    topSitesMonthly: Array,
+    topSitesYearly: Array,
+    topFishWeekly: Array,
+    topFishMonthly: Array,
+    topFishYearly: Array,
 });
 
 // Chart Filters
@@ -34,12 +39,12 @@ const filterOptions = [
 
 // Chart refs
 const arrivalsChartRef = ref(null);
-const vesselStatusChartRef = ref(null);
+const fishSpeciesChartRef = ref(null);
 const landingSitesChartRef = ref(null);
 
 // Chart instances
 let arrivalsChartInstance = null;
-let vesselStatusChartInstance = null;
+let fishSpeciesChartInstance = null;
 let landingSitesChartInstance = null;
 
 // Dark mode detection
@@ -139,27 +144,52 @@ const renderArrivalsChart = () => {
     arrivalsChartInstance = Highcharts.chart(arrivalsChartRef.value, options);
 };
 
-// Render vessel status chart
-const renderVesselStatusChart = () => {
-    if (!vesselStatusChartRef.value) return;
+// Donut chart colors
+const fishChartColors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
+
+// Get current fish data based on filter
+const getCurrentFishData = () => {
+    if (timeFilter.value === 'weekly') return props.topFishWeekly || [];
+    if (timeFilter.value === 'yearly') return props.topFishYearly || [];
+    return props.topFishMonthly || [];
+};
+
+// Get total weight of all top fish
+const getTotalFishWeight = () => {
+    return getCurrentFishData().reduce((sum, item) => sum + item.total_weight, 0);
+};
+
+// Format weight
+const formatWeight = (weight) => {
+    if (weight >= 1000) return (weight / 1000).toFixed(1) + ' ton';
+    return weight.toLocaleString('id-ID') + ' kg';
+};
+
+// Get current sites data based on filter
+const getCurrentSitesData = () => {
+    if (timeFilter.value === 'weekly') return props.topSitesWeekly || [];
+    if (timeFilter.value === 'yearly') return props.topSitesYearly || [];
+    return props.topSitesMonthly || [];
+};
+
+// Render fish species donut chart
+const renderFishSpeciesChart = () => {
+    if (!fishSpeciesChartRef.value) return;
     
     // Destroy existing chart
-    if (vesselStatusChartInstance) {
-        vesselStatusChartInstance.destroy();
+    if (fishSpeciesChartInstance) {
+        fishSpeciesChartInstance.destroy();
     }
     
-    const options = updateChartTheme(getVesselStatusChartConfig(), isDarkMode.value);
+    const fishData = getCurrentFishData();
     
-    vesselStatusChartInstance = Highcharts.chart(vesselStatusChartRef.value, options);
+    const options = updateChartTheme(getFishSpeciesChartConfig(fishData), isDarkMode.value);
+    
+    fishSpeciesChartInstance = Highcharts.chart(fishSpeciesChartRef.value, options);
 };
 
 // Render landing sites chart
 const renderLandingSitesChart = () => {
-    // Check if we have data
-    if (!props.topLandingSites || props.topLandingSites.length === 0) {
-        return;
-    }
-    
     if (!landingSitesChartRef.value) return;
     
     // Destroy existing chart
@@ -167,7 +197,9 @@ const renderLandingSitesChart = () => {
         landingSitesChartInstance.destroy();
     }
     
-    const options = updateChartTheme(getLandingSitesChartConfig(), isDarkMode.value);
+    const sitesData = getCurrentSitesData();
+    const options = updateChartTheme(getLandingSitesChartConfig(sitesData), isDarkMode.value);
+    
     landingSitesChartInstance = Highcharts.chart(landingSitesChartRef.value, options);
 };
 
@@ -179,7 +211,7 @@ const updateAllCharts = async () => {
     await nextTick();
     
     renderArrivalsChart();
-    renderVesselStatusChart();
+    renderFishSpeciesChart();
     renderLandingSitesChart();
 };
 
@@ -257,7 +289,13 @@ const getArrivalsChartConfig = (data) => {
     };
 };
 
-const getVesselStatusChartConfig = () => {
+const getFishSpeciesChartConfig = (fishData) => {
+    const seriesData = fishData.map((item, index) => ({
+        name: item.species_name || item.local_name || '-',
+        y: item.total_weight,
+        color: fishChartColors[index % fishChartColors.length],
+    }));
+
     return {
         chart: {
             type: 'pie',
@@ -267,113 +305,72 @@ const getVesselStatusChartConfig = () => {
         },
         title: { text: null },
         tooltip: {
-            pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b> ({point.y} kapal)',
+            pointFormat: '<b>{point.percentage:.1f}%</b> ({point.y} kg)',
             style: { fontSize: '11px' }
         },
         plotOptions: {
             pie: {
+                innerSize: '60%',
                 allowPointSelect: true,
                 cursor: 'pointer',
-                borderRadius: 8,
+                borderRadius: 6,
                 borderWidth: 2,
-                borderColor: isDarkMode.value ? '#374151' : '#ffffff',
+                borderColor: isDarkMode.value ? '#1f2937' : '#ffffff',
                 dataLabels: {
-                    enabled: true,
-                    format: '<b>{point.name}</b>: {point.y}',
-                    style: {
-                        fontSize: '11px',
-                        fontWeight: '500',
-                        color: isDarkMode.value ? '#ffffff' : '#1f2937'
-                    }
+                    enabled: false
                 },
-                showInLegend: true
+                showInLegend: false
             }
         },
-        legend: {
-            align: 'right',
-            verticalAlign: 'middle',
-            layout: 'vertical',
-            itemStyle: { fontSize: '11px' }
-        },
+        legend: { enabled: false },
         credits: { enabled: false },
         series: [{
-            name: 'Status',
+            name: 'Berat',
             colorByPoint: true,
-            data: [
-                {
-                    name: 'Disetujui',
-                    y: props.vesselStatusDistribution?.approved || 0,
-                    color: '#10B981'
-                },
-                {
-                    name: 'Pending',
-                    y: props.vesselStatusDistribution?.pending || 0,
-                    color: '#F59E0B'
-                },
-                {
-                    name: 'Ditolak',
-                    y: props.vesselStatusDistribution?.rejected || 0,
-                    color: '#EF4444'
-                }
-            ]
+            data: seriesData.length > 0 ? seriesData : [{ name: 'Tidak ada data', y: 1, color: '#d1d5db' }]
         }]
     };
 };
 
-const getLandingSitesChartConfig = () => {
-    const sites = props.topLandingSites.map((item, index) => `Top ${index + 1}`);
-    const counts = props.topLandingSites.map(item => item.count);
-    const names = props.topLandingSites.map(item => item.landing_site?.name || '-');
+const getLandingSitesChartConfig = (sitesData) => {
+    const seriesData = sitesData.map((item, index) => ({
+        name: item.site_name || '-',
+        y: item.total_arrivals,
+        color: fishChartColors[index % fishChartColors.length], // We can reuse the same premium colors
+    }));
 
     return {
         chart: {
-            type: 'column',
+            type: 'pie',
             style: {
                 fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
             }
         },
         title: { text: null },
-        xAxis: {
-            categories: sites,
-            labels: {
-                rotation: 0,
-                style: { fontSize: '10px' }
-            }
-        },
-        yAxis: {
-            min: 0,
-            title: { text: 'Jumlah Kedatangan', style: { fontSize: '11px' } }
-        },
         tooltip: {
-            formatter: function() {
-                return `${names[this.point.index]}: ${this.y} kedatangan`;
-            },
+            pointFormat: '<b>{point.percentage:.1f}%</b> ({point.y} kedatangan)',
             style: { fontSize: '11px' }
         },
         plotOptions: {
-            column: {
-                borderRadius: 8,
-                borderWidth: 0,
-                pointWidth: 40,
-                color: {
-                    linearGradient: {
-                        x1: 0,
-                        x2: 0,
-                        y1: 0,
-                        y2: 1
-                    },
-                    stops: [
-                        [0, '#3B82F6'],
-                        [1, '#1E40AF']
-                    ]
-                }
+            pie: {
+                innerSize: '60%',
+                allowPointSelect: true,
+                cursor: 'pointer',
+                borderRadius: 6,
+                borderWidth: 2,
+                borderColor: isDarkMode.value ? '#1f2937' : '#ffffff',
+                dataLabels: {
+                    enabled: false
+                },
+                showInLegend: false
             }
         },
         legend: { enabled: false },
         credits: { enabled: false },
         series: [{
             name: 'Kedatangan',
-            data: counts
+            colorByPoint: true,
+            data: seriesData.length > 0 ? seriesData : [{ name: 'Tidak ada data', y: 1, color: '#d1d5db' }]
         }]
     };
 };
@@ -453,8 +450,8 @@ onUnmounted(() => {
     if (arrivalsChartInstance) {
         arrivalsChartInstance.destroy();
     }
-    if (vesselStatusChartInstance) {
-        vesselStatusChartInstance.destroy();
+    if (fishSpeciesChartInstance) {
+        fishSpeciesChartInstance.destroy();
     }
     if (landingSitesChartInstance) {
         landingSitesChartInstance.destroy();
@@ -710,19 +707,87 @@ watch(() => localStorage.getItem('darkMode'), async () => {
 
             <!-- Charts Section -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <!-- Top Landing Sites Chart -->
+            <!-- Top Landing Sites Donut Chart -->
             <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-4 transition-colors">
-                    <h2 class="text-sm font-semibold text-gray-900 dark:text-white mb-3">Top Lokasi Pendaratan</h2>
-                    <div v-if="topLandingSites && topLandingSites.length > 0" ref="landingSitesChartRef" :key="`landing-${chartRenderKey}`" class="chart-sm"></div>
-                    <div v-else class="text-center text-gray-500 dark:text-gray-400 py-8">
-                        Tidak ada data lokasi pendaratan
+                <div class="flex items-center justify-between mb-3">
+                    <h2 class="text-sm font-semibold text-gray-900 dark:text-white">Top Lokasi Pendaratan</h2>
+                    <span class="text-[10px] text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full">
+                        {{ timeFilter === 'weekly' ? 'Minggu Ini' : timeFilter === 'monthly' ? 'Bulan Ini' : 'Tahun Ini' }}
+                    </span>
+                </div>
+                <div v-if="getCurrentSitesData().length > 0" class="flex items-start gap-4">
+                    <!-- Donut Chart -->
+                    <div class="w-1/2 flex-shrink-0">
+                        <div ref="landingSitesChartRef" :key="`landing-${chartRenderKey}`" style="height: 240px;"></div>
                     </div>
+                    <!-- Landing Sites List -->
+                    <div class="w-1/2 flex flex-col justify-center py-4">
+                        <div class="space-y-3">
+                            <div v-for="(site, index) in getCurrentSitesData()" :key="site.landing_site_id" 
+                                 class="flex items-center justify-between group cursor-default hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg px-2 py-1.5 -mx-2 transition-colors">
+                                <div class="flex items-center gap-2 min-w-0">
+                                    <span class="w-2.5 h-2.5 rounded-full flex-shrink-0 ring-2 ring-offset-1 dark:ring-offset-gray-800" 
+                                          :style="{ backgroundColor: fishChartColors[index], ringColor: fishChartColors[index] + '40' }"></span>
+                                    <span class="text-xs text-gray-700 dark:text-gray-300 truncate font-medium">{{ site.site_name }}</span>
+                                </div>
+                                <div class="flex items-center gap-2 flex-shrink-0 ml-2">
+                                    <span class="text-xs font-bold text-gray-900 dark:text-white">{{ site.total_arrivals }}</span>
+                                    <span class="text-[10px] text-gray-500 min-w-[32px]">kapal</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div v-else class="flex flex-col items-center justify-center h-[240px] text-gray-500 dark:text-gray-400">
+                    <svg class="w-12 h-12 mb-3 text-gray-300 dark:text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                    </svg>
+                    <p class="text-sm">Belum ada data pendaratan</p>
+                </div>
             </div>
 
-            <!-- Vessel Status Pie Chart -->
+            <!-- Top 5 Fish Species Donut Chart -->
             <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-4 transition-colors">
-                <h2 class="text-sm font-semibold text-gray-900 dark:text-white mb-3">Distribusi Status Kapal</h2>
-                <div ref="vesselStatusChartRef" :key="`status-${chartRenderKey}`" class="chart-sm"></div>
+                <div class="flex items-center justify-between mb-3">
+                    <h2 class="text-sm font-semibold text-gray-900 dark:text-white">Data Per Jenis Ikan</h2>
+                    <span class="text-[10px] text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full">
+                        {{ timeFilter === 'weekly' ? 'Minggu Ini' : timeFilter === 'monthly' ? 'Bulan Ini' : 'Tahun Ini' }}
+                    </span>
+                </div>
+                <div v-if="getCurrentFishData().length > 0" class="flex items-start gap-4">
+                    <!-- Donut Chart -->
+                    <div class="w-1/2 flex-shrink-0">
+                        <div ref="fishSpeciesChartRef" :key="`fish-${chartRenderKey}`" style="height: 240px;"></div>
+                    </div>
+                    <!-- Fish Species List -->
+                    <div class="w-1/2 flex flex-col justify-center py-4">
+                        <div class="space-y-3">
+                            <div v-for="(fish, index) in getCurrentFishData()" :key="fish.fish_species_id" 
+                                 class="flex items-center justify-between group cursor-default hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg px-2 py-1.5 -mx-2 transition-colors">
+                                <div class="flex items-center gap-2 min-w-0">
+                                    <span class="w-2.5 h-2.5 rounded-full flex-shrink-0 ring-2 ring-offset-1 dark:ring-offset-gray-800" 
+                                          :style="{ backgroundColor: fishChartColors[index], ringColor: fishChartColors[index] + '40' }"></span>
+                                    <span class="text-xs text-gray-700 dark:text-gray-300 truncate font-medium">{{ fish.species_name }}</span>
+                                </div>
+                                <div class="flex items-baseline flex-shrink-0 ml-2">
+                                    <span class="text-xs font-bold text-gray-900 dark:text-white">{{ formatWeight(fish.total_weight) }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-4 pt-3 border-t border-gray-100 dark:border-gray-700">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-medium text-gray-500 dark:text-gray-400">Total Tangkapan</span>
+                                <span class="text-xs font-bold text-gray-900 dark:text-white">{{ formatWeight(getTotalFishWeight()) }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div v-else class="flex flex-col items-center justify-center h-[240px] text-gray-500 dark:text-gray-400">
+                    <svg class="w-12 h-12 mb-3 text-gray-300 dark:text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                    </svg>
+                    <p class="text-sm">Belum ada data tangkapan</p>
+                </div>
             </div>
         </div>
 

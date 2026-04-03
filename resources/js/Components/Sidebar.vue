@@ -76,8 +76,8 @@ const toggleDropdown = (index) => {
                 </div>
                 <transition name="fade">
                     <div v-show="!isCollapsed" class="transition-all duration-300">
-                        <h1 class="text-sm font-bold text-gray-900 dark:text-white">SAMOSIR</h1>
-                        <p class="text-[10px] text-gray-500 dark:text-gray-400">Pelabuhan Perikanan</p>
+                        <h1 class="text-sm font-bold text-gray-900 dark:text-white">SAMOSIR V.3.0</h1>
+                        <p class="text-[10px] text-gray-500 dark:text-gray-400">PPN Sibolga</p>
                     </div>
                 </transition>
             </div>

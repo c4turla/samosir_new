@@ -7,7 +7,9 @@ use Illuminate\Support\Facades\DB;
 use App\Models\Vessel;
 use App\Models\User;
 use App\Models\Arrival;
+use App\Models\ArrivalCatch;
 use App\Models\Departure;
+use App\Models\FishSpecies;
 use Carbon\Carbon;
 
 class DashboardController extends Controller{
@@ -71,13 +73,15 @@ class DashboardController extends Controller{
             'selesai' => Arrival::where('status', 'SELESAI')->count(),
         ];
 
-        // Top landing sites by arrivals
-        $topLandingSites = Arrival::select('landing_site_id', DB::raw('count(*) as count'))
-            ->with('landingSite')
-            ->groupBy('landing_site_id')
-            ->orderBy('count', 'desc')
-            ->limit(5)
-            ->get();
+        // Top landing sites data per filter
+        $topSitesWeekly = $this->getTopLandingSites('weekly');
+        $topSitesMonthly = $this->getTopLandingSites('monthly');
+        $topSitesYearly = $this->getTopLandingSites('yearly');
+
+        // Top fish species data per filter
+        $topFishWeekly = $this->getTopFishSpecies('weekly');
+        $topFishMonthly = $this->getTopFishSpecies('monthly');
+        $topFishYearly = $this->getTopFishSpecies('yearly');
 
         return inertia('Dashboard/Index', [
             'stats' => $stats,
@@ -89,7 +93,12 @@ class DashboardController extends Controller{
             'yearlyStats' => $yearlyStats,
             'vesselStatusDistribution' => $vesselStatusDistribution,
             'arrivalStatusDistribution' => $arrivalStatusDistribution,
-            'topLandingSites' => $topLandingSites,
+            'topSitesWeekly' => $topSitesWeekly,
+            'topSitesMonthly' => $topSitesMonthly,
+            'topSitesYearly' => $topSitesYearly,
+            'topFishWeekly' => $topFishWeekly,
+            'topFishMonthly' => $topFishMonthly,
+            'topFishYearly' => $topFishYearly,
         ]);
     }
 
@@ -221,5 +230,92 @@ class DashboardController extends Controller{
         }
 
         return $years;
+    }
+
+    /**
+     * Get top 5 landing sites by total arrivals for a given time filter.
+     */
+    private function getTopLandingSites(string $filter)
+    {
+        $query = Arrival::select(
+            'landing_site_id',
+            DB::raw('COUNT(*) as total_arrivals')
+        )
+        ->whereNull('deleted_at');
+
+        if ($filter === 'weekly') {
+            $query->whereBetween('arrival_date', [
+                Carbon::now()->startOfWeek(),
+                Carbon::now()->endOfWeek(),
+            ]);
+        } elseif ($filter === 'monthly') {
+            $query->whereYear('arrival_date', Carbon::now()->year)
+                  ->whereMonth('arrival_date', Carbon::now()->month);
+        } elseif ($filter === 'yearly') {
+            $query->whereYear('arrival_date', Carbon::now()->year);
+        }
+
+        $results = $query
+            ->whereNotNull('landing_site_id')
+            ->groupBy('landing_site_id')
+            ->orderByDesc('total_arrivals')
+            ->limit(5)
+            ->with('landingSite')
+            ->get();
+
+        return $results->map(function ($item) {
+            return [
+                'landing_site_id' => $item->landing_site_id,
+                'site_name' => $item->landingSite->site_name ?? 'Tidak Diketahui',
+                'total_arrivals' => (int) $item->total_arrivals,
+            ];
+        });
+    }
+
+    /**
+     * Get top 5 fish species by total weight for a given time filter.
+     */
+    private function getTopFishSpecies(string $filter)
+    {
+        $query = ArrivalCatch::select(
+            'arrival_catches.fish_species_id',
+            DB::raw('SUM(arrival_catches.weight_kg) as total_weight'),
+            DB::raw('COUNT(*) as total_records')
+        )
+        ->join('arrivals', 'arrival_catches.arrival_id', '=', 'arrivals.id')
+        ->whereNull('arrivals.deleted_at');
+
+        if ($filter === 'weekly') {
+            $query->whereBetween('arrivals.arrival_date', [
+                Carbon::now()->startOfWeek(),
+                Carbon::now()->endOfWeek(),
+            ]);
+        } elseif ($filter === 'monthly') {
+            $query->whereYear('arrivals.arrival_date', Carbon::now()->year)
+                  ->whereMonth('arrivals.arrival_date', Carbon::now()->month);
+        } elseif ($filter === 'yearly') {
+            $query->whereYear('arrivals.arrival_date', Carbon::now()->year);
+        }
+
+        $results = $query
+            ->groupBy('arrival_catches.fish_species_id')
+            ->orderByDesc('total_weight')
+            ->limit(5)
+            ->get();
+
+        // Load fish species for each result
+        $speciesIds = $results->pluck('fish_species_id')->toArray();
+        $species = FishSpecies::whereIn('id', $speciesIds)->get()->keyBy('id');
+
+        return $results->map(function ($item) use ($species) {
+            $fish = $species->get($item->fish_species_id);
+            return [
+                'fish_species_id' => $item->fish_species_id,
+                'species_name' => $fish->species_name ?? '-',
+                'local_name' => $fish->local_name ?? '-',
+                'total_weight' => (int) $item->total_weight,
+                'total_records' => (int) $item->total_records,
+            ];
+        });
     }
 }

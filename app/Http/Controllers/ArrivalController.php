@@ -77,7 +77,7 @@ class ArrivalController extends Controller
             'vessel_id' => 'required|exists:vessels,id',
             'origin' => 'nullable|string|max:255',
             'arrival_date' => 'required|date',
-            'arrival_time' => 'nullable|date_format:H:i:s',
+            'arrival_time' => 'nullable|date_format:H:i',
             'landing_site_id' => 'nullable|exists:landing_sites,id',
             'mutu' => 'nullable|string|max:50',
             'fish_quality' => 'nullable|string|max:50',
@@ -85,30 +85,52 @@ class ArrivalController extends Controller
             'waste_volume' => 'nullable|integer|min:0',
             'fish_temperature' => 'nullable|integer',
             'hold_temperature' => 'nullable|integer',
-            'status' => 'required|in:TAMBAT,BONGKAR,SELESAI',
-            'approval_status' => 'nullable|boolean',
+            'status' => 'required|in:TAMBAT,LABUH,BONGKAR,MENGISI PERBEKALAN,PERBAIKAN,SELESAI',
+            'approval_status' => 'nullable',
             'notes' => 'nullable|string',
             'is_processed' => 'nullable|boolean',
             'catches' => 'nullable|array',
             'catches.*.fish_species_id' => 'required_with:catches|exists:fish_species,id',
-            'catches.*.quantity' => 'required_with:catches|integer|min:1',
-            'catches.*.weight' => 'required_with:catches|numeric|min:0',
+            'catches.*.weight_kg' => 'required_with:catches|numeric|min:0',
         ]);
 
         $validated['input_by'] = auth()->id();
-        $validated['approval_status'] = $validated['approval_status'] ?? false;
+        $validated['approval_status'] = 1;
+
+        // Extract catches before creating arrival
+        $catchesData = $validated['catches'] ?? [];
+        unset($validated['catches']);
 
         $arrival = Arrival::create($validated);
 
         // Save fish catches
-        if (isset($validated['catches']) && is_array($validated['catches'])) {
-            foreach ($validated['catches'] as $catch) {
-                $arrival->catches()->create($catch);
+        if (!empty($catchesData)) {
+            foreach ($catchesData as $catch) {
+                $arrival->catches()->create([
+                    'fish_species_id' => $catch['fish_species_id'],
+                    'weight_kg' => $catch['weight_kg'],
+                ]);
             }
         }
 
         return redirect()->route('arrivals.index')
             ->with('success', 'Kedatangan kapal berhasil dicatat.');
+    }
+
+    /**
+     * Display the specified resource.
+     */
+    public function show(\Illuminate\Http\Request $request, Arrival $arrival)
+    {
+        $arrival->load(['vessel', 'landingSite', 'catches.fishSpecies']);
+        
+        if (($request->wantsJson() || $request->ajax()) && !$request->header('X-Inertia')) {
+            return response()->json($arrival);
+        }
+        
+        return \Inertia\Inertia::render('Arrivals/Show', [
+            'arrival' => $arrival
+        ]);
     }
 
     /**
@@ -143,7 +165,7 @@ class ArrivalController extends Controller
             'vessel_id' => 'required|exists:vessels,id',
             'origin' => 'nullable|string|max:255',
             'arrival_date' => 'required|date',
-            'arrival_time' => 'nullable|date_format:H:i:s',
+            'arrival_time' => 'nullable|date_format:H:i',
             'landing_site_id' => 'nullable|exists:landing_sites,id',
             'mutu' => 'nullable|string|max:50',
             'fish_quality' => 'nullable|string|max:50',
@@ -151,14 +173,13 @@ class ArrivalController extends Controller
             'waste_volume' => 'nullable|integer|min:0',
             'fish_temperature' => 'nullable|integer',
             'hold_temperature' => 'nullable|integer',
-            'status' => 'required|in:TAMBAT,BONGKAR,SELESAI',
+            'status' => 'required|in:TAMBAT,LABUH,BONGKAR,MENGISI PERBEKALAN,PERBAIKAN,SELESAI',
             'approval_status' => 'nullable|boolean',
             'notes' => 'nullable|string',
             'is_processed' => 'nullable|boolean',
             'catches' => 'nullable|array',
             'catches.*.fish_species_id' => 'required_with:catches|exists:fish_species,id',
-            'catches.*.quantity' => 'required_with:catches|integer|min:1',
-            'catches.*.weight' => 'required_with:catches|numeric|min:0',
+            'catches.*.weight_kg' => 'required_with:catches|numeric|min:0',
         ]);
 
         // Handle approval status changes
@@ -172,13 +193,20 @@ class ArrivalController extends Controller
             }
         }
 
+        // Extract catches before updating arrival
+        $catchesData = $validated['catches'] ?? [];
+        unset($validated['catches']);
+
         $arrival->update($validated);
 
         // Update fish catches - delete all and recreate
         $arrival->catches()->delete();
-        if (isset($validated['catches']) && is_array($validated['catches'])) {
-            foreach ($validated['catches'] as $catch) {
-                $arrival->catches()->create($catch);
+        if (!empty($catchesData)) {
+            foreach ($catchesData as $catch) {
+                $arrival->catches()->create([
+                    'fish_species_id' => $catch['fish_species_id'],
+                    'weight_kg' => $catch['weight_kg'],
+                ]);
             }
         }
 

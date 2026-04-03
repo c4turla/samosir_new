@@ -10,12 +10,12 @@ class ArrivalCatch extends Model
     protected $table = 'arrival_catches';
 
     protected $fillable = [
-        'arrival_id', 'fish_species_id', 'quantity', 'weight'
+        'arrival_id', 'fish_species_id', 'weight_kg', 'estimated_value'
     ];
 
     protected $casts = [
-        'quantity' => 'integer',
-        'weight' => 'decimal:2',
+        'weight_kg' => 'integer',
+        'estimated_value' => 'decimal:2',
     ];
 
     // Relationships

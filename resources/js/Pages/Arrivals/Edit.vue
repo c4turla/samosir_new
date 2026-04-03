@@ -15,8 +15,7 @@ const catches = ref([])
 if (props.arrival.catches && props.arrival.catches.length > 0) {
     catches.value = props.arrival.catches.map(c => ({
         fish_species_id: c.fish_species_id,
-        quantity: c.quantity,
-        weight: c.weight
+        weight_kg: c.weight_kg || 0
     }))
 }
 
@@ -26,7 +25,7 @@ const form = useForm({
     arrival_date: props.arrival.arrival_date,
     arrival_time: props.arrival.arrival_time || '',
     landing_site_id: props.arrival.landing_site_id || '',
-    Mutu: props.arrival.mutu || '',
+    mutu: props.arrival.mutu || '',
     fish_quality: props.arrival.fish_quality || '',
     average_price: props.arrival.average_price || '',
     waste_volume: props.arrival.waste_volume || '',
@@ -42,7 +41,7 @@ const form = useForm({
 const addCatch = () => {
     catches.value.push({
         fish_species_id: '',
-        weight: '',
+        weight_kg: '',
     })
 }
 
@@ -58,7 +57,7 @@ const getAvailableFishSpecies = (currentIndex) => {
 }
 
 const submit = () => {
-    const validCatches = catches.value.filter(catchItem => catchItem.fish_species_id && catchItem.quantity && catchItem.weight)
+    const validCatches = catches.value.filter(catchItem => catchItem.fish_species_id && catchItem.weight_kg)
     form.catches = validCatches
     form.put(`/arrivals/${props.arrival.id}`)
 }
@@ -152,7 +151,7 @@ const cancel = () => (window.location.href = '/arrivals')
                                 </div>
                                 <div class="w-32">
                                     <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Berat (kg)</label>
-                                    <input v-model="catchItem.weight" type="number" min="0" step="0.01" placeholder="0" :class="['w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500', 'border-gray-300 dark:border-gray-600', 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white']" />
+                                    <input v-model="catchItem.weight_kg" type="number" min="0" step="1" placeholder="0" :class="['w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500', 'border-gray-300 dark:border-gray-600', 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white']" />
                                 </div>
                                 <button type="button" @click="removeCatch(index)" class="px-3 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors text-xs mb-0.5">
                                     Hapus
