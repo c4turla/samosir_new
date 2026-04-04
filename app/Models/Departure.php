@@ -13,10 +13,10 @@ class Departure extends Model
     protected $table = 'departures';
 
     protected $fillable = [
-        'vessel_id', 'destination', 'crew_count', 'departure_date', 'departure_time',
-        'departure_datetime', 'return_datetime', 'landing_site_id', 'syahbandar',
-        'administrative_officer', 'ice_supply', 'water_supply', 'diesel_supply',
-        'oil_supply', 'gasoline_supply', 'other_supplies', 'notes', 'status',
+        'nomor', 'vessel_id', 'nakhoda_name', 'destination', 'crew_count', 'departure_date', 'departure_time',
+        'departure_datetime', 'arrival_datetime', 'etmal_days', 'etmal_hours', 'landing_site_id', 'syahbandar',
+        'ice_supply', 'water_supply', 'diesel_supply',
+        'oil_supply', 'gasoline_supply', 'other_supplies', 'notes', 'status', 'floating_status', 'unloading_status', 'admin_completion',
         'approval_status', 'approved_by', 'approved_at', 'input_by', 'signature'
     ];
 
@@ -24,7 +24,7 @@ class Departure extends Model
         'departure_date' => 'date',
         'departure_time' => 'datetime:H:i:s',
         'departure_datetime' => 'datetime',
-        'return_datetime' => 'datetime',
+        'arrival_datetime' => 'datetime',
         'ice_supply' => 'integer',
         'water_supply' => 'integer',
         'diesel_supply' => 'integer',

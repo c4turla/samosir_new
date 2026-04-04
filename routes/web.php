@@ -15,6 +15,10 @@ use App\Http\Controllers\UnloadingController;
 use App\Http\Controllers\ApprovalController;
 use App\Http\Controllers\GlobalSearchController;
 use App\Http\Controllers\VesselPositionController;
+use App\Http\Controllers\ReportArrivalController;
+use App\Http\Controllers\ReportDepartureController;
+use App\Http\Controllers\ReportVesselController;
+use App\Http\Controllers\ReportCatchController;
 
 // Guest routes (no authentication required)
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
@@ -128,5 +132,21 @@ Route::middleware('auth')->group(function () {
         Route::get('/', [ApprovalController::class, 'index'])->name('approval.index');
         Route::post('/{unloading}/approve', [ApprovalController::class, 'approve'])->name('approval.approve');
         Route::post('/{unloading}/reject', [ApprovalController::class, 'reject'])->name('approval.reject');
+    });
+    
+    // Reports routes
+    Route::prefix('reports')->group(function () {
+        Route::get('/arrivals', [ReportArrivalController::class, 'index'])->name('reports.arrivals');
+        Route::get('/arrivals/export-excel', [ReportArrivalController::class, 'exportExcel'])->name('reports.arrivals.excel');
+        Route::get('/arrivals/export-pdf', [ReportArrivalController::class, 'exportPdf'])->name('reports.arrivals.pdf');
+        Route::get('/departures', [ReportDepartureController::class, 'index'])->name('reports.departures');
+        Route::get('/departures/export-excel', [ReportDepartureController::class, 'exportExcel'])->name('reports.departures.excel');
+        Route::get('/departures/export-pdf', [ReportDepartureController::class, 'exportPdf'])->name('reports.departures.pdf');
+        Route::get('/vessels', [ReportVesselController::class, 'index'])->name('reports.vessels');
+        Route::get('/vessels/export-excel', [ReportVesselController::class, 'exportExcel'])->name('reports.vessels.excel');
+        Route::get('/vessels/export-pdf', [ReportVesselController::class, 'exportPdf'])->name('reports.vessels.pdf');
+        Route::get('/catches', [ReportCatchController::class, 'index'])->name('reports.catches');
+        Route::get('/catches/export-excel', [ReportCatchController::class, 'exportExcel'])->name('reports.catches.excel');
+        Route::get('/catches/export-pdf', [ReportCatchController::class, 'exportPdf'])->name('reports.catches.pdf');
     });
 });

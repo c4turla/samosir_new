@@ -194,22 +194,22 @@ const formatWaktu = (timeString) => {
                         <thead class="bg-gray-50 dark:bg-gray-700">
                             <tr>
                                 <th class="px-4 py-2 text-left text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                    Tanggal
+                                    Nomor SKP
                                 </th>
                                 <th class="px-4 py-2 text-left text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                    Kapal
+                                    Tanggal & Jam
+                                </th>
+                                <th class="px-4 py-2 text-left text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                    Kapal / Nakhoda
                                 </th>
                                 <th class="px-4 py-2 text-left text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                     Tujuan
                                 </th>
                                 <th class="px-4 py-2 text-left text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                    Dermaga
+                                    Etmal
                                 </th>
                                 <th class="px-4 py-2 text-left text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                     Status
-                                </th>
-                                <th class="px-4 py-2 text-left text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                    Approval
                                 </th>
                                 <th class="px-4 py-2 text-right text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                     Aksi
@@ -218,46 +218,50 @@ const formatWaktu = (timeString) => {
                         </thead>
                         <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
                             <tr v-for="departure in (departures.data || [])" :key="departure.id" class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                                <td class="px-4 py-3 whitespace-nowrap text-xs font-medium text-gray-900 dark:text-white">
+                                    {{ departure.nomor || '-' }}
+                                </td>
                                 <td class="px-4 py-3 whitespace-nowrap">
                                     <div>
                                         <p class="text-xs font-medium text-gray-900 dark:text-white">
-                                            {{ formatTanggal(departure.departure_date) }}
+                                            {{ formatTanggal(departure.departure_datetime || departure.departure_date) }}
                                         </p>
                                         <p class="text-[10px] text-gray-500 dark:text-gray-400">
-                                            {{ formatWaktu(departure.departure_time) }}
+                                            {{ formatWaktu(departure.departure_datetime ? departure.departure_datetime.substring(11) : departure.departure_time) }}
                                         </p>
                                     </div>
                                 </td>
                                 <td class="px-4 py-3">
                                     <div class="flex items-center">
-                                        <svg class="w-6 h-6 text-blue-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                                        </svg>
+                                        <div class="w-2 h-8 bg-blue-500 rounded-full mr-2"></div>
                                         <div>
                                             <p class="text-xs font-medium text-gray-900 dark:text-white">
                                                 {{ departure.vessel?.vessel_name }}
                                             </p>
                                             <p class="text-[10px] text-gray-500 dark:text-gray-400">
-                                                {{ departure.vessel?.license_number || '-' }}
+                                                Nakhoda: {{ departure.nakhoda_name || '-' }}
                                             </p>
                                         </div>
                                     </div>
                                 </td>
                                 <td class="px-4 py-3 text-xs text-gray-600 dark:text-gray-400">
-                                    {{ departure.destination || '-' }}
+                                    <div class="flex flex-col">
+                                        <span>{{ departure.destination || '-' }}</span>
+                                        <span class="text-[10px] text-gray-400">{{ departure.landingSite?.site_name || '-' }}</span>
+                                    </div>
                                 </td>
-                                <td class="px-4 py-3 text-xs text-gray-600 dark:text-gray-400">
-                                    {{ departure.landingSite?.site_name || '-' }}
-                                </td>
-                                <td class="px-4 py-3 whitespace-nowrap">
-                                    <span :class="['inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium', getStatusBadgeClass(departure.status)]">
-                                        {{ departure.status }}
-                                    </span>
+                                <td class="px-4 py-3 whitespace-nowrap text-xs text-gray-900 dark:text-white">
+                                    {{ departure.etmal_days || '-' }} Etmal
                                 </td>
                                 <td class="px-4 py-3 whitespace-nowrap">
-                                    <span :class="['inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium', getApprovalBadgeClass(departure.approval_status)]">
-                                        {{ departure.approval_status ? 'Disetujui' : 'Menunggu' }}
-                                    </span>
+                                    <div class="flex flex-col gap-1">
+                                        <span :class="['inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium w-fit', getStatusBadgeClass(departure.status)]">
+                                            {{ departure.status }}
+                                        </span>
+                                        <span :class="['inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium w-fit', getApprovalBadgeClass(departure.approval_status)]">
+                                            {{ departure.approval_status ? 'Approved' : 'Pending' }}
+                                        </span>
+                                    </div>
                                 </td>
                                 <td class="px-4 py-3 whitespace-nowrap text-right">
                                     <div class="flex items-center justify-end gap-2">

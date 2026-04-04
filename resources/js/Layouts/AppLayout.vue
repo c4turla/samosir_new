@@ -123,6 +123,7 @@ const menuItems = computed(() => {
       items: [
         { title: 'Laporan Kedatangan', icon: 'ri-bar-chart-grouped-line', to: '/reports/arrivals' },
         { title: 'Laporan Keberangkatan', icon: 'ri-bar-chart-grouped-line', to: '/reports/departures' },
+        { title: 'Laporan Data Kapal', icon: 'ri-ship-2-line', to: '/reports/vessels' },
         { title: 'Laporan Tangkapan', icon: 'ri-bar-chart-grouped-line', to: '/reports/catches' },
       ],
       open: false,

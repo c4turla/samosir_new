@@ -50,17 +50,26 @@ class DepartureController extends Controller
      */
     public function create()
     {
-        // Get vessels that have arrivals (ships that have arrived)
-        $vesselsWithArrivals = \App\Models\Vessel::whereHas('arrivals')
+        // Get vessels that are currently "at port" (ArrivalsCount > departuresCount)
+        $vesselsAtPort = \App\Models\Vessel::whereHas('arrivals')
+            ->where(function($query) {
+                $query->whereRaw('(SELECT COUNT(*) FROM arrivals WHERE arrivals.vessel_id = vessels.id) > (SELECT COUNT(*) FROM departures WHERE departures.vessel_id = vessels.id AND departures.deleted_at IS NULL)');
+            })
             ->select('id', 'vessel_name', 'license_number')
             ->orderBy('vessel_name')
             ->get();
 
         return Inertia::render('Departures/Create', [
-            'vessels' => $vesselsWithArrivals,
+            'vessels' => $vesselsAtPort,
+            'next_nomor' => $this->generateNextNomor(),
             'landingSites' => \App\Models\LandingSite::where('is_active', true)
                 ->select('id', 'site_name')
                 ->orderBy('site_name')
+                ->get(),
+            'syahbandars' => \App\Models\User::where('role', 'syahbandar')
+                ->where('is_active', true)
+                ->select('id', 'name')
+                ->orderBy('name')
                 ->get(),
         ]);
     }
@@ -72,15 +81,15 @@ class DepartureController extends Controller
     {
         $validated = $request->validate([
             'vessel_id' => 'required|exists:vessels,id',
+            'nakhoda_name' => 'nullable|string|max:100',
             'destination' => 'required|string|max:255',
             'crew_count' => 'nullable|integer|min:0',
+            'arrival_datetime' => 'required|date',
             'departure_date' => 'required|date',
-            'departure_time' => 'nullable|date_format:H:i:s',
+            'departure_time' => 'nullable|date_format:H:i',
             'departure_datetime' => 'nullable|date',
-            'return_datetime' => 'nullable|date|after:departure_datetime',
             'landing_site_id' => 'nullable|exists:landing_sites,id',
             'syahbandar' => 'nullable|string|max:255',
-            'administrative_officer' => 'nullable|string|max:255',
             'ice_supply' => 'nullable|integer|min:0',
             'water_supply' => 'nullable|integer|min:0',
             'diesel_supply' => 'nullable|integer|min:0',
@@ -88,14 +97,22 @@ class DepartureController extends Controller
             'gasoline_supply' => 'nullable|integer|min:0',
             'other_supplies' => 'nullable|string',
             'notes' => 'nullable|string',
+            'floating_status' => 'nullable|string|max:100',
+            'unloading_status' => 'nullable|string|max:100',
+            'admin_completion' => 'nullable|string|max:100',
             'status' => 'nullable|string|max:50',
+            'etmal_days' => 'nullable|numeric',
+            'etmal_hours' => 'nullable|string|max:100',
             'approval_status' => 'nullable|boolean',
             'signature' => 'nullable|string',
         ]);
 
+        // Generate Nomor
+        $validated['nomor'] = $this->generateNextNomor();
+
         $validated['input_by'] = auth()->id();
-        $validated['approval_status'] = $validated['approval_status'] ?? false;
-        $validated['status'] = $validated['status'] ?? 'MENUNGGU';
+        $validated['approval_status'] = 1;
+        $validated['status'] = $validated['status'] ?? 'Sesuai Jadwal';
 
         $departure = Departure::create($validated);
 
@@ -124,18 +141,22 @@ class DepartureController extends Controller
      */
     public function edit(Departure $departure)
     {
-        // Get vessels that have arrivals (ships that have arrived)
-        $vesselsWithArrivals = \App\Models\Vessel::whereHas('arrivals')
+        // For Edit, we only show the current vessel since it cannot be changed (read-only)
+        $selectedVessel = \App\Models\Vessel::where('id', $departure->vessel_id)
             ->select('id', 'vessel_name', 'license_number')
-            ->orderBy('vessel_name')
             ->get();
 
         return Inertia::render('Departures/Edit', [
             'departure' => $departure,
-            'vessels' => $vesselsWithArrivals,
+            'vessels' => $selectedVessel,
             'landingSites' => \App\Models\LandingSite::where('is_active', true)
                 ->select('id', 'site_name')
                 ->orderBy('site_name')
+                ->get(),
+            'syahbandars' => \App\Models\User::where('role', 'syahbandar')
+                ->where('is_active', true)
+                ->select('id', 'name')
+                ->orderBy('name')
                 ->get(),
         ]);
     }
@@ -147,15 +168,15 @@ class DepartureController extends Controller
     {
         $validated = $request->validate([
             'vessel_id' => 'required|exists:vessels,id',
+            'nakhoda_name' => 'nullable|string|max:100',
             'destination' => 'required|string|max:255',
             'crew_count' => 'nullable|integer|min:0',
+            'arrival_datetime' => 'required|date',
             'departure_date' => 'required|date',
-            'departure_time' => 'nullable|date_format:H:i:s',
+            'departure_time' => 'nullable|date_format:H:i',
             'departure_datetime' => 'nullable|date',
-            'return_datetime' => 'nullable|date|after:departure_datetime',
             'landing_site_id' => 'nullable|exists:landing_sites,id',
             'syahbandar' => 'nullable|string|max:255',
-            'administrative_officer' => 'nullable|string|max:255',
             'ice_supply' => 'nullable|integer|min:0',
             'water_supply' => 'nullable|integer|min:0',
             'diesel_supply' => 'nullable|integer|min:0',
@@ -163,7 +184,12 @@ class DepartureController extends Controller
             'gasoline_supply' => 'nullable|integer|min:0',
             'other_supplies' => 'nullable|string',
             'notes' => 'nullable|string',
+            'floating_status' => 'nullable|string|max:100',
+            'unloading_status' => 'nullable|string|max:100',
+            'admin_completion' => 'nullable|string|max:100',
             'status' => 'nullable|string|max:50',
+            'etmal_days' => 'nullable|numeric',
+            'etmal_hours' => 'nullable|string|max:100',
             'approval_status' => 'nullable|boolean',
             'signature' => 'nullable|string',
         ]);
@@ -224,5 +250,40 @@ class DepartureController extends Controller
 
         return redirect()->route('departures.index')
             ->with('success', 'Keberangkatan kapal berhasil ditolak.');
+    }
+
+    /**
+     * Generate the next departure number.
+     */
+    private function generateNextNomor()
+    {
+        $lastNomor = Departure::whereYear('created_at', now()->year)
+            ->whereMonth('created_at', now()->month)
+            ->orderBy('id', 'desc')
+            ->first();
+        
+        $nextSeq = 1;
+        if ($lastNomor && preg_match('/^(\d+)/', $lastNomor->nomor, $matches)) {
+            $nextSeq = intval($matches[1]) + 1;
+        }
+        
+        return sprintf('%03d/PPNS-SKP/%s/%d', 
+            $nextSeq, 
+            $this->getRomanMonth(now()->month), 
+            now()->year
+        );
+    }
+
+    /**
+     * Get Roman representation of a month.
+     */
+    private function getRomanMonth($month)
+    {
+        $map = [
+            1 => 'I', 2 => 'II', 3 => 'III', 4 => 'IV', 
+            5 => 'V', 6 => 'VI', 7 => 'VII', 8 => 'VIII', 
+            9 => 'IX', 10 => 'X', 11 => 'XI', 12 => 'XII'
+        ];
+        return $map[$month] ?? 'I';
     }
 }
