@@ -8,6 +8,7 @@ const form = useForm({
   name: '',
   email: '',
   role: 'petugas',
+  nip: '',
   password: '',
   password_confirmation: '',
   phone: '',
@@ -85,12 +86,32 @@ const storeUser = () => {
                 required
                 class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 dark:bg-gray-700"
               >
-                <option value="petugas">Petugas</option>
+                <option value="petugas">Staff/Petugas</option>
                 <option value="syahbandar">Syahbandar</option>
+                <option value="kepala_pelabuhan">Kepala Pelabuhan</option>
+                <option value="pengelola">Pengelola Kapal</option>
                 <option value="admin">Admin</option>
               </select>
               <div v-if="form.errors.role" class="mt-1 text-sm text-red-600 dark:text-red-400">
                 {{ form.errors.role }}
+              </div>
+            </div>
+
+            <!-- NIP (Conditional) -->
+            <div v-if="['petugas', 'syahbandar', 'kepala_pelabuhan'].includes(form.role)">
+              <label for="nip" class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
+                NIP <span class="text-red-500">*</span>
+              </label>
+              <input
+                id="nip"
+                v-model="form.nip"
+                type="text"
+                placeholder="Nomor Induk Pegawai"
+                :required="['petugas', 'syahbandar', 'kepala_pelabuhan'].includes(form.role)"
+                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 dark:bg-gray-700"
+              />
+              <div v-if="form.errors.nip" class="mt-1 text-sm text-red-600 dark:text-red-400">
+                {{ form.errors.nip }}
               </div>
             </div>
 

@@ -43,9 +43,43 @@ const initializeOpenStates = () => {
 // Initialize on mount
 initializeOpenStates()
 
+// Hover state for collapsed sidebar flyouts
+const hoveredMenu = ref(null)
+const hoverTop = ref(0)
+let hoverTimeout = null
+
+const onMouseEnter = (item, index, event) => {
+    if (!props.isCollapsed) return
+    clearTimeout(hoverTimeout)
+    
+    // Get the Top position of the hovered element.
+    const rect = event.currentTarget.getBoundingClientRect()
+    hoverTop.value = rect.top
+    hoveredMenu.value = { item, index }
+}
+
+const onMouseLeave = () => {
+    if (!props.isCollapsed) return
+    hoverTimeout = setTimeout(() => {
+        hoveredMenu.value = null
+    }, 150)
+}
+
+const onDropdownMouseEnter = () => {
+    clearTimeout(hoverTimeout)
+}
+
+const onDropdownMouseLeave = () => {
+    if (!props.isCollapsed) return
+    hoverTimeout = setTimeout(() => {
+        hoveredMenu.value = null
+    }, 150)
+}
+
 // Watch for currentPath changes to auto-open dropdowns
 watch(() => props.currentPath, () => {
     initializeOpenStates()
+    hoveredMenu.value = null // Close flyout on navigation
 })
 
 // Check if a menu item is open
@@ -74,12 +108,14 @@ const toggleDropdown = (index) => {
                 <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
                     <span class="text-white font-bold text-sm">S</span>
                 </div>
-                <transition name="fade">
-                    <div v-show="!isCollapsed" class="transition-all duration-300">
-                        <h1 class="text-sm font-bold text-gray-900 dark:text-white">SAMOSIR V.3.0</h1>
-                        <p class="text-[10px] text-gray-500 dark:text-gray-400">PPN Sibolga</p>
-                    </div>
-                </transition>
+<transition name="fade">
+    <div v-show="!isCollapsed" class="transition-all duration-300">
+        <h1 class="text-sm font-bold text-gray-900 dark:text-white">
+            SAMOSIR <span class="text-[10px] font-medium">V.3.0</span>
+        </h1>
+        <p class="text-[10px] text-gray-500 dark:text-gray-400">PPN Sibolga</p>
+    </div>
+</transition>
             </div>
             <button
                 @click="emit('close')"
@@ -98,7 +134,8 @@ const toggleDropdown = (index) => {
                 <Link
                     v-if="!item.items"
                     :href="item.to"
-                    :title="isCollapsed ? item.title : ''"
+                    @mouseenter="(e) => onMouseEnter(item, index, e)"
+                    @mouseleave="onMouseLeave"
                     :class="[
                         'flex items-center rounded-lg transition-all duration-200',
                         isCollapsed ? 'justify-center px-2.5 py-2' : 'space-x-2.5 px-3 py-2',
@@ -114,10 +151,12 @@ const toggleDropdown = (index) => {
                 </Link>
 
                 <!-- Menu with Subitems -->
-                <div v-else class="relative">
+                <div v-else class="relative"
+                    @mouseenter="(e) => onMouseEnter(item, index, e)"
+                    @mouseleave="onMouseLeave"
+                >
                     <button
                         @click="isCollapsed ? emit('toggle-collapse') : toggleDropdown(index)"
-                        :title="isCollapsed ? item.title : ''"
                         :class="[
                             'w-full flex items-center rounded-lg transition-all duration-200',
                             isCollapsed ? 'justify-center px-2.5 py-2' : 'justify-between px-3 py-2',
@@ -175,6 +214,49 @@ const toggleDropdown = (index) => {
             <slot name="user-profile"></slot>
         </div>
     </aside>
+
+    <!-- Floating Menu for collapsed sidebar -->
+    <Teleport to="body">
+        <transition name="fade">
+            <div 
+                v-if="isCollapsed && hoveredMenu"
+                class="fixed z-[100] left-[72px] bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-100 dark:border-gray-700 py-1.5 min-w-[200px]"
+                :style="{ top: hoverTop + 'px' }"
+                @mouseenter="onDropdownMouseEnter"
+                @mouseleave="onDropdownMouseLeave"
+            >
+                <!-- Dropdown for Items WITH Subitems -->
+                <template v-if="hoveredMenu.item.items">
+                    <div class="px-4 py-2 border-b border-gray-100 dark:border-gray-700 font-medium text-sm text-gray-900 dark:text-white">
+                        {{ hoveredMenu.item.title }}
+                    </div>
+                    <div class="py-1 max-h-[50vh] overflow-y-auto">
+                        <Link
+                            v-for="subItem in hoveredMenu.item.items"
+                            :key="subItem.title"
+                            :href="subItem.to"
+                            :class="[
+                                'flex items-center space-x-2.5 px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors',
+                                currentPath === subItem.to
+                                    ? 'text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-900/10'
+                                    : 'text-gray-600 dark:text-gray-400'
+                            ]"
+                        >
+                            <i :class="[subItem.icon, 'text-sm']"></i>
+                            <span class="text-xs">{{ subItem.title }}</span>
+                        </Link>
+                    </div>
+                </template>
+
+                <!-- Tooltip for Single Items -->
+                <template v-else>
+                    <div class="px-4 py-2 font-medium text-sm text-gray-900 dark:text-white">
+                        {{ hoveredMenu.item.title }}
+                    </div>
+                </template>
+            </div>
+        </transition>
+    </Teleport>
 </template>
 
 <style scoped>

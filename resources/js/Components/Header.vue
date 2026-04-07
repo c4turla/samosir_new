@@ -1,7 +1,9 @@
 <script setup>
-import { ref, onUnmounted, watch } from 'vue'
+import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import { route } from 'ziggy-js'
-import { Link } from '@inertiajs/vue3'
+import { Link, usePage, router } from '@inertiajs/vue3'
+
+const page = usePage()
 
 const props = defineProps({
     user: {
@@ -35,9 +37,63 @@ const showSearchDropdown = ref(false)
 const searchDropdownRef = ref(null)
 let debounceTimeout = null
 
+// Notifications State
+const showNotificationsDropdown = ref(false)
+const notificationsDropdownRef = ref(null)
+
+const notifications = computed(() => page.props.auth?.notifications || [])
+const unreadNotificationsCount = computed(() => page.props.auth?.unread_notifications_count || 0)
+
+// Notification Polling (Real-time Effect)
+onMounted(() => {
+    // Only poll if user is logged in
+    if (props.user?.id) {
+        const interval = setInterval(() => {
+            router.reload({ 
+                only: ['auth'], 
+                preserveScroll: true,
+                preserveState: true,
+                onSuccess: (page) => {
+                    // Auth data updated
+                }
+            })
+        }, 30000) // 30 seconds
+
+        onUnmounted(() => clearInterval(interval))
+    }
+})
+
+const toggleNotificationsDropdown = (event) => {
+    event.stopPropagation()
+    showNotificationsDropdown.value = !showNotificationsDropdown.value
+    showProfileDropdown.value = false
+    showSearchDropdown.value = false
+}
+
+const closeNotificationsDropdown = () => {
+    showNotificationsDropdown.value = false
+}
+
+const markAsReadAndGo = (notification) => {
+    closeNotificationsDropdown()
+    router.post(route('notifications.mark-read', notification.id), {}, {
+        preserveScroll: true,
+        onSuccess: () => {
+            if (notification.data.url) {
+                router.visit(notification.data.url)
+            }
+        }
+    })
+}
+
+const markAllAsRead = () => {
+    router.post(route('notifications.mark-all-read'), {}, { preserveScroll: true })
+}
+
 const toggleDropdown = (event) => {
     event.stopPropagation()
     showProfileDropdown.value = !showProfileDropdown.value
+    showNotificationsDropdown.value = false
 }
 
 const closeDropdown = () => {
@@ -63,6 +119,11 @@ const handleClickOutside = (event) => {
     
     if (showSearchDropdown.value && searchDropdownRef.value && !searchDropdownRef.value.contains(event.target)) {
         closeSearchDropdown()
+        clickedOutside = true
+    }
+
+    if (showNotificationsDropdown.value && notificationsDropdownRef.value && !notificationsDropdownRef.value.contains(event.target)) {
+        closeNotificationsDropdown()
         clickedOutside = true
     }
     
@@ -215,15 +276,75 @@ const handleSearchNavigation = (item) => {
                 </button>
 
                 <!-- Notifications -->
-                <button
-                    class="relative p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-                    title="Notifications"
-                >
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                    </svg>
-                    <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-                </button>
+                <div ref="notificationsDropdownRef" class="relative">
+                    <button
+                        @click="toggleNotificationsDropdown"
+                        class="relative p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                        title="Notifications"
+                    >
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                        </svg>
+                        <span v-if="unreadNotificationsCount > 0" class="absolute top-1 right-1 flex h-2 w-2">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                        </span>
+                    </button>
+
+                    <!-- Notifications Dropdown -->
+                    <Transition
+                        enter-active-class="transition ease-out duration-200"
+                        enter-from-class="opacity-0 scale-95"
+                        enter-to-class="opacity-100 scale-100"
+                        leave-active-class="transition ease-in duration-150"
+                        leave-from-class="opacity-100 scale-100"
+                        leave-to-class="opacity-0 scale-95"
+                    >
+                        <div
+                            v-if="showNotificationsDropdown"
+                            class="absolute right-0 mt-2 w-80 rounded-lg bg-white dark:bg-gray-800 shadow-lg ring-1 ring-gray-900/5 dark:ring-gray-700 overflow-hidden"
+                            style="z-index: 9999;"
+                        >
+                            <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-800/80">
+                                <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Notifikasi</h3>
+                                <button v-if="unreadNotificationsCount > 0" @click="markAllAsRead" class="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300">
+                                    Tandai semua dibaca
+                                </button>
+                            </div>
+                            <div class="max-h-[60vh] overflow-y-auto">
+                                <div v-if="notifications.length === 0" class="p-8 text-center bg-white dark:bg-gray-800">
+                                    <svg class="mx-auto h-8 w-8 text-gray-300 dark:text-gray-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                                    <p class="text-sm text-gray-500 dark:text-gray-400">Tidak ada notifikasi baru</p>
+                                </div>
+                                <template v-else>
+                                    <div
+                                        v-for="notification in notifications"
+                                        :key="notification.id"
+                                        @click="markAsReadAndGo(notification)"
+                                        class="p-4 border-b border-gray-50 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition-colors relative"
+                                    >
+                                        <div class="flex gap-3">
+                                            <div class="flex-shrink-0 mt-1">
+                                                <div :class="[
+                                                    'w-8 h-8 rounded-full flex items-center justify-center', 
+                                                    notification.data.type === 'warning' ? 'bg-orange-100 text-orange-600' : 'bg-blue-100 text-blue-600'
+                                                ]">
+                                                    <svg v-if="notification.data.type === 'warning'" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                                                    <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <p class="text-xs font-semibold text-gray-900 dark:text-gray-100 mb-0.5">{{ notification.data.title }}</p>
+                                                <p class="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">{{ notification.data.message }}</p>
+                                                <p class="text-[10px] text-gray-400 dark:text-gray-500 mt-1">{{ notification.created_at }}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </Transition>
+                </div>
 
                 <!-- User Menu with Dropdown -->
                 <div ref="dropdownRef" class="relative">

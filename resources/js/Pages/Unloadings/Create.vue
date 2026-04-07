@@ -15,12 +15,16 @@ const props = defineProps({
     syahbandars: {
         type: Array,
         required: true
+    },
+    suggestedReference: {
+        type: String,
+        required: true
     }
 })
 
 const form = useForm({
     arrival_id: '',
-    reference_number: '',
+    reference_number: props.suggestedReference,
     syahbandar_id: '',
     captain_name: '',
     identification_mark: '',
@@ -114,6 +118,16 @@ onUnmounted(() => {
                 </p>
             </div>
 
+            <!-- Status Info -->
+            <div class="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                <div class="flex items-center gap-2 text-yellow-800 dark:text-yellow-200">
+                    <i class="ri-information-line text-lg"></i>
+                    <p class="text-[10px] font-medium uppercase tracking-wider">
+                        Status Awal: <strong>PENDING</strong> (Memerlukan Persetujuan Syahbandar)
+                    </p>
+                </div>
+            </div>
+
             <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
                 <form @submit.prevent="submit">
                     <!-- Data Kapal -->
@@ -195,11 +209,11 @@ onUnmounted(() => {
                                 <input
                                     v-model="form.reference_number"
                                     type="text"
-                                    placeholder="Nomor surat penimbangan"
+                                    placeholder="Contoh: 340-0007-SPLP-IV-2026"
                                     :class="[
                                         'w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500',
                                         form.errors.reference_number ? 'border-red-500' : 'border-gray-300 dark:border-gray-600 focus:border-blue-500',
-                                        'bg-white dark:bg-gray-700 text-gray-900 dark:text-white'
+                                        'bg-white dark:bg-gray-700 text-gray-900 dark:text-white font-mono'
                                     ]"
                                 />
                                 <p v-if="form.errors.reference_number" class="mt-1 text-[10px] text-red-600 dark:text-red-400">{{ form.errors.reference_number }}</p>

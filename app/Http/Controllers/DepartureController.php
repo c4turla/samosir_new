@@ -116,6 +116,29 @@ class DepartureController extends Controller
 
         $departure = Departure::create($validated);
 
+        // Notify Users
+        $departure->load('vessel');
+        $vesselName = $departure->vessel ? $departure->vessel->vessel_name : 'Tidak Diketahui';
+        
+        $users = \App\Models\User::where('is_active', true)->get();
+        foreach ($users as $user) {
+            if ($user->role === 'syahbandar') {
+                $user->notify(new \App\Notifications\DataInputNotification(
+                    'Menunggu Approval',
+                    "Data Keberangkatan Kapal {$vesselName} menunggu approval Anda.",
+                    '/departures',
+                    'warning'
+                ));
+            } else {
+                $user->notify(new \App\Notifications\DataInputNotification(
+                    'Keberangkatan Kapal',
+                    "Data Keberangkatan Kapal {$vesselName} baru saja ditambahkan.",
+                    '/departures',
+                    'info'
+                ));
+            }
+        }
+
         return redirect()->route('departures.index')
             ->with('success', 'Keberangkatan kapal berhasil dicatat.');
     }

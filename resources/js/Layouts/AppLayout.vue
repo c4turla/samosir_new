@@ -7,6 +7,7 @@ import Header from '../Components/Header.vue'
 import UserProfile from '../Components/UserProfile.vue'
 import LogoutConfirmModal from '../Components/LogoutConfirmModal.vue'
 import ToastNotification from '../Components/ToastNotification.vue'
+import ChatWidget from '../Components/ChatWidget.vue'
 
 const page = usePage()
 
@@ -53,6 +54,7 @@ if (darkMode.value) {
 }
 
 const menuItems = computed(() => {
+  const userRole = user.value?.role;
   const items = [
     {
       title: 'Dashboard',
@@ -80,7 +82,7 @@ const menuItems = computed(() => {
       icon: 'ri-ship-line',
       items: [
         { title: 'Daftar Kapal', icon: 'ri-ship-2-line', to: '/vessels' },
-        { title: 'Approval Kapal', icon: 'ri-check-double-line', to: '/vessels/approval' },
+        ...(userRole === 'admin' || userRole === 'syahbandar' ? [{ title: 'Approval Kapal', icon: 'ri-check-double-line', to: '/vessels/approval' }] : []),
       ],
       open: false,
     },
@@ -89,7 +91,7 @@ const menuItems = computed(() => {
       icon: 'ri-anchor-line',
       items: [
         { title: 'Daftar Kedatangan', icon: 'ri-anchor-line', to: '/arrivals' },
-        { title: 'Tambah Kedatangan', icon: 'ri-add-circle-line', to: '/arrivals/create' },
+        ...(userRole !== 'kepala_pelabuhan' ? [{ title: 'Tambah Kedatangan', icon: 'ri-add-circle-line', to: '/arrivals/create' }] : []),
       ],
       open: false,
     },
@@ -98,7 +100,10 @@ const menuItems = computed(() => {
       icon: 'ri-sailboat-line',
       items: [
         { title: 'Daftar Keberangkatan', icon: 'ri-sailboat-line', to: '/departures' },
-        { title: 'Tambah Keberangkatan', icon: 'ri-add-circle-line', to: '/departures/create' },
+        ...(userRole !== 'kepala_pelabuhan' ? [
+            { title: 'Tambah Keberangkatan', icon: 'ri-add-circle-line', to: '/departures/create' },
+            { title: 'Permohonan SPR', icon: 'ri-file-info-line', to: '/spr-departures' }
+        ] : []),
       ],
       open: false,
     },
@@ -107,7 +112,7 @@ const menuItems = computed(() => {
       icon: 'ri-download-cloud-2-line',
       items: [
         { title: 'Daftar Penimbangan', icon: 'ri-list-check', to: '/unloadings' },
-        ...(user.value?.role === 'syahbandar' ? [{ title: 'Approval Penimbangan', icon: 'ri-check-double-line', to: '/approval' }] : []),
+        ...(userRole === 'syahbandar' ? [{ title: 'Approval Penimbangan', icon: 'ri-check-double-line', to: '/approval' }] : []),
       ],
       open: false,
     },
@@ -131,7 +136,7 @@ const menuItems = computed(() => {
   ]
 
   // Add admin-only menu items
-  if (user.value?.role === 'admin') {
+  if (userRole === 'admin') {
     items.push({
       title: 'Manajemen User',
       icon: 'ri-user-settings-line',
@@ -219,5 +224,8 @@ const closeLogoutModal = () => {
 
     <!-- Global Toast Notifications -->
     <ToastNotification />
+
+    <!-- Chat Widget -->
+    <ChatWidget />
   </div>
 </template>

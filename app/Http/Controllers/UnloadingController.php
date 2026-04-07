@@ -5,6 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\Unloading;
 use App\Models\Arrival;
 use App\Models\LandingSite;
+use App\Models\User;
+use App\Notifications\DataInputNotification;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -12,7 +16,7 @@ class UnloadingController extends Controller
 {
     public function index(Request $request)
     {
-        $unloadings = Unloading::with(['arrival.vessel', 'landingSite'])
+        $unloadings = Unloading::with(['arrival.vessel', 'landingSite', 'syahbandar'])
             ->filter(
                 $request->search,
                 $request->status,
@@ -69,7 +73,21 @@ class UnloadingController extends Controller
         // Set approval status to pending by default
         $validated['approval_status'] = false;
 
-        Unloading::create($validated);
+        $unloading = Unloading::create($validated);
+
+        // Notify Assigned Syahbandar
+        $unloading->load('arrival.vessel');
+        $vesselName = $unloading->arrival?->vessel?->vessel_name ?? 'Kapal';
+
+        $syahbandar = User::find($unloading->syahbandar_id);
+        if ($syahbandar) {
+            $syahbandar->notify(new DataInputNotification(
+                'Approval Penimbangan',
+                "Kapal {$vesselName} memerlukan approval penimbangan dari Anda.",
+                "/approval/{$unloading->id}",
+                'warning'
+            ));
+        }
 
         return redirect()->route('unloadings.index')->with('success', 'Data penimbangan ikan berhasil ditambahkan');
     }
@@ -131,5 +149,19 @@ class UnloadingController extends Controller
         $unloading->delete();
 
         return redirect()->route('unloadings.index')->with('success', 'Data penimbangan ikan berhasil dihapus');
+    }
+
+    public function print(Unloading $unloading)
+    {
+        $unloading->load(['arrival.vessel', 'landingSite', 'syahbandar']);
+        
+        $pdf = Pdf::loadView('reports.unloading-print', [
+            'unloading' => $unloading,
+            'today' => Carbon::now()->isoFormat('D-MMM-Y')
+        ])->setPaper('a4', 'portrait');
+
+        $filename = 'surat_penimbangan_' . str_replace('/', '_', $unloading->reference_number) . '.pdf';
+        
+        return $pdf->stream($filename);
     }
 }

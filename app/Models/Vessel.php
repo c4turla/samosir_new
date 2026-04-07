@@ -17,7 +17,7 @@ class Vessel extends Model
     protected $fillable = [
         'vessel_name', 'owner_name', 'license_number', 'gt', 'fishing_gear',
         'selar_mark', 'vessel_type', 'sipi_date', 'sipi_end_date', 'length',
-        'loa', 'siup_number', 'vessel_photo', 'qr_code', 'registered_by',
+        'loa', 'engine_power', 'siup_number', 'vessel_photo', 'qr_code', 'registered_by',
         'approval_status', 'approved_by', 'approved_at', 'notes'
     ];
 
@@ -116,6 +116,11 @@ class Vessel extends Model
     public function waterServices(): HasMany
     {
         return $this->hasMany(WaterService::class);
+    }
+
+    public function sprDepartures(): HasMany
+    {
+        return $this->hasMany(SprDeparture::class);
     }
 
     // Scopes

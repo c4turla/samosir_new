@@ -30,6 +30,24 @@ class ApprovalController extends Controller
         ]);
     }
 
+    public function show(Unloading $unloading)
+    {
+        $user = auth()->user();
+        
+        // Only syahbandar can access this page
+        if ($user->role !== 'syahbandar') {
+            abort(403, 'Anda tidak memiliki akses ke halaman ini');
+        }
+
+        // Load relations
+        $unloading->load(['arrival.vessel', 'landingSite', 'syahbandar']);
+
+        return Inertia::render('Approval/Show', [
+            'unloading' => $unloading,
+            'currentUser' => $user,
+        ]);
+    }
+
     public function approve(Unloading $unloading)
     {
         $user = auth()->user();

@@ -113,6 +113,29 @@ class ArrivalController extends Controller
             }
         }
 
+        // Notify Users
+        $arrival->load('vessel');
+        $vesselName = $arrival->vessel ? $arrival->vessel->vessel_name : 'Tidak Diketahui';
+        
+        $users = \App\Models\User::where('is_active', true)->get();
+        foreach ($users as $user) {
+            if ($user->role === 'syahbandar') {
+                $user->notify(new \App\Notifications\DataInputNotification(
+                    'Menunggu Approval',
+                    "Data Kedatangan Kapal {$vesselName} menunggu approval Anda.",
+                    '/arrivals',
+                    'warning'
+                ));
+            } else {
+                $user->notify(new \App\Notifications\DataInputNotification(
+                    'Kedatangan Kapal',
+                    "Data Kedatangan Kapal {$vesselName} baru saja ditambahkan.",
+                    '/arrivals',
+                    'info'
+                ));
+            }
+        }
+
         return redirect()->route('arrivals.index')
             ->with('success', 'Kedatangan kapal berhasil dicatat.');
     }

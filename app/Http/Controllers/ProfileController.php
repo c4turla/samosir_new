@@ -65,4 +65,56 @@ class ProfileController extends Controller
 
         return back()->with('success', 'Password berhasil diperbarui!');
     }
+
+    /**
+     * Update user signature from canvas base64 data
+     */
+    public function updateSignature(Request $request)
+    {
+        $request->validate([
+            'signature' => 'required|string',
+        ]);
+
+        $user = $request->user();
+        
+        // This feature is for syahbandar only
+        if ($user->role !== 'syahbandar') {
+            return back()->with('error', 'Fitur ini hanya tersedia untuk Syahbandar.');
+        }
+
+        $data = $request->signature;
+        
+        // Handle base64 image
+        if (preg_match('/^data:image\/(\w+);base64,/', $data, $type)) {
+            $data = substr($data, strpos($data, ',') + 1);
+            $type = strtolower($type[1]); // png, jpg, etc
+
+            if (!in_array($type, ['png', 'jpg', 'jpeg'])) {
+                return back()->with('error', 'Format gambar tidak valid.');
+            }
+
+            $data = base64_decode($data);
+
+            if ($data === false) {
+                return back()->with('error', 'Gagal memproses gambar tanda tangan.');
+            }
+            
+            $fileName = 'signatures/' . $user->id . '_' . time() . '.' . $type;
+            
+            // Delete old signature if exists
+            if ($user->signature && \Storage::disk('public')->exists($user->signature)) {
+                \Storage::disk('public')->delete($user->signature);
+            }
+
+            \Storage::disk('public')->put($fileName, $data);
+            
+            $user->update([
+                'signature' => $fileName
+            ]);
+
+            return back()->with('success', 'Tanda tangan berhasil diperbarui!');
+        }
+
+        return back()->with('error', 'Data tanda tangan tidak valid.');
+    }
 }

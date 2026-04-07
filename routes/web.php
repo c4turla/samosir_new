@@ -35,6 +35,7 @@ Route::middleware('auth')->group(function () {
     Route::prefix('profile')->group(function () {
         Route::get('/', [ProfileController::class, 'show'])->name('profile.show');
         Route::post('/', [ProfileController::class, 'update'])->name('profile.update');
+        Route::post('/signature', [ProfileController::class, 'updateSignature'])->name('profile.signature');
         Route::post('/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
     });
     
@@ -116,6 +117,12 @@ Route::middleware('auth')->group(function () {
         Route::post('/{departure}/approve', [DepartureController::class, 'approve'])->name('departures.approve');
         Route::post('/{departure}/reject', [DepartureController::class, 'reject'])->name('departures.reject');
     });
+
+    // SPR Departures routes
+    Route::prefix('spr-departures')->group(function () {
+        Route::get('/', [App\Http\Controllers\SprDepartureController::class, 'index'])->name('spr-departures.index');
+        Route::get('/{sprDeparture}', [App\Http\Controllers\SprDepartureController::class, 'show'])->name('spr-departures.show');
+    });
     
     // Unloadings routes
     Route::prefix('unloadings')->group(function () {
@@ -125,11 +132,13 @@ Route::middleware('auth')->group(function () {
         Route::get('/{unloading}/edit', [UnloadingController::class, 'edit'])->name('unloadings.edit');
         Route::put('/{unloading}', [UnloadingController::class, 'update'])->name('unloadings.update');
         Route::delete('/{unloading}', [UnloadingController::class, 'destroy'])->name('unloadings.destroy');
+        Route::get('/{unloading}/print', [UnloadingController::class, 'print'])->name('unloadings.print');
     });
     
     // Approval routes (syahbandar only)
     Route::prefix('approval')->group(function () {
         Route::get('/', [ApprovalController::class, 'index'])->name('approval.index');
+        Route::get('/{unloading}', [ApprovalController::class, 'show'])->name('approval.show');
         Route::post('/{unloading}/approve', [ApprovalController::class, 'approve'])->name('approval.approve');
         Route::post('/{unloading}/reject', [ApprovalController::class, 'reject'])->name('approval.reject');
     });
@@ -148,5 +157,17 @@ Route::middleware('auth')->group(function () {
         Route::get('/catches', [ReportCatchController::class, 'index'])->name('reports.catches');
         Route::get('/catches/export-excel', [ReportCatchController::class, 'exportExcel'])->name('reports.catches.excel');
         Route::get('/catches/export-pdf', [ReportCatchController::class, 'exportPdf'])->name('reports.catches.pdf');
+    });
+
+    // Notifications routes
+    Route::post('/notifications/{id}/mark-read', [App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('notifications.mark-read');
+    Route::post('/notifications/mark-all-read', [App\Http\Controllers\NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-read');
+
+    // Chat routes
+    Route::prefix('chat')->group(function () {
+        Route::get('/users', [App\Http\Controllers\ChatController::class, 'getUsers'])->name('chat.users');
+        Route::get('/conversations', [App\Http\Controllers\ChatController::class, 'getConversations'])->name('chat.conversations');
+        Route::get('/conversations/{conversation}/messages', [App\Http\Controllers\ChatController::class, 'getMessages'])->name('chat.messages');
+        Route::post('/messages', [App\Http\Controllers\ChatController::class, 'sendMessage'])->name('chat.send');
     });
 });

@@ -138,31 +138,19 @@ const formatWaktu = (timeString) => {
                                     {{ unloading.syahbandar?.name || '-' }}
                                 </td>
                                 <td class="px-4 py-3 text-xs text-gray-600 dark:text-gray-400">
-                                    {{ unloading.landingSite?.site_name || '-' }}
+                                    {{ unloading.landing_site?.site_name || '-' }}
                                 </td>
                                 <td class="px-4 py-3 whitespace-nowrap text-right">
                                     <div class="flex items-center justify-end gap-2">
-                                        <!-- Only show approve if assigned to this syahbandar -->
                                         <Link
-                                            v-if="unloading.syahbandar_id === currentUser.id"
-                                            @click.prevent="approveUnloading(unloading.id)"
-                                            class="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300"
-                                            title="Setujui"
+                                            :href="`/approval/${unloading.id}`"
+                                            class="inline-flex items-center px-3 py-1 bg-blue-50 text-blue-700 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50 rounded-lg transition-colors duration-200 text-xs font-medium"
                                         >
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                             </svg>
-                                        </Link>
-                                        <!-- Only show reject if assigned to this syahbandar -->
-                                        <Link
-                                            v-if="unloading.syahbandar_id === currentUser.id"
-                                            @click.prevent="rejectUnloading(unloading.id)"
-                                            class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
-                                            title="Tolak"
-                                        >
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                            </svg>
+                                            Review
                                         </Link>
                                     </div>
                                 </td>

@@ -32,6 +32,14 @@ class HandleInertiaRequests extends Middleware
         return array_merge(parent::share($request), [
             'auth' => [
                 'user' => $request->user(),
+                'notifications' => $request->user() ? collect($request->user()->unreadNotifications()->take(10)->get())->map(function($notif) {
+                    return [
+                        'id' => $notif->id,
+                        'data' => $notif->data,
+                        'created_at' => $notif->created_at->diffForHumans(),
+                    ];
+                }) : [],
+                'unread_notifications_count' => $request->user() ? $request->user()->unreadNotifications()->count() : 0,
             ],
             'ziggy' => function () use ($request) {
                 return array_merge((new \Tighten\Ziggy\Ziggy())->toArray(), [

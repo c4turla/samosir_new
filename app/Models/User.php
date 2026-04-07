@@ -16,7 +16,7 @@ class User extends Authenticatable
 
     protected $fillable = [
         'name', 'email', 'password', 'nip', 'phone', 'address',
-        'photo', 'role', 'is_active', 'email_verified_at'
+        'photo', 'signature', 'role', 'is_active', 'email_verified_at'
     ];
 
     protected $hidden = [
@@ -28,6 +28,18 @@ class User extends Authenticatable
         'password' => 'hashed',
         'is_active' => 'boolean',
     ];
+
+    protected $appends = ['signature_url'];
+
+    // Accessors
+    public function getSignatureUrlAttribute()
+    {
+        if (!$this->signature) {
+            return null;
+        }
+        
+        return asset('storage/' . $this->signature);
+    }
 
     // Relationships
     public function vessels(): BelongsToMany
@@ -63,6 +75,29 @@ class User extends Authenticatable
     public function activityLogs(): HasMany
     {
         return $this->hasMany(ActivityLog::class);
+    }
+
+    public function sprDepartures(): HasMany
+    {
+        return $this->hasMany(SprDeparture::class);
+    }
+
+    /**
+     * Get the conversations for the user.
+     */
+    public function conversations(): BelongsToMany
+    {
+        return $this->belongsToMany(Conversation::class, 'conversation_user')
+            ->withPivot('read_at')
+            ->withTimestamps();
+    }
+
+    /**
+     * Get the messages sent by the user.
+     */
+    public function messages(): HasMany
+    {
+        return $this->hasMany(Message::class, 'sender_id');
     }
 
     // Scopes

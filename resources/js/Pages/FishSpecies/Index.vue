@@ -1,8 +1,9 @@
 <script setup>
 import AppLayout from '../../Layouts/AppLayout.vue'
-import { Head, Link, router, useForm } from '@inertiajs/vue3'
-import { ref, watch } from 'vue'
+import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3'
+import { ref, watch, computed } from 'vue'
 
+const page = usePage()
 const props = defineProps({
     species: {
         type: Object,
@@ -26,6 +27,8 @@ const deleteSpecies = (id) => {
         router.delete(`/fish-species/${id}`)
     }
 }
+
+const userRole = computed(() => page.props.auth?.user?.role)
 </script>
 
 <template>
@@ -41,6 +44,7 @@ const deleteSpecies = (id) => {
                 </p>
             </div>
             <Link
+                v-if="userRole !== 'kepala_pelabuhan'"
                 href="/fish-species/create"
                 class="inline-flex items-center px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors duration-200 text-xs"
             >
@@ -100,7 +104,7 @@ const deleteSpecies = (id) => {
                             <th class="px-4 py-2 text-left text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                 Status
                             </th>
-                            <th class="px-4 py-2 text-right text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            <th v-if="userRole !== 'kepala_pelabuhan'" class="px-4 py-2 text-right text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                 Aksi
                             </th>
                         </tr>
@@ -138,7 +142,7 @@ const deleteSpecies = (id) => {
                                     {{ item.is_active ? 'Aktif' : 'Non-Aktif' }}
                                 </span>
                             </td>
-                            <td class="px-4 py-3 whitespace-nowrap text-right">
+                            <td v-if="userRole !== 'kepala_pelabuhan'" class="px-4 py-3 whitespace-nowrap text-right">
                                 <div class="flex items-center justify-end gap-2">
                                     <Link
                                         :href="`/fish-species/${item.id}/edit`"
@@ -162,12 +166,13 @@ const deleteSpecies = (id) => {
                             </td>
                         </tr>
                         <tr v-if="species.data.length === 0">
-                            <td colspan="6" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
+                            <td :colspan="userRole !== 'kepala_pelabuhan' ? 6 : 5" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
                                 <svg class="w-10 h-10 mx-auto mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
                                 <p class="text-xs">Tidak ada data jenis ikan yang ditemukan</p>
                                 <Link
+                                    v-if="userRole !== 'kepala_pelabuhan'"
                                     href="/fish-species/create"
                                     class="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 mt-2 inline-block text-xs"
                                 >

@@ -52,7 +52,7 @@ class AuthController extends Controller
         }
 
         // Cek role - hanya admin, staff, dan syahbandar yang boleh login
-        if (!in_array($user->role, ['admin', 'petugas', 'syahbandar'])) {
+        if (!in_array($user->role, ['admin', 'petugas', 'syahbandar', 'kepala_pelabuhan'])) {
             throw ValidationException::withMessages([
                 'email' => ['Anda tidak memiliki akses ke sistem web.'],
             ]);

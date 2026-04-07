@@ -63,7 +63,8 @@ class UserController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
-            'role' => ['required', Rule::in(['admin', 'petugas', 'syahbandar'])],
+            'role' => ['required', Rule::in(['admin', 'petugas', 'syahbandar', 'kepala_pelabuhan', 'pengelola'])],
+            'nip' => 'nullable|string|max:50',
             'password' => 'required|string|min:8',
             'phone' => 'nullable|string|max:20',
             'address' => 'nullable|string|max:500',
@@ -73,12 +74,13 @@ class UserController extends Controller
             'name' => $request->name,
             'email' => $request->email,
             'role' => $request->role,
+            'nip' => $request->nip,
             'password' => Hash::make($request->password),
             'phone' => $request->phone,
             'address' => $request->address,
         ]);
 
-        return back()->with('success', 'User berhasil ditambahkan!');
+        return redirect()->route('users.index')->with('success', 'User berhasil ditambahkan!');
     }
 
     /**
@@ -94,7 +96,8 @@ class UserController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
-            'role' => ['required', Rule::in(['admin', 'petugas', 'syahbandar'])],
+            'role' => ['required', Rule::in(['admin', 'petugas', 'syahbandar', 'kepala_pelabuhan', 'pengelola'])],
+            'nip' => 'nullable|string|max:50',
             'phone' => 'nullable|string|max:20',
             'address' => 'nullable|string|max:500',
         ]);
@@ -103,11 +106,12 @@ class UserController extends Controller
             'name' => $request->name,
             'email' => $request->email,
             'role' => $request->role,
+            'nip' => $request->nip,
             'phone' => $request->phone,
             'address' => $request->address,
         ]);
 
-        return back()->with('success', 'User berhasil diperbarui!');
+        return redirect()->route('users.index')->with('success', 'User berhasil diperbarui!');
     }
 
     /**

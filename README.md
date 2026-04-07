@@ -32,6 +32,9 @@ SAMOSIR adalah sistem berbasis web yang dirancang untuk mempermudah pengelolaan 
 - ✅ Monitoring keberangkatan kapal (departures)
 - ✅ Pencatatan hasil tangkapan
 - ✅ Activity logging untuk audit trail
+- ✅ Fitur Chat Real-time (lintas perangkat Web & Mobile)
+- ✅ Konsultasi masyarakat ke Petugas/Master Pelabuhan
+
 
 ### Layanan Pelabuhan
 - ✅ Layanan air (water services)
@@ -45,6 +48,8 @@ SAMOSIR adalah sistem berbasis web yang dirancang untuk mempermudah pengelolaan 
 - **Laravel 11** - PHP Framework
 - **MySQL** - Database
 - **Laravel Sanctum** - API Authentication
+- **Laravel Reverb** - WebSocket Server (Real-time Chat)
+
 
 ### Frontend
 - **Vue 3** - JavaScript Framework
@@ -74,6 +79,10 @@ SAMOSIR adalah sistem berbasis web yang dirancang untuk mempermudah pengelolaan 
 - `equipment_items` - Inventory peralatan
 - `documents` - Manajemen dokumen
 - `activity_logs` - Log aktivitas
+- `conversations` - Daftar percakapan chat
+- `messages` - Isi pesan chat
+- `conversation_user` - Partisipan chat
+
 
 ## Instalasi
 
@@ -82,6 +91,49 @@ SAMOSIR adalah sistem berbasis web yang dirancang untuk mempermudah pengelolaan 
 - Composer
 - Node.js >= 18
 - MySQL >= 5.7
+- Redis (Optional, untuk antrean pesan skala besar)
+
+### Panduan Instalasi VPS (Ubuntu/Debian)
+
+1. **Clone Repository**
+   ```bash
+   git clone [url-repo]
+   cd samosir_new
+   ```
+
+2. **Backend Setup**
+   ```bash
+   composer install
+   cp .env.example .env
+   php artisan key:generate
+   ```
+
+3. **Database & Chat Configuration**
+   ```bash
+   # Update DB_DATABASE, DB_USERNAME, DB_PASSWORD di .env
+   php artisan migrate
+   php artisan reverb:install
+   ```
+
+4. **Frontend Setup**
+   ```bash
+   npm install
+   npm run build
+   ```
+
+5. **Menjalankan Services (Production)**
+   Disarankan menggunakan **Supervisor** untuk menjaga service tetap berjalan:
+   ```bash
+   # Jalankan Queue Worker
+   php artisan queue:work
+   
+   # Jalankan Reverb (WebSocket)
+   php artisan reverb:start
+   ```
+
+6. **Web Server configuration**
+   Pastikan port WebSocket (default: 8080) terbuka di firewall dan dikonfigurasi di Nginx/Apache.
+
 
 
 ## Kontak

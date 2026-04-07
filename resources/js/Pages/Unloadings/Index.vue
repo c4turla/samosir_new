@@ -53,7 +53,6 @@ const formatTanggal = (dateString) => {
         month: 'short', 
         year: 'numeric' 
     }
-    
     try {
         const date = new Date(dateString)
         return date.toLocaleDateString('id-ID', options)
@@ -66,6 +65,8 @@ const formatWaktu = (timeString) => {
     if (!timeString) return '-'
     return timeString.substring(0, 5)
 }
+
+const userRole = computed(() => page.props.auth?.user?.role)
 </script>
 
 <template>
@@ -81,6 +82,7 @@ const formatWaktu = (timeString) => {
                     </p>
                 </div>
                 <Link
+                    v-if="userRole !== 'kepala_pelabuhan'"
                     href="/unloadings/create"
                     class="inline-flex items-center px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors duration-200 text-xs"
                 >
@@ -225,7 +227,7 @@ const formatWaktu = (timeString) => {
                                     {{ unloading.syahbandar?.name || '-' }}
                                 </td>
                                 <td class="px-4 py-3 text-xs text-gray-600 dark:text-gray-400">
-                                    {{ unloading.landingSite?.site_name || '-' }}
+                                    {{ unloading.landing_site?.site_name || '-' }}
                                 </td>
                                 <td class="px-4 py-3 whitespace-nowrap">
                                     <span :class="['inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium', getApprovalBadgeClass(unloading.approval_status)]">
@@ -234,20 +236,21 @@ const formatWaktu = (timeString) => {
                                 </td>
                                 <td class="px-4 py-3 whitespace-nowrap text-right">
                                     <div class="flex items-center justify-end gap-2">
-                                        <!-- Print button for approved records (placeholder for future print feature) -->
-                                        <button
+                                        <!-- Print button for approved records -->
+                                        <a
                                             v-if="unloading.approval_status"
-                                            @click="alert('Fitur print akan segera tersedia')"
+                                            :href="`/unloadings/${unloading.id}/print`"
+                                            target="_blank"
                                             class="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-300"
                                             title="Cetak"
                                         >
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                                             </svg>
-                                        </button>
-                                        <!-- Edit button only for unapproved records -->
+                                        </a>
+                                        <!-- Edit button only for unapproved records and NOT for kepala_pelabuhan -->
                                         <Link
-                                            v-if="!unloading.approval_status"
+                                            v-if="!unloading.approval_status && userRole !== 'kepala_pelabuhan'"
                                             :href="`/unloadings/${unloading.id}/edit`"
                                             class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
                                             title="Edit"
@@ -256,9 +259,9 @@ const formatWaktu = (timeString) => {
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 0L11.828 15H9v-2.828l8.586-8.586z" />
                                             </svg>
                                         </Link>
-                                        <!-- Delete button only for unapproved records -->
+                                        <!-- Delete button only for unapproved records and NOT for kepala_pelabuhan -->
                                         <button
-                                            v-if="!unloading.approval_status"
+                                            v-if="!unloading.approval_status && userRole !== 'kepala_pelabuhan'"
                                             @click="deleteUnloading(unloading.id)"
                                             class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
                                             title="Hapus"
@@ -271,12 +274,13 @@ const formatWaktu = (timeString) => {
                                 </td>
                             </tr>
                             <tr v-if="!unloadings.data || unloadings.data.length === 0">
-                                <td colspan="7" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
+                                <td :colspan="userRole !== 'kepala_pelabuhan' ? 7 : 7" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
                                     <svg class="w-10 h-10 mx-auto mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
                                     </svg>
                                     <p class="text-xs">Tidak ada data penimbangan ikan yang ditemukan</p>
                                     <Link
+                                        v-if="userRole !== 'kepala_pelabuhan'"
                                         href="/unloadings/create"
                                         class="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 mt-2 inline-block text-xs"
                                     >

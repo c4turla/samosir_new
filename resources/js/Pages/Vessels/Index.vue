@@ -74,8 +74,7 @@ const getSipiBadgeClass = (sipiStatus) => {
     }
 }
 
-// Track hovered vessel for photo preview
-const hoveredVessel = ref(null)
+const userRole = computed(() => page.props.auth?.user?.role)
 </script>
 
 <template>
@@ -91,6 +90,7 @@ const hoveredVessel = ref(null)
                     </p>
                 </div>
                 <Link
+                    v-if="userRole !== 'kepala_pelabuhan'"
                     href="/vessels/create"
                     class="inline-flex items-center px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors duration-200 text-xs"
                 >
@@ -184,7 +184,7 @@ const hoveredVessel = ref(null)
                                 <th class="px-4 py-2 text-left text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                     Status Kapal
                                 </th>
-                                <th class="px-4 py-2 text-right text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                <th v-if="userRole !== 'kepala_pelabuhan'" class="px-4 py-2 text-right text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                     Aksi
                                 </th>
                             </tr>
@@ -245,7 +245,7 @@ const hoveredVessel = ref(null)
                                         {{ getStatusLabel(vessel.approval_status) }}
                                     </span>
                                 </td>
-                                <td class="px-4 py-3 whitespace-nowrap text-right">
+                                <td v-if="userRole !== 'kepala_pelabuhan'" class="px-4 py-3 whitespace-nowrap text-right">
                                     <div class="flex items-center justify-end gap-2">
                                         <Link
                                             v-if="vessel.approval_status === 'pending'"
@@ -259,7 +259,7 @@ const hoveredVessel = ref(null)
                                         </Link>
                                         <Link
                                             v-if="vessel.approval_status === 'pending'"
-                                            @click.prevent="rejectVessel(vessel.id)"
+                                            @click.prevent="rejectVessel(id)"
                                             class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
                                             title="Tolak"
                                         >
@@ -289,12 +289,13 @@ const hoveredVessel = ref(null)
                                 </td>
                             </tr>
                             <tr v-if="!vessels.data || vessels.data.length === 0">
-                                <td colspan="8" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
+                                <td :colspan="userRole !== 'kepala_pelabuhan' ? 8 : 7" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
                                     <svg class="w-10 h-10 mx-auto mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
                                     </svg>
                                     <p class="text-xs">Tidak ada data kapal yang ditemukan</p>
                                     <Link
+                                        v-if="userRole !== 'kepala_pelabuhan'"
                                         href="/vessels/create"
                                         class="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 mt-2 inline-block text-xs"
                                     >
