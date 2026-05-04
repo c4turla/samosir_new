@@ -170,8 +170,8 @@ const updateManager = () => {
 
         <div class="max-w-7xl mx-auto">
             <div class="mb-6">
-                <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Pengelolaan Kapal</h1>
-                <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                <h1 class="text-xl font-bold text-gray-900 dark:text-white">Pengelolaan Kapal</h1>
+                <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">
                     Kelola pengelola kapal dan review pengajuan dari mobile
                 </p>
             </div>
@@ -197,13 +197,13 @@ const updateManager = () => {
                             v-model="search"
                             type="text"
                             placeholder="Cari berdasarkan nama kapal, pemilik, nomor lisensi, atau jenis..."
-                            class="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 dark:bg-gray-700 transition-colors"
+                            class="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 dark:bg-gray-700 transition-colors text-xs"
                         />
                     </div>
                     <div class="relative min-w-[200px]">
                         <select
                             v-model="status"
-                            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 dark:bg-gray-700 transition-colors appearance-none cursor-pointer"
+                            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 dark:bg-gray-700 transition-colors appearance-none cursor-pointer text-xs"
                         >
                             <option value="">Semua Status</option>
                             <option value="pending">Menunggu</option>
@@ -215,7 +215,7 @@ const updateManager = () => {
                         </svg>
                     </div>
                 </div>
-                <p v-if="vessels.total > 0" class="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                <p v-if="vessels.total > 0" class="text-xs text-gray-600 dark:text-gray-400 mt-2">
                     Menampilkan {{ vessels.from }} - {{ vessels.to }} dari total {{ vessels.total }} data
                 </p>
                 
@@ -247,8 +247,8 @@ const updateManager = () => {
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
                                 </svg>
                                 <div>
-                                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ vessel.vessel_name }}</h3>
-                                    <p class="text-sm text-gray-600 dark:text-gray-400">Pemilik: {{ vessel.owner_name }}</p>
+                                    <h3 class="text-sm font-semibold text-gray-900 dark:text-white">{{ vessel.vessel_name }}</h3>
+                                    <p class="text-[11px] text-gray-600 dark:text-gray-400">Pemilik: {{ vessel.owner_name }}</p>
                                 </div>
                             </div>
                             <div class="flex items-center gap-2">
@@ -257,7 +257,7 @@ const updateManager = () => {
                                 </span>
                                 <Link
                                     :href="`/vessels/${vessel.id}/edit`"
-                                    class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                                    class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
                                 >
                                     <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -270,19 +270,19 @@ const updateManager = () => {
                         <!-- Vessel Details -->
                         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 text-sm">
                             <div>
-                                <span class="text-gray-500 dark:text-gray-400">Nomor Lisensi:</span>
+                                <span class="text-gray-500 dark:text-gray-400 text-[10px] uppercase font-semibold">Nomor Lisensi:</span>
                                 <p class="font-medium text-gray-900 dark:text-white">{{ vessel.license_number || '-' }}</p>
                             </div>
                             <div>
-                                <span class="text-gray-500 dark:text-gray-400">Jenis Kapal:</span>
+                                <span class="text-gray-500 dark:text-gray-400 text-[10px] uppercase font-semibold">Jenis Kapal:</span>
                                 <p class="font-medium text-gray-900 dark:text-white">{{ vessel.vessel_type || '-' }}</p>
                             </div>
                             <div>
-                                <span class="text-gray-500 dark:text-gray-400">GT:</span>
+                                <span class="text-gray-500 dark:text-gray-400 text-[10px] uppercase font-semibold">GT:</span>
                                 <p class="font-medium text-gray-900 dark:text-white">{{ vessel.gt || '-' }}</p>
                             </div>
                             <div>
-                                <span class="text-gray-500 dark:text-gray-400">LOA:</span>
+                                <span class="text-gray-500 dark:text-gray-400 text-[10px] uppercase font-semibold">LOA:</span>
                                 <p class="font-medium text-gray-900 dark:text-white">{{ vessel.loa || '-' }}</p>
                             </div>
                         </div>
@@ -293,7 +293,7 @@ const updateManager = () => {
                                 <h4 class="text-sm font-semibold text-gray-900 dark:text-white">Pengelola Kapal</h4>
                                 <button
                                     @click="openManagerModal(vessel)"
-                                    class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
+                                    class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
                                 >
                                     <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -366,7 +366,7 @@ const updateManager = () => {
                         <div class="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4 flex justify-end gap-2">
                             <button
                                 @click="deleteVessel(vessel.id)"
-                                class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                                class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-xs text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                             >
                                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -395,21 +395,21 @@ const updateManager = () => {
             <!-- Pagination -->
             <div v-if="vessels.last_page > 1" class="mt-6 bg-white dark:bg-gray-800 shadow rounded-lg px-4 py-3">
                 <div class="flex flex-col sm:flex-row items-center justify-between">
-                    <div class="text-sm text-gray-700 dark:text-gray-300 mb-2 sm:mb-0">
+                    <div class="text-xs text-gray-700 dark:text-gray-300 mb-2 sm:mb-0">
                         Halaman {{ vessels.current_page }} dari {{ vessels.last_page }}
                     </div>
                     <div class="flex space-x-2">
                         <Link
                             v-if="vessels.prev_page_url"
                             :href="vessels.prev_page_url"
-                            class="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                            class="px-3 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
                         >
                             Sebelumnya
                         </Link>
                         <span
                             v-for="page in Math.min(vessels.last_page, 5)"
                             :key="page"
-                            class="px-3 py-1 text-sm border rounded-md transition-colors"
+                            class="px-3 py-1 text-xs border rounded-md transition-colors"
                             :class="[
                                 page === vessels.current_page
                                     ? 'bg-blue-600 text-white border-blue-600'
@@ -427,7 +427,7 @@ const updateManager = () => {
                         <Link
                             v-if="vessels.next_page_url"
                             :href="vessels.next_page_url"
-                            class="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                            class="px-3 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
                         >
                             Selanjutnya
                         </Link>

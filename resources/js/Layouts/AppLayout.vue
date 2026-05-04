@@ -9,6 +9,8 @@ import LogoutConfirmModal from '../Components/LogoutConfirmModal.vue'
 import ToastNotification from '../Components/ToastNotification.vue'
 import ChatWidget from '../Components/ChatWidget.vue'
 
+import { menuConfig, ROLES } from '../Config/menuPermissions'
+
 const page = usePage()
 
 const user = computed(() => page.props.auth?.user)
@@ -55,105 +57,24 @@ if (darkMode.value) {
 
 const menuItems = computed(() => {
   const userRole = user.value?.role;
-  const items = [
-    {
-      title: 'Dashboard',
-      icon: 'ri-dashboard-line',
-      to: '/',
-      open: false,
-    },
-    {
-      title: 'Posisi Kapal',
-      icon: 'ri-map-pin-2-line',
-      to: '/vessel-positions',
-      open: false,
-    },
-    {
-      title: 'Data',
-      icon: 'ri-database-2-line',
-      items: [
-        { title: 'Jenis Ikan', icon: 'ri-deepseek-line', to: '/fish-species' },
-        { title: 'Dermaga', icon: 'ri-anchor-line', to: '/landing-sites' },
-      ],
-      open: false,
-    },
-    {
-      title: 'Manajemen Kapal',
-      icon: 'ri-ship-line',
-      items: [
-        { title: 'Daftar Kapal', icon: 'ri-ship-2-line', to: '/vessels' },
-        ...(userRole === 'admin' || userRole === 'syahbandar' ? [{ title: 'Approval Kapal', icon: 'ri-check-double-line', to: '/vessels/approval' }] : []),
-      ],
-      open: false,
-    },
-    {
-      title: 'Kedatangan',
-      icon: 'ri-anchor-line',
-      items: [
-        { title: 'Daftar Kedatangan', icon: 'ri-anchor-line', to: '/arrivals' },
-        ...(userRole !== 'kepala_pelabuhan' ? [{ title: 'Tambah Kedatangan', icon: 'ri-add-circle-line', to: '/arrivals/create' }] : []),
-      ],
-      open: false,
-    },
-    {
-      title: 'Keberangkatan',
-      icon: 'ri-sailboat-line',
-      items: [
-        { title: 'Daftar Keberangkatan', icon: 'ri-sailboat-line', to: '/departures' },
-        ...(userRole !== 'kepala_pelabuhan' ? [
-            { title: 'Tambah Keberangkatan', icon: 'ri-add-circle-line', to: '/departures/create' },
-            { title: 'Permohonan SPR', icon: 'ri-file-info-line', to: '/spr-departures' }
-        ] : []),
-      ],
-      open: false,
-    },
-    {
-      title: 'Penimbangan Ikan',
-      icon: 'ri-download-cloud-2-line',
-      items: [
-        { title: 'Daftar Penimbangan', icon: 'ri-list-check', to: '/unloadings' },
-        ...(userRole === 'syahbandar' ? [{ title: 'Approval Penimbangan', icon: 'ri-check-double-line', to: '/approval' }] : []),
-      ],
-      open: false,
-    },
-    {
-      title: 'Dokumen',
-      icon: 'ri-file-list-3-line',
-      to: '/documents',
-      open: false,
-    },
-    {
-      title: 'Laporan',
-      icon: 'ri-bar-chart-line',
-      items: [
-        { title: 'Laporan Kedatangan', icon: 'ri-bar-chart-grouped-line', to: '/reports/arrivals' },
-        { title: 'Laporan Keberangkatan', icon: 'ri-bar-chart-grouped-line', to: '/reports/departures' },
-        { title: 'Laporan Data Kapal', icon: 'ri-ship-2-line', to: '/reports/vessels' },
-        { title: 'Laporan Tangkapan', icon: 'ri-bar-chart-grouped-line', to: '/reports/catches' },
-      ],
-      open: false,
-    },
-  ]
+  
+  return menuConfig.filter(menu => {
+    // Check main menu access
+    const hasAccess = menu.roles.includes(userRole);
+    if (!hasAccess) return false;
 
-  // Add admin-only menu items
-  if (userRole === 'admin') {
-    items.push({
-      title: 'Manajemen User',
-      icon: 'ri-user-settings-line',
-      to: '/users',
-      open: false,
-    })
-  }
+    // If there are sub-menus, filter them too
+    if (menu.items) {
+      const filteredSubItems = menu.items.filter(sub => sub.roles.includes(userRole));
+      // Only show main menu if it has accessible sub-menus
+      if (filteredSubItems.length === 0) return false;
+      
+      // Update items with filtered sub-items (clone to avoid modifying original config)
+      menu.items = filteredSubItems;
+    }
 
-  // Add settings menu for all users
-  items.push({
-    title: 'Settings',
-    icon: 'ri-settings-4-line',
-    to: '/settings',
-    open: false,
-  })
-
-  return items
+    return true;
+  });
 })
 
 const currentPath = computed(() => page.props.ziggy?.location || window.location.pathname)

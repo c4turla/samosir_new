@@ -268,7 +268,7 @@ onMounted(() => {
                 <!-- Footer -->
                 <div class="mt-8 text-center">
                     <p class="text-xs text-gray-400 dark:text-gray-600">
-                        © 2024-2026 SAMOSIR v3.0 · Pelabuhan Perikanan Nusantara Sibolga
+                        © 2022-2026 SAMOSIR v3.0 · Pelabuhan Perikanan Nusantara Sibolga
                     </p>
                 </div>
             </div>

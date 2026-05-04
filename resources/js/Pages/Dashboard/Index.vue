@@ -477,229 +477,223 @@ watch(() => localStorage.getItem('darkMode'), async () => {
 
     <div class="space-y-6">
         <!-- Page Title -->
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 transition-all duration-300">
             <div class="flex items-center justify-between">
                 <div>
-                    <h1 class="text-xl font-bold text-gray-900 dark:text-white">Dashboard SAMOSIR</h1>
-                    <p class="mt-1 text-xs text-gray-600 dark:text-gray-400">Sistem Informasi Pelabuhan Perikanan Nusantara Sibolga</p>
+                    <h1 class="text-xl font-bold text-gray-900 dark:text-white tracking-tight">Dashboard SAMOSIR</h1>
+                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Sistem Informasi Pelabuhan Perikanan Nusantara Sibolga</p>
                 </div>
-                <div class="flex items-center space-x-4">
-                    <label class="text-xs font-medium text-gray-700 dark:text-gray-300">Filter:</label>
-                    <select 
-                        v-model="timeFilter"
-                        class="px-3 py-1.5 bg-gray-100 dark:bg-gray-700 border-0 rounded-lg text-xs text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-                    >
-                        <option v-for="option in filterOptions" :key="option.value" :value="option.value">
-                            {{ option.label }}
-                        </option>
-                    </select>
+                <div class="hidden sm:block">
+                    <div class="bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 px-3 py-1.5 rounded-xl text-[11px] font-bold border border-blue-100 dark:border-blue-800/30">
+                        {{ new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) }}
+                    </div>
                 </div>
             </div>
         </div>
 
         <!-- Statistics Cards -->
-        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <!-- Total Vessels -->
-            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg transition-colors group hover:shadow-lg">
-                    <div class="p-3">
-                        <div class="flex items-center">
-                            <div class="flex-shrink-0">
-                                <div class="bg-blue-500 rounded-md p-2 group-hover:scale-110 transition-transform">
-                                    <svg class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
-                                    </svg>
-                                </div>
-                            </div>
-                            <div class="ml-3 w-0 flex-1">
-                                <dl>
-                                    <dt class="text-xs font-medium text-gray-500 dark:text-gray-400 truncate">Total Kapal</dt>
-                                    <dd class="flex items-baseline">
-                                        <div class="text-lg font-semibold text-gray-900 dark:text-white">{{ stats.total_vessels }}</div>
-                                    </dd>
-                                </dl>
-                            </div>
+            <div class="relative overflow-hidden bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-5 group hover:shadow-md transition-all duration-300">
+                <div class="absolute -right-4 -top-4 w-24 h-24 bg-blue-500/5 rounded-full group-hover:scale-150 transition-transform duration-500"></div>
+                <div class="flex items-center relative z-10">
+                    <div class="flex-shrink-0">
+                        <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-3 shadow-lg shadow-blue-500/20 group-hover:rotate-6 transition-transform">
+                            <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+                            </svg>
                         </div>
                     </div>
-                </div>
-
-                <!-- Active Vessels -->
-                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg transition-colors group hover:shadow-lg">
-                    <div class="p-3">
-                        <div class="flex items-center">
-                            <div class="flex-shrink-0">
-                                <div class="bg-green-500 rounded-md p-2 group-hover:scale-110 transition-transform">
-                                    <svg class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                </div>
-                            </div>
-                            <div class="ml-3 w-0 flex-1">
-                                <dl>
-                                    <dt class="text-xs font-medium text-gray-500 dark:text-gray-400 truncate">Kapal Aktif</dt>
-                                    <dd class="flex items-baseline">
-                                        <div class="text-lg font-semibold text-gray-900 dark:text-white">{{ stats.active_vessels }}</div>
-                                    </dd>
-                                </dl>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Pending Vessels -->
-                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg transition-colors group hover:shadow-lg">
-                    <div class="p-3">
-                        <div class="flex items-center">
-                            <div class="flex-shrink-0">
-                                <div class="bg-yellow-500 rounded-md p-2 group-hover:scale-110 transition-transform">
-                                    <svg class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                </div>
-                            </div>
-                            <div class="ml-3 w-0 flex-1">
-                                <dl>
-                                    <dt class="text-xs font-medium text-gray-500 dark:text-gray-400 truncate">Pending Approval</dt>
-                                    <dd class="flex items-baseline">
-                                        <div class="text-lg font-semibold text-gray-900 dark:text-white">{{ stats.pending_vessels }}</div>
-                                    </dd>
-                                </dl>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Total Users -->
-                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg transition-colors group hover:shadow-lg">
-                    <div class="p-3">
-                        <div class="flex items-center">
-                            <div class="flex-shrink-0">
-                                <div class="bg-purple-500 rounded-md p-2 group-hover:scale-110 transition-transform">
-                                    <svg class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                                    </svg>
-                                </div>
-                            </div>
-                            <div class="ml-3 w-0 flex-1">
-                                <dl>
-                                    <dt class="text-xs font-medium text-gray-500 dark:text-gray-400 truncate">Total Pengguna</dt>
-                                    <dd class="flex items-baseline">
-                                        <div class="text-lg font-semibold text-gray-900 dark:text-white">{{ stats.total_users }}</div>
-                                    </dd>
-                                </dl>
-                            </div>
-                        </div>
+                    <div class="ml-4 flex-1">
+                        <dt class="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Total Kapal</dt>
+                        <dd class="flex items-baseline">
+                            <div class="text-xl font-bold text-gray-900 dark:text-white">{{ stats.total_vessels }}</div>
+                            <span class="ml-1.5 text-[11px] text-gray-400 font-medium">unit</span>
+                        </dd>
                     </div>
                 </div>
             </div>
 
-            <!-- Second Row Stats -->
-            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                <!-- Arrivals Today -->
-                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg transition-colors group hover:shadow-lg">
-                    <div class="p-3">
-                        <div class="flex items-center">
-                            <div class="flex-shrink-0">
-                                <div class="bg-indigo-500 rounded-md p-2 group-hover:scale-110 transition-transform">
-                                    <svg class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-                                    </svg>
-                                </div>
-                            </div>
-                            <div class="ml-3 w-0 flex-1">
-                                <dl>
-                                    <dt class="text-xs font-medium text-gray-500 dark:text-gray-400 truncate">Kedatangan Hari Ini</dt>
-                                    <dd class="flex items-baseline">
-                                        <div class="text-lg font-semibold text-gray-900 dark:text-white">{{ stats.arrivals_today }}</div>
-                                    </dd>
-                                </dl>
-                            </div>
+            <!-- Active Vessels -->
+            <div class="relative overflow-hidden bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-5 group hover:shadow-md transition-all duration-300">
+                <div class="absolute -right-4 -top-4 w-24 h-24 bg-emerald-500/5 rounded-full group-hover:scale-150 transition-transform duration-500"></div>
+                <div class="flex items-center relative z-10">
+                    <div class="flex-shrink-0">
+                        <div class="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl p-3 shadow-lg shadow-emerald-500/20 group-hover:rotate-6 transition-transform">
+                            <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
                         </div>
                     </div>
-                </div>
-
-                <!-- Departures Today -->
-                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg transition-colors group hover:shadow-lg">
-                    <div class="p-3">
-                        <div class="flex items-center">
-                            <div class="flex-shrink-0">
-                                <div class="bg-red-500 rounded-md p-2 group-hover:scale-110 transition-transform">
-                                    <svg class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
-                                    </svg>
-                                </div>
-                            </div>
-                            <div class="ml-3 w-0 flex-1">
-                                <dl>
-                                    <dt class="text-xs font-medium text-gray-500 dark:text-gray-400 truncate">Keberangkatan Hari Ini</dt>
-                                    <dd class="flex items-baseline">
-                                        <div class="text-lg font-semibold text-gray-900 dark:text-white">{{ stats.departures_today }}</div>
-                                    </dd>
-                                </dl>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Vessels at Port -->
-                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg transition-colors group hover:shadow-lg">
-                    <div class="p-3">
-                        <div class="flex items-center">
-                            <div class="flex-shrink-0">
-                                <div class="bg-cyan-500 rounded-md p-2 group-hover:scale-110 transition-transform">
-                                    <svg class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-                                    </svg>
-                                </div>
-                            </div>
-                            <div class="ml-3 w-0 flex-1">
-                                <dl>
-                                    <dt class="text-xs font-medium text-gray-500 dark:text-gray-400 truncate">Kapal Tambat</dt>
-                                    <dd class="flex items-baseline">
-                                        <div class="text-lg font-semibold text-gray-900 dark:text-white">{{ stats.vessels_at_port }}</div>
-                                    </dd>
-                                </dl>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Vessels Unloading -->
-                <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg transition-colors group hover:shadow-lg">
-                    <div class="p-3">
-                        <div class="flex items-center">
-                            <div class="flex-shrink-0">
-                                <div class="bg-orange-500 rounded-md p-2 group-hover:scale-110 transition-transform">
-                                    <svg class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                                    </svg>
-                                </div>
-                            </div>
-                            <div class="ml-3 w-0 flex-1">
-                                <dl>
-                                    <dt class="text-xs font-medium text-gray-500 dark:text-gray-400 truncate">Kapal Bongkar</dt>
-                                    <dd class="flex items-baseline">
-                                        <div class="text-lg font-semibold text-gray-900 dark:text-white">{{ stats.vessels_unloading }}</div>
-                                    </dd>
-                                </dl>
-                            </div>
-                        </div>
+                    <div class="ml-4 flex-1">
+                        <dt class="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Kapal Aktif</dt>
+                        <dd class="flex items-baseline">
+                            <div class="text-xl font-bold text-gray-900 dark:text-white">{{ stats.active_vessels }}</div>
+                            <span class="ml-1.5 text-[11px] text-gray-400 font-medium">unit</span>
+                        </dd>
                     </div>
                 </div>
             </div>
+
+            <!-- Pending Vessels -->
+            <div class="relative overflow-hidden bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-5 group hover:shadow-md transition-all duration-300">
+                <div class="absolute -right-4 -top-4 w-24 h-24 bg-amber-500/5 rounded-full group-hover:scale-150 transition-transform duration-500"></div>
+                <div class="flex items-center relative z-10">
+                    <div class="flex-shrink-0">
+                        <div class="bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl p-3 shadow-lg shadow-amber-500/20 group-hover:rotate-6 transition-transform">
+                            <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="ml-4 flex-1">
+                        <dt class="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Pending Approval</dt>
+                        <dd class="flex items-baseline">
+                            <div class="text-xl font-bold text-gray-900 dark:text-white">{{ stats.pending_vessels }}</div>
+                            <span class="ml-1.5 text-[11px] text-gray-400 font-medium">kapal</span>
+                        </dd>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Total Users -->
+            <div class="relative overflow-hidden bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-5 group hover:shadow-md transition-all duration-300">
+                <div class="absolute -right-4 -top-4 w-24 h-24 bg-violet-500/5 rounded-full group-hover:scale-150 transition-transform duration-500"></div>
+                <div class="flex items-center relative z-10">
+                    <div class="flex-shrink-0">
+                        <div class="bg-gradient-to-br from-violet-500 to-violet-600 rounded-xl p-3 shadow-lg shadow-violet-500/20 group-hover:rotate-6 transition-transform">
+                            <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="ml-4 flex-1">
+                        <dt class="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Total Pengguna</dt>
+                        <dd class="flex items-baseline">
+                            <div class="text-xl font-bold text-gray-900 dark:text-white">{{ stats.total_users }}</div>
+                            <span class="ml-1.5 text-[11px] text-gray-400 font-medium">orang</span>
+                        </dd>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Arrivals Today -->
+            <div class="relative overflow-hidden bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-5 group hover:shadow-md transition-all duration-300">
+                <div class="absolute -right-4 -top-4 w-24 h-24 bg-indigo-500/5 rounded-full group-hover:scale-150 transition-transform duration-500"></div>
+                <div class="flex items-center relative z-10">
+                    <div class="flex-shrink-0">
+                        <div class="bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl p-3 shadow-lg shadow-indigo-500/20 group-hover:rotate-6 transition-transform">
+                            <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="ml-4 flex-1">
+                        <dt class="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Kedatangan Hari Ini</dt>
+                        <dd class="flex items-baseline">
+                            <div class="text-xl font-bold text-gray-900 dark:text-white">{{ stats.arrivals_today }}</div>
+                            <span class="ml-1.5 text-[11px] text-gray-400 font-medium">kapal</span>
+                        </dd>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Departures Today -->
+            <div class="relative overflow-hidden bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-5 group hover:shadow-md transition-all duration-300">
+                <div class="absolute -right-4 -top-4 w-24 h-24 bg-rose-500/5 rounded-full group-hover:scale-150 transition-transform duration-500"></div>
+                <div class="flex items-center relative z-10">
+                    <div class="flex-shrink-0">
+                        <div class="bg-gradient-to-br from-rose-500 to-rose-600 rounded-xl p-3 shadow-lg shadow-rose-500/20 group-hover:rotate-6 transition-transform">
+                            <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="ml-4 flex-1">
+                        <dt class="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Keberangkatan Hari Ini</dt>
+                        <dd class="flex items-baseline">
+                            <div class="text-xl font-bold text-gray-900 dark:text-white">{{ stats.departures_today }}</div>
+                            <span class="ml-1.5 text-[11px] text-gray-400 font-medium">kapal</span>
+                        </dd>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vessels at Port -->
+            <div class="relative overflow-hidden bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-5 group hover:shadow-md transition-all duration-300">
+                <div class="absolute -right-4 -top-4 w-24 h-24 bg-cyan-500/5 rounded-full group-hover:scale-150 transition-transform duration-500"></div>
+                <div class="flex items-center relative z-10">
+                    <div class="flex-shrink-0">
+                        <div class="bg-gradient-to-br from-cyan-500 to-cyan-600 rounded-xl p-3 shadow-lg shadow-cyan-500/20 group-hover:rotate-6 transition-transform">
+                            <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="ml-4 flex-1">
+                        <dt class="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Kapal Tambat</dt>
+                        <dd class="flex items-baseline">
+                            <div class="text-xl font-bold text-gray-900 dark:text-white">{{ stats.vessels_at_port }}</div>
+                            <span class="ml-1.5 text-[11px] text-gray-400 font-medium">unit</span>
+                        </dd>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vessels Unloading -->
+            <div class="relative overflow-hidden bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-5 group hover:shadow-md transition-all duration-300">
+                <div class="absolute -right-4 -top-4 w-24 h-24 bg-orange-500/5 rounded-full group-hover:scale-150 transition-transform duration-500"></div>
+                <div class="flex items-center relative z-10">
+                    <div class="flex-shrink-0">
+                        <div class="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl p-3 shadow-lg shadow-orange-500/20 group-hover:rotate-6 transition-transform">
+                            <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="ml-4 flex-1">
+                        <dt class="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Kapal Bongkar</dt>
+                        <dd class="flex items-baseline">
+                            <div class="text-xl font-bold text-gray-900 dark:text-white">{{ stats.vessels_unloading }}</div>
+                            <span class="ml-1.5 text-[11px] text-gray-400 font-medium">unit</span>
+                        </dd>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <!-- Arrivals & Departures Line Chart -->            
-            <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-4 transition-colors">
-                <div class="flex items-center justify-between mb-3">
-                    <h2 class="text-sm font-semibold text-gray-900 dark:text-white">Statistik Kedatangan & Keberangkatan</h2>
-                    <div class="flex items-center space-x-2">
-                        <div class="flex items-center">
-                            <div class="w-2 h-2 bg-blue-500 rounded-full mr-1"></div>
-                            <span class="text-[10px] text-gray-600 dark:text-gray-400">Kedatangan</span>
+            <div class="bg-white dark:bg-gray-800 shadow-sm border border-gray-100 dark:border-gray-700 rounded-2xl p-6 transition-all duration-300">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                    <div>
+                        <h2 class="text-sm font-semibold text-gray-900 dark:text-white">Statistik Kedatangan & Keberangkatan</h2>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <div class="flex items-center bg-gray-50 dark:bg-gray-700/50 p-1 rounded-xl border border-gray-100 dark:border-gray-600">
+                            <button 
+                                v-for="option in filterOptions" 
+                                :key="option.value"
+                                @click="timeFilter = option.value"
+                                :class="[
+                                    'px-3 py-1 text-[10px] font-bold uppercase tracking-wide rounded-lg transition-all duration-200',
+                                    timeFilter === option.value 
+                                        ? 'bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 shadow-sm ring-1 ring-black/5' 
+                                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+                                ]"
+                            >
+                                {{ option.label }}
+                            </button>
                         </div>
-                        <div class="flex items-center">
-                            <div class="w-2 h-2 bg-red-500 rounded-full mr-1"></div>
-                            <span class="text-[10px] text-gray-600 dark:text-gray-400">Keberangkatan</span>
-                        </div>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4 mb-4 pb-4 border-b border-gray-50 dark:border-gray-700/50">
+                    <div class="flex items-center">
+                        <div class="w-2.5 h-2.5 bg-blue-500 rounded-full mr-2 shadow-sm shadow-blue-500/20"></div>
+                        <span class="text-[11px] font-semibold text-gray-600 dark:text-gray-400">Kedatangan</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-2.5 h-2.5 bg-red-500 rounded-full mr-2 shadow-sm shadow-red-500/20"></div>
+                        <span class="text-[11px] font-semibold text-gray-600 dark:text-gray-400">Keberangkatan</span>
                     </div>
                 </div>
                 <div ref="arrivalsChartRef" :key="`arrivals-${chartRenderKey}`" class="chart-sm"></div>
