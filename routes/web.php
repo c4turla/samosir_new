@@ -165,8 +165,10 @@ Route::middleware('auth')->group(function () {
 
     // Chat routes
     Route::prefix('chat')->group(function () {
+        Route::get('/', [App\Http\Controllers\ChatController::class, 'index'])->name('chat.index');
         Route::get('/users', [App\Http\Controllers\ChatController::class, 'getUsers'])->name('chat.users');
         Route::get('/conversations', [App\Http\Controllers\ChatController::class, 'getConversations'])->name('chat.conversations');
+        Route::post('/conversations/get', [App\Http\Controllers\ChatController::class, 'getOrCreateConversation'])->name('chat.conversation.get');
         Route::get('/conversations/{conversation}/messages', [App\Http\Controllers\ChatController::class, 'getMessages'])->name('chat.messages');
         Route::post('/messages', [App\Http\Controllers\ChatController::class, 'sendMessage'])->name('chat.send');
     });

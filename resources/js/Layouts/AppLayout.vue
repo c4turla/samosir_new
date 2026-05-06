@@ -7,7 +7,6 @@ import Header from '../Components/Header.vue'
 import UserProfile from '../Components/UserProfile.vue'
 import LogoutConfirmModal from '../Components/LogoutConfirmModal.vue'
 import ToastNotification from '../Components/ToastNotification.vue'
-import ChatWidget from '../Components/ChatWidget.vue'
 
 import { menuConfig, ROLES } from '../Config/menuPermissions'
 
@@ -93,7 +92,7 @@ const closeLogoutModal = () => {
     <!-- Mobile Sidebar Overlay -->
     <div
       v-if="sidebarOpen"
-      class="fixed inset-0 bg-black/50 z-20 lg:hidden"
+      class="fixed inset-0 bg-black/50 z-45 lg:hidden"
       @click="sidebarOpen = false"
     ></div>
 
@@ -115,7 +114,7 @@ const closeLogoutModal = () => {
     <!-- Main Content -->
     <div
       :class="[
-        'transition-all duration-300',
+        'transition-all duration-300 min-h-screen flex flex-col',
         sidebarOpen ? (sidebarCollapsed ? 'lg:ml-16' : 'lg:ml-64') : 'lg:ml-0'
       ]"
     >
@@ -130,10 +129,23 @@ const closeLogoutModal = () => {
         @logout="handleLogout"
       />
 
+      <!-- Spacer for fixed header -->
+      <div class="h-14 flex-shrink-0"></div>
+
       <!-- Page Content -->
-      <main class="p-4 sm:p-6 lg:p-8">
+      <main class="p-4 sm:p-6 lg:p-8 flex-grow">
         <slot />
       </main>
+
+      <!-- Footer -->
+      <footer class="p-6 text-center border-t border-gray-100 dark:border-gray-800 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm">
+          <p class="text-[11px] text-gray-500 dark:text-gray-400 font-medium">
+              © 2022-2026 <span class="font-bold text-blue-600 dark:text-blue-400">SAMOSIR v3.0</span> · Sistem Informasi Pelabuhan Perikanan Nusantara Sibolga
+          </p>
+          <p class="text-[10px] text-gray-400 dark:text-gray-500 mt-1">
+              Dibuat dengan ❤️ oleh <span class="font-semibold text-gray-600 dark:text-gray-300">Kendariweb.com</span>
+          </p>
+      </footer>
     </div>
 
     <!-- Logout Confirm Modal -->
@@ -146,7 +158,5 @@ const closeLogoutModal = () => {
     <!-- Global Toast Notifications -->
     <ToastNotification />
 
-    <!-- Chat Widget -->
-    <ChatWidget />
   </div>
 </template>

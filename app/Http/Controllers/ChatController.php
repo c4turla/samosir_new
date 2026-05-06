@@ -13,6 +13,16 @@ use Inertia\Inertia;
 class ChatController extends Controller
 {
     /**
+     * Display the chat interface.
+     */
+    public function index()
+    {
+        return Inertia::render('Chat/Index', [
+            'initialConversations' => $this->getConversations()
+        ]);
+    }
+
+    /**
      * Get all conversations for the current user.
      */
     public function getConversations()
@@ -93,14 +103,43 @@ class ChatController extends Controller
     }
 
     /**
+     * Find or create a conversation between users without sending a message.
+     */
+    public function getOrCreateConversation(Request $request)
+    {
+        $request->validate([
+            'receiver_id' => 'required|exists:users,id',
+        ]);
+
+        $userId = Auth::id();
+        $receiverId = $request->receiver_id;
+
+        // Find existing private conversation
+        $conversation = Conversation::where('type', 'private')
+            ->whereHas('participants', function ($query) use ($userId) {
+                $query->where('users.id', $userId);
+            })
+            ->whereHas('participants', function ($query) use ($receiverId) {
+                $query->where('users.id', $receiverId);
+            })
+            ->with(['participants', 'latestMessage'])
+            ->first();
+
+        if (!$conversation) {
+            $conversation = Conversation::create(['type' => 'private']);
+            $conversation->participants()->attach([$userId, $receiverId]);
+            $conversation->load(['participants', 'latestMessage']);
+        }
+
+        return $conversation;
+    }
+
+    /**
      * Get list of users to start chat with.
      */
     public function getUsers()
     {
         $query = User::where('id', '!=', Auth::id());
-        
-        // Filter based on role if needed (e.g. masyarakat can only see staff)
-        // For now, allow all as per user request "bebas"
         
         return $query->get(['id', 'name', 'role', 'photo']);
     }
