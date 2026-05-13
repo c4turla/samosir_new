@@ -14,7 +14,7 @@ const form = useForm({
     local_name: props.fishSpecies.local_name || '',
     scientific_name: props.fishSpecies.scientific_name || '',
     category: props.fishSpecies.category || '',
-    is_active: props.fishSpecies.is_active ?? true,
+    is_active: Boolean(props.fishSpecies.is_active),
 })
 
 const submit = () => {

@@ -72,9 +72,20 @@ export const menuConfig = [
         ]
     },
     {
-        title: 'Dokumen',
-        icon: 'ri-file-list-3-line',
-        to: '/documents',
+        title: 'Jasa',
+        icon: 'ri-hand-heart-line',
+        roles: ALL_ROLES,
+        items: [
+            { title: 'Peralatan', icon: 'ri-tools-line', to: '/equipment-services', roles: ALL_ROLES },
+            { title: 'Ice Cruiser', icon: 'ri-snowy-line', to: '/ice-cruiser-services', roles: ALL_ROLES },
+            { title: 'Air', icon: 'ri-water-percent-line', to: '/water-services', roles: ALL_ROLES },
+        ]
+    },
+
+    {
+        title: 'Chat',
+        icon: 'ri-chat-1-line',
+        to: '/chat',
         roles: ALL_ROLES
     },
     {

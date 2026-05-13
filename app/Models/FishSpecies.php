@@ -12,6 +12,10 @@ class FishSpecies extends Model
     protected $fillable = [
         'species_name', 'local_name', 'scientific_name', 'category', 'is_active'
     ];
+    
+    protected $casts = [
+        'is_active' => 'boolean',
+    ];
 
     // Relationships
     public function arrivalCatches(): HasMany

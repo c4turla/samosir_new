@@ -52,7 +52,7 @@ class FishSpeciesController extends Controller
             'is_active' => 'nullable|boolean',
         ]);
 
-        $validated['is_active'] = $request->has('is_active');
+        $validated['is_active'] = $request->boolean('is_active');
 
         FishSpecies::create($validated);
 
@@ -63,8 +63,9 @@ class FishSpeciesController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(FishSpecies $fishSpecies)
+    public function edit($id)
     {
+        $fishSpecies = FishSpecies::findOrFail($id);
         return Inertia::render('FishSpecies/Edit', [
             'fishSpecies' => $fishSpecies,
         ]);
@@ -73,8 +74,9 @@ class FishSpeciesController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, FishSpecies $fishSpecies)
+    public function update(Request $request, $id)
     {
+        $fishSpecies = FishSpecies::findOrFail($id);
         $validated = $request->validate([
             'species_name' => 'required|string|max:255',
             'local_name' => 'nullable|string|max:255',
@@ -83,7 +85,7 @@ class FishSpeciesController extends Controller
             'is_active' => 'nullable|boolean',
         ]);
 
-        $validated['is_active'] = $request->has('is_active');
+        $validated['is_active'] = $request->boolean('is_active');
 
         $fishSpecies->update($validated);
 
@@ -94,8 +96,9 @@ class FishSpeciesController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(FishSpecies $fishSpecies)
+    public function destroy($id)
     {
+        $fishSpecies = FishSpecies::findOrFail($id);
         $fishSpecies->delete();
 
         return redirect()->route('fish-species.index')

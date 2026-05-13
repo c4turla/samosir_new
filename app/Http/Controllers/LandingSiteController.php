@@ -54,7 +54,7 @@ class LandingSiteController extends Controller
             'is_active' => 'nullable|boolean',
         ]);
 
-        $validated['is_active'] = $request->has('is_active');
+        $validated['is_active'] = $request->boolean('is_active');
 
         LandingSite::create($validated);
 
@@ -65,8 +65,9 @@ class LandingSiteController extends Controller
     /**
      * Show form for editing the specified resource.
      */
-    public function edit(LandingSite $landingSite)
+    public function edit($id)
     {
+        $landingSite = LandingSite::findOrFail($id);
         return Inertia::render('LandingSites/Edit', [
             'landingSite' => $landingSite,
         ]);
@@ -75,8 +76,9 @@ class LandingSiteController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, LandingSite $landingSite)
+    public function update(Request $request, $id)
     {
+        $landingSite = LandingSite::findOrFail($id);
         $validated = $request->validate([
             'site_name' => 'required|string|max:255',
             'address' => 'nullable|string',
@@ -87,7 +89,7 @@ class LandingSiteController extends Controller
             'is_active' => 'nullable|boolean',
         ]);
 
-        $validated['is_active'] = $request->has('is_active');
+        $validated['is_active'] = $request->boolean('is_active');
 
         $landingSite->update($validated);
 
@@ -98,8 +100,9 @@ class LandingSiteController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(LandingSite $landingSite)
+    public function destroy($id)
     {
+        $landingSite = LandingSite::findOrFail($id);
         $landingSite->delete();
 
         return redirect()->route('landing-sites.index')

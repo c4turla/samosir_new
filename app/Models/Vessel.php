@@ -76,7 +76,7 @@ class Vessel extends Model
     public function managers(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'vessel_managers')
-                    ->withPivot('is_primary', 'address', 'id_card', 'authorization_letter')
+                    ->withPivot('is_primary', 'address', 'id_card', 'authorization_letter', 'status', 'approved_by', 'approved_at')
                     ->withTimestamps()
                     ->wherePivotNull('deleted_at');
     }

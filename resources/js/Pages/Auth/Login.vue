@@ -65,7 +65,7 @@ onMounted(() => {
                     <div class="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center border border-white/10">
                         <img :src="'/img/logobaru.png'" alt="SAMOSIR Logo" class="h-7 w-7 object-contain" />
                     </div>
-                    <span class="text-white/90 font-bold text-lg tracking-wide">SAMOSIR</span>
+                    <span class="text-white/90 font-bold text-3xl tracking-wide">SAMOSIR <span class="text-xs font-bold">V3.0</span></span>
                 </div>
 
                 <!-- Center: Main Content -->
@@ -268,7 +268,10 @@ onMounted(() => {
                 <!-- Footer -->
                 <div class="mt-8 text-center">
                     <p class="text-xs text-gray-400 dark:text-gray-600">
-                        © 2022-2026 SAMOSIR v3.0 · Pelabuhan Perikanan Nusantara Sibolga
+                        © 2022-2026 SAMOSIR <span class="text-[10px] font-bold">v3.0</span> · Pelabuhan Perikanan Nusantara Sibolga
+                    </p>
+                    <p class="text-xs text-gray-400 dark:text-gray-600">
+                        Dibuat Oleh <a href="https://kendariweb.com" target="_blank" class="text-blue-600 dark:text-blue-400 hover:underline">kendariweb.com</a>
                     </p>
                 </div>
             </div>

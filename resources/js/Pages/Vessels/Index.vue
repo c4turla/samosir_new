@@ -14,10 +14,9 @@ const props = defineProps({
 })
 
 const search = ref(new URLSearchParams(window.location.search).get('search') || '')
-const status = ref(new URLSearchParams(window.location.search).get('status') || '')
 
-watch([search, status], ([searchValue, statusValue]) => {
-    router.get('/vessels', { search: searchValue, status: statusValue }, {
+watch(search, (searchValue) => {
+    router.get('/vessels', { search: searchValue }, {
         preserveState: true,
         replace: true
     })
@@ -29,39 +28,7 @@ const deleteVessel = (id) => {
     }
 }
 
-const approveVessel = (id) => {
-    if (confirm('Apakah Anda yakin ingin menyetujui kapal ini?')) {
-        router.put(`/vessels/${id}/approve`)
-    }
-}
 
-const rejectVessel = (id) => {
-    if (confirm('Apakah Anda yakin ingin menolak kapal ini?')) {
-        router.put(`/vessels/${id}/reject`)
-    }
-}
-
-const getStatusBadgeClass = (status) => {
-    switch (status) {
-        case 'approved':
-            return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-        case 'rejected':
-            return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-        default:
-            return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
-    }
-}
-
-const getStatusLabel = (status) => {
-    switch (status) {
-        case 'approved':
-            return 'Disetujui'
-        case 'rejected':
-            return 'Ditolak'
-        default:
-            return 'Menunggu'
-    }
-}
 
 const getSipiBadgeClass = (sipiStatus) => {
     switch (sipiStatus) {
@@ -125,20 +92,6 @@ const userRole = computed(() => page.props.auth?.user?.role)
                             class="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 dark:bg-gray-700 transition-colors text-xs"
                         />
                     </div>
-                    <div class="relative min-w-[200px]">
-                        <select
-                            v-model="status"
-                            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 dark:bg-gray-700 transition-colors appearance-none cursor-pointer text-xs"
-                        >
-                            <option value="">Semua Status</option>
-                            <option value="pending">Menunggu</option>
-                            <option value="approved">Disetujui</option>
-                            <option value="rejected">Ditolak</option>
-                        </select>
-                        <svg class="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                        </svg>
-                    </div>
                 </div>
                 <p v-if="vessels.data && vessels.data.length > 0 && vessels.total > 0" class="text-xs text-gray-600 dark:text-gray-400 mt-2">
                     Menampilkan {{ vessels.from }} - {{ vessels.to }} dari total {{ vessels.total }} data
@@ -180,9 +133,6 @@ const userRole = computed(() => page.props.auth?.user?.role)
                                 </th>
                                 <th class="px-4 py-2 text-left text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                     Status SIPI
-                                </th>
-                                <th class="px-4 py-2 text-left text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                    Status Kapal
                                 </th>
                                 <th v-if="userRole !== 'kepala_pelabuhan'" class="px-4 py-2 text-right text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                     Aksi
@@ -240,33 +190,9 @@ const userRole = computed(() => page.props.auth?.user?.role)
                                         {{ vessel.sipi_status_text }}
                                     </span>
                                 </td>
-                                <td class="px-4 py-3 whitespace-nowrap">
-                                    <span :class="['inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium', getStatusBadgeClass(vessel.approval_status)]">
-                                        {{ getStatusLabel(vessel.approval_status) }}
-                                    </span>
-                                </td>
                                 <td v-if="userRole !== 'kepala_pelabuhan'" class="px-4 py-3 whitespace-nowrap text-right">
                                     <div class="flex items-center justify-end gap-2">
-                                        <Link
-                                            v-if="vessel.approval_status === 'pending'"
-                                            @click.prevent="approveVessel(vessel.id)"
-                                            class="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300"
-                                            title="Setujui"
-                                        >
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                                            </svg>
-                                        </Link>
-                                        <Link
-                                            v-if="vessel.approval_status === 'pending'"
-                                            @click.prevent="rejectVessel(id)"
-                                            class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
-                                            title="Tolak"
-                                        >
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                            </svg>
-                                        </Link>
+
                                         <Link
                                             :href="`/vessels/${vessel.id}/edit`"
                                             class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
@@ -289,7 +215,7 @@ const userRole = computed(() => page.props.auth?.user?.role)
                                 </td>
                             </tr>
                             <tr v-if="!vessels.data || vessels.data.length === 0">
-                                <td :colspan="userRole !== 'kepala_pelabuhan' ? 8 : 7" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
+                                <td :colspan="userRole !== 'kepala_pelabuhan' ? 7 : 6" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
                                     <svg class="w-10 h-10 mx-auto mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
                                     </svg>
@@ -333,7 +259,7 @@ const userRole = computed(() => page.props.auth?.user?.role)
                             >
                                 <Link
                                     v-if="Math.abs(page - vessels.current_page) <= 2"
-                                    :href="`${vessels.path}?page=${page}${search ? '&search=' + search : ''}${status ? '&status=' + status : ''}`"
+                                    :href="`${vessels.path}?page=${page}${search ? '&search=' + search : ''}`"
                                     class="block"
                                 >
                                     {{ page }}

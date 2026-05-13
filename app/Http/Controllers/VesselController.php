@@ -75,6 +75,8 @@ class VesselController extends Controller
 
         $validated['registered_by'] = auth()->id();
         $validated['approval_status'] = 'approved';
+        $validated['approved_by'] = auth()->id();
+        $validated['approved_at'] = now();
 
         Vessel::create($validated);
 
@@ -121,15 +123,11 @@ class VesselController extends Controller
             $validated['vessel_photo'] = $request->file('vessel_photo')->store('vessel-photos', 'public');
         }
 
-        // Handle approval status changes
-        if ($vessel->approval_status !== $request->approval_status) {
-            if ($request->approval_status === 'approved') {
-                $validated['approved_by'] = auth()->id();
-                $validated['approved_at'] = now();
-            } else {
-                $validated['approved_by'] = null;
-                $validated['approved_at'] = null;
-            }
+        // Vessels are always approved now
+        $validated['approval_status'] = 'approved';
+        if (!$vessel->approved_at) {
+            $validated['approved_by'] = auth()->id();
+            $validated['approved_at'] = now();
         }
 
         $vessel->update($validated);
@@ -195,7 +193,9 @@ class VesselController extends Controller
                     ->orWhere('vessel_type', 'like', "%{$search}%");
             })
             ->when($status, function ($query, $status) {
-                $query->where('approval_status', $status);
+                $query->whereHas('managers', function ($q) use ($status) {
+                    $q->where('vessel_managers.status', $status);
+                });
             })
             ->orderBy('created_at', 'desc')
             ->paginate(10)
@@ -208,6 +208,7 @@ class VesselController extends Controller
 
         $users = User::select('id', 'name', 'email')
             ->where('is_active', true)
+            ->where('role', 'pengelola')
             ->orderBy('name')
             ->get();
 
@@ -249,6 +250,9 @@ class VesselController extends Controller
             'address' => $validated['address'] ?? null,
             'id_card' => $validated['id_card'] ?? null,
             'authorization_letter' => $validated['authorization_letter'] ?? null,
+            'status' => 'pending', // Managers added by admin/officer are pending until approved? 
+                                   // Actually, if added by officer, maybe approve immediately?
+                                   // User said: "ketika pengelola mengajukan via mobile atau petugas via web maka perlu adanya approval"
         ]);
 
         return back()->with('success', 'Pengelola kapal berhasil ditambahkan.');
@@ -289,5 +293,33 @@ class VesselController extends Controller
         ]);
 
         return back()->with('success', 'Data pengelola kapal berhasil diperbarui.');
+    }
+
+    /**
+     * Approve vessel manager.
+     */
+    public function approveManager(Vessel $vessel, User $user)
+    {
+        $vessel->managers()->updateExistingPivot($user->id, [
+            'status' => 'approved',
+            'approved_by' => auth()->id(),
+            'approved_at' => now(),
+        ]);
+
+        return back()->with('success', 'Pengelola kapal berhasil disetujui.');
+    }
+
+    /**
+     * Reject vessel manager.
+     */
+    public function rejectManager(Vessel $vessel, User $user)
+    {
+        $vessel->managers()->updateExistingPivot($user->id, [
+            'status' => 'rejected',
+            'approved_by' => auth()->id(),
+            'approved_at' => now(),
+        ]);
+
+        return back()->with('success', 'Pengelola kapal ditolak.');
     }
 }

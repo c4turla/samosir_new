@@ -19,6 +19,10 @@ use App\Http\Controllers\ReportArrivalController;
 use App\Http\Controllers\ReportDepartureController;
 use App\Http\Controllers\ReportVesselController;
 use App\Http\Controllers\ReportCatchController;
+use App\Http\Controllers\EquipmentServiceController;
+use App\Http\Controllers\IceCruiserServiceController;
+use App\Http\Controllers\WaterServiceController;
+use App\Http\Controllers\ServicesController;
 
 // Guest routes (no authentication required)
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
@@ -61,9 +65,9 @@ Route::middleware('auth')->group(function () {
         Route::get('/', [FishSpeciesController::class, 'index'])->name('fish-species.index');
         Route::get('/create', [FishSpeciesController::class, 'create'])->name('fish-species.create');
         Route::post('/', [FishSpeciesController::class, 'store'])->name('fish-species.store');
-        Route::get('/{fishSpecies}/edit', [FishSpeciesController::class, 'edit'])->name('fish-species.edit');
-        Route::put('/{fishSpecies}', [FishSpeciesController::class, 'update'])->name('fish-species.update');
-        Route::delete('/{fishSpecies}', [FishSpeciesController::class, 'destroy'])->name('fish-species.destroy');
+        Route::get('/{id}/edit', [FishSpeciesController::class, 'edit'])->name('fish-species.edit');
+        Route::put('/{id}', [FishSpeciesController::class, 'update'])->name('fish-species.update');
+        Route::delete('/{id}', [FishSpeciesController::class, 'destroy'])->name('fish-species.destroy');
     });
     
     // Landing Sites routes
@@ -71,9 +75,9 @@ Route::middleware('auth')->group(function () {
         Route::get('/', [LandingSiteController::class, 'index'])->name('landing-sites.index');
         Route::get('/create', [LandingSiteController::class, 'create'])->name('landing-sites.create');
         Route::post('/', [LandingSiteController::class, 'store'])->name('landing-sites.store');
-        Route::get('/{landingSite}/edit', [LandingSiteController::class, 'edit'])->name('landing-sites.edit');
-        Route::put('/{landingSite}', [LandingSiteController::class, 'update'])->name('landing-sites.update');
-        Route::delete('/{landingSite}', [LandingSiteController::class, 'destroy'])->name('landing-sites.destroy');
+        Route::get('/{id}/edit', [LandingSiteController::class, 'edit'])->name('landing-sites.edit');
+        Route::put('/{id}', [LandingSiteController::class, 'update'])->name('landing-sites.update');
+        Route::delete('/{id}', [LandingSiteController::class, 'destroy'])->name('landing-sites.destroy');
     });
     
     // Vessels routes
@@ -90,6 +94,8 @@ Route::middleware('auth')->group(function () {
         Route::post('/{vessel}/assign-manager', [VesselController::class, 'assignManager'])->name('vessels.assign-manager');
         Route::put('/{vessel}/managers/{user}', [VesselController::class, 'updateManager'])->name('vessels.update-manager');
         Route::delete('/{vessel}/managers/{user}', [VesselController::class, 'removeManager'])->name('vessels.remove-manager');
+        Route::put('/{vessel}/managers/{user}/approve', [VesselController::class, 'approveManager'])->name('vessels.approve-manager');
+        Route::put('/{vessel}/managers/{user}/reject', [VesselController::class, 'rejectManager'])->name('vessels.reject-manager');
     });
     
     // Arrivals routes
@@ -170,6 +176,56 @@ Route::middleware('auth')->group(function () {
         Route::get('/conversations', [App\Http\Controllers\ChatController::class, 'getConversations'])->name('chat.conversations');
         Route::post('/conversations/get', [App\Http\Controllers\ChatController::class, 'getOrCreateConversation'])->name('chat.conversation.get');
         Route::get('/conversations/{conversation}/messages', [App\Http\Controllers\ChatController::class, 'getMessages'])->name('chat.messages');
+        Route::delete('/conversations/{conversation}', [App\Http\Controllers\ChatController::class, 'deleteConversation'])->name('chat.conversation.delete');
         Route::post('/messages', [App\Http\Controllers\ChatController::class, 'sendMessage'])->name('chat.send');
+        Route::delete('/messages/{message}', [App\Http\Controllers\ChatController::class, 'deleteMessage'])->name('chat.message.delete');
+        Route::put('/messages/{message}', [App\Http\Controllers\ChatController::class, 'updateMessage'])->name('chat.message.update');
+    });
+
+    // Services routes (Menu Utama Jasa)
+    Route::get('/services', [ServicesController::class, 'index'])->name('services.index');
+
+    // Equipment Services routes (Peralatan)
+    Route::prefix('equipment-services')->group(function () {
+        Route::get('/', [EquipmentServiceController::class, 'index'])->name('equipment-services.index');
+        Route::get('/create', [EquipmentServiceController::class, 'create'])->name('equipment-services.create');
+        Route::post('/', [EquipmentServiceController::class, 'store'])->name('equipment-services.store');
+        Route::get('/{id}', [EquipmentServiceController::class, 'show'])->name('equipment-services.show');
+        Route::get('/{id}/edit', [EquipmentServiceController::class, 'edit'])->name('equipment-services.edit');
+        Route::put('/{id}', [EquipmentServiceController::class, 'update'])->name('equipment-services.update');
+        Route::get('/{id}/print', [EquipmentServiceController::class, 'printOrder'])->name('equipment-services.print');
+        Route::get('/{id}/calculation', [EquipmentServiceController::class, 'calculation'])->name('equipment-services.calculation');
+        Route::get('/{id}/print-calculation', [EquipmentServiceController::class, 'printCalculation'])->name('equipment-services.print-calculation');
+        Route::post('/{id}/calculate', [EquipmentServiceController::class, 'calculate'])->name('equipment-services.calculate');
+        Route::post('/{id}/complete', [EquipmentServiceController::class, 'complete'])->name('equipment-services.complete');
+        Route::delete('/{id}', [EquipmentServiceController::class, 'destroy'])->name('equipment-services.destroy');
+    });
+
+    // Ice Cruiser Services routes
+    Route::prefix('ice-cruiser-services')->group(function () {
+        Route::get('/', [IceCruiserServiceController::class, 'index'])->name('ice-cruiser-services.index');
+        Route::get('/create', [IceCruiserServiceController::class, 'create'])->name('ice-cruiser-services.create');
+        Route::post('/', [IceCruiserServiceController::class, 'store'])->name('ice-cruiser-services.store');
+        Route::get('/{id}', [IceCruiserServiceController::class, 'show'])->name('ice-cruiser-services.show');
+        Route::get('/{id}/edit', [IceCruiserServiceController::class, 'edit'])->name('ice-cruiser-services.edit');
+        Route::put('/{id}', [IceCruiserServiceController::class, 'update'])->name('ice-cruiser-services.update');
+        Route::get('/{id}/print', [IceCruiserServiceController::class, 'printOrder'])->name('ice-cruiser-services.print');
+        Route::get('/{id}/calculation', [IceCruiserServiceController::class, 'calculation'])->name('ice-cruiser-services.calculation');
+        Route::get('/{id}/print-calculation', [IceCruiserServiceController::class, 'printCalculation'])->name('ice-cruiser-services.print-calculation');
+        Route::post('/{id}/calculate', [IceCruiserServiceController::class, 'calculate'])->name('ice-cruiser-services.calculate');
+        Route::post('/{id}/complete', [IceCruiserServiceController::class, 'complete'])->name('ice-cruiser-services.complete');
+        Route::delete('/{id}', [IceCruiserServiceController::class, 'destroy'])->name('ice-cruiser-services.destroy');
+    });
+
+    // Water Services routes (Air)
+    Route::prefix('water-services')->group(function () {
+        Route::get('/', [WaterServiceController::class, 'index'])->name('water-services.index');
+        Route::get('/create', [WaterServiceController::class, 'create'])->name('water-services.create');
+        Route::post('/', [WaterServiceController::class, 'store'])->name('water-services.store');
+        Route::get('/{id}', [WaterServiceController::class, 'show'])->name('water-services.show');
+        Route::get('/{id}/edit', [WaterServiceController::class, 'edit'])->name('water-services.edit');
+        Route::put('/{id}', [WaterServiceController::class, 'update'])->name('water-services.update');
+        Route::delete('/{id}', [WaterServiceController::class, 'destroy'])->name('water-services.destroy');
+        Route::post('/{id}/complete', [WaterServiceController::class, 'complete'])->name('water-services.complete');
     });
 });

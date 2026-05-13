@@ -2,6 +2,8 @@
 import AppLayout from '../../Layouts/AppLayout.vue'
 import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3'
 import { ref, watch, computed } from 'vue'
+import { route } from 'ziggy-js'
+import GeneralConfirmModal from '../../Components/GeneralConfirmModal.vue'
 
 const page = usePage()
 const props = defineProps({
@@ -22,10 +24,24 @@ watch(search, (value) => {
     })
 })
 
+const showDeleteModal = ref(false)
+const selectedSpeciesId = ref(null)
+
 const deleteSpecies = (id) => {
-    if (confirm('Apakah Anda yakin ingin menghapus jenis ikan ini?')) {
-        router.delete(`/fish-species/${id}`)
-    }
+    selectedSpeciesId.value = id
+    showDeleteModal.value = true
+}
+
+const confirmDelete = () => {
+    router.delete(route('fish-species.destroy', selectedSpeciesId.value), {
+        onSuccess: () => {
+            showDeleteModal.value = false
+            selectedSpeciesId.value = null
+        },
+        onError: () => {
+            showDeleteModal.value = false
+        }
+    })
 }
 
 const userRole = computed(() => page.props.auth?.user?.role)
@@ -228,5 +244,16 @@ const userRole = computed(() => page.props.auth?.user?.role)
             </div>
         </div>
     </div>
+
+    <!-- Delete Confirmation Modal -->
+    <GeneralConfirmModal
+        :show="showDeleteModal"
+        title="Hapus Jenis Ikan"
+        message="Apakah Anda yakin ingin menghapus jenis ikan ini? Tindakan ini tidak dapat dibatalkan."
+        confirm-text="Hapus Sekarang"
+        type="danger"
+        @close="showDeleteModal = false"
+        @confirm="confirmDelete"
+    />
 </AppLayout>
 </template>

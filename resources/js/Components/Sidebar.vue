@@ -82,8 +82,8 @@ watch(() => props.currentPath, () => {
     hoveredMenu.value = null // Close flyout on navigation
 })
 
-// Check if a menu item is open
-const isOpen = (index) => {
+// Check if a menu item dropdown is open
+const isDropdownOpen = (index) => {
     return openStates[index] || false
 }
 
@@ -91,19 +91,26 @@ const isOpen = (index) => {
 const toggleDropdown = (index) => {
     openStates[index] = !openStates[index]
 }
+
+// Close sidebar on mobile after navigation
+const handleNavigation = () => {
+    if (window.innerWidth < 1024) {
+        emit('close')
+    }
+}
 </script>
 
 <template>
     <aside
         :class="[
-            'fixed inset-y-0 left-0 z-30 bg-white dark:bg-gray-800 shadow-lg transition-all duration-300',
+            'fixed inset-y-0 left-0 z-50 bg-white dark:bg-gray-800 shadow-lg transition-all duration-300',
             isOpen ? 'translate-x-0' : '-translate-x-full',
             isCollapsed ? 'w-16' : 'w-64'
         ]"
         @mouseleave="isCollapsed ? null : null"
     >
         <!-- Logo Section -->
-        <div class="flex items-center justify-between h-14 px-3 border-b border-gray-200 dark:border-gray-700">
+        <div class="flex items-center justify-between h-12 px-3 border-b border-gray-200 dark:border-gray-700">
             <div class="flex items-center space-x-2">
                 <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
                     <span class="text-white font-bold text-sm">S</span>
@@ -128,12 +135,13 @@ const toggleDropdown = (index) => {
         </div>
 
         <!-- Navigation -->
-        <nav class="p-1.5 space-y-0.5 overflow-y-auto h-[calc(100vh-7rem)]">
+        <nav class="p-1.5 space-y-0.5 overflow-y-auto h-[calc(100vh-6rem)]">
             <template v-for="(item, index) in menuItems" :key="item.title">
                 <!-- Single Menu Item -->
                 <Link
                     v-if="!item.items"
                     :href="item.to"
+                    @click="handleNavigation"
                     @mouseenter="(e) => onMouseEnter(item, index, e)"
                     @mouseleave="onMouseLeave"
                     :class="[
@@ -156,7 +164,7 @@ const toggleDropdown = (index) => {
                     @mouseleave="onMouseLeave"
                 >
                     <button
-                        @click="isCollapsed ? emit('toggle-collapse') : toggleDropdown(index)"
+                        @click="isCollapsed ? null : toggleDropdown(index)"
                         :class="[
                             'w-full flex items-center rounded-lg transition-all duration-200',
                             isCollapsed ? 'justify-center px-2.5 py-2' : 'justify-between px-3 py-2',
@@ -174,7 +182,7 @@ const toggleDropdown = (index) => {
                         <transition name="fade">
                             <svg
                                 v-show="!isCollapsed"
-                                :class="['w-4 h-4 transition-transform duration-200 flex-shrink-0', isOpen(index) ? 'rotate-180' : '']"
+                                :class="['w-4 h-4 transition-transform duration-200 flex-shrink-0', isDropdownOpen(index) ? 'rotate-180' : '']"
                                 fill="none"
                                 stroke="currentColor"
                                 viewBox="0 0 24 24"
@@ -186,13 +194,14 @@ const toggleDropdown = (index) => {
 
                     <transition name="slide">
                         <div
-                            v-show="isOpen(index) && !isCollapsed"
+                            v-show="isDropdownOpen(index) && !isCollapsed"
                             class="mt-1 ml-3 space-y-0.5 overflow-hidden"
                         >
                             <Link
                                 v-for="subItem in item.items"
                                 :key="subItem.title"
                                 :href="subItem.to"
+                                @click="handleNavigation"
                                 :class="[
                                     'flex items-center space-x-2.5 px-3 py-2 rounded-lg transition-all duration-200',
                                     currentPath === subItem.to
@@ -248,11 +257,15 @@ const toggleDropdown = (index) => {
                     </div>
                 </template>
 
-                <!-- Tooltip for Single Items -->
+                <!-- Tooltip/Link for Single Items (e.g. Chat) -->
                 <template v-else>
-                    <div class="px-4 py-2 font-medium text-sm text-gray-900 dark:text-white">
+                    <Link
+                        :href="hoveredMenu.item.to"
+                        class="flex items-center gap-2 px-4 py-2.5 font-medium text-sm text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                    >
+                        <i :class="[hoveredMenu.item.icon, 'text-base text-gray-500 dark:text-gray-400']"></i>
                         {{ hoveredMenu.item.title }}
-                    </div>
+                    </Link>
                 </template>
             </div>
         </transition>

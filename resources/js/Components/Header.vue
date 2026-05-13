@@ -24,7 +24,7 @@ const props = defineProps({
     }
 })
 
-const emit = defineEmits(['toggle-dark-mode', 'toggle-sidebar-collapse', 'logout'])
+const emit = defineEmits(['toggle-dark-mode', 'toggle-sidebar-collapse', 'toggle-sidebar-mobile', 'logout'])
 
 const showProfileDropdown = ref(false)
 const dropdownRef = ref(null)
@@ -169,15 +169,26 @@ const handleSearchNavigation = (item) => {
 </script>
 
 <template>
-    <header class="sticky top-0 z-10 bg-white dark:bg-gray-800 shadow-sm">
-        <div class="flex items-center justify-between px-3 sm:px-4 lg:px-6 h-14">
+    <header class="sticky top-0 z-40 bg-white dark:bg-gray-800 shadow-sm">
+        <div class="flex items-center justify-between px-3 sm:px-4 lg:px-6 h-12">
             <!-- Left Section -->
-            <div class="flex items-center space-x-3">
-                <!-- Collapse Sidebar Button -->
+            <div class="flex items-center gap-1 sm:gap-2">
+                <!-- Mobile Hamburger Button -->
+                <button
+                    @click="emit('toggle-sidebar-mobile')"
+                    class="lg:hidden flex items-center justify-center w-9 h-9 rounded-lg text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex-shrink-0"
+                    :title="isSidebarOpen ? 'Tutup Menu' : 'Buka Menu'"
+                >
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path v-if="!isSidebarOpen" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                        <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+                <!-- Collapse Sidebar Button (Desktop only) -->
                 <button
                     v-show="isSidebarOpen"
                     @click="emit('toggle-sidebar-collapse')"
-                    class="hidden lg:block text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+                    class="hidden lg:flex items-center justify-center w-8 h-8 rounded-lg text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex-shrink-0"
                     :title="isSidebarCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'"
                 >
                     <svg v-if="isSidebarCollapsed" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -255,22 +266,22 @@ const handleSearchNavigation = (item) => {
             </div>
 
             <!-- Right Section -->
-            <div class="flex items-center space-x-2 sm:space-x-3">
+            <div class="flex items-center gap-1 sm:gap-2">
                 <!-- Dark Mode Toggle -->
                 <button
                     @click="emit('toggle-dark-mode')"
                     :class="[
-                        'p-2 rounded-lg transition-all duration-200',
+                        'flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-lg transition-all duration-200',
                         darkMode
                             ? 'bg-gray-700 text-yellow-400'
-                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
                     ]"
                     title="Toggle Dark Mode"
                 >
-                    <svg v-if="darkMode" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <svg v-if="darkMode" class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd" />
                     </svg>
-                    <svg v-else class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <svg v-else class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                         <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
                     </svg>
                 </button>
@@ -279,10 +290,10 @@ const handleSearchNavigation = (item) => {
                 <div ref="notificationsDropdownRef" class="relative">
                     <button
                         @click="toggleNotificationsDropdown"
-                        class="relative p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                        class="relative flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
                         title="Notifications"
                     >
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                         </svg>
                         <span v-if="unreadNotificationsCount > 0" class="absolute top-1 right-1 flex h-2 w-2">
@@ -351,17 +362,17 @@ const handleSearchNavigation = (item) => {
                     <!-- Desktop Version -->
                     <button
                         @click="toggleDropdown"
-                        class="hidden sm:flex items-center space-x-3 pl-3 sm:pl-4 border-l border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg px-3 py-2 transition-colors"
+                        class="hidden sm:flex items-center gap-2 pl-3 border-l border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg px-2 py-1.5 transition-colors"
                     >
-                        <div class="text-right">
-                            <p class="text-sm font-medium text-gray-900 dark:text-white">{{ user?.name || 'Admin' }}</p>
-                            <p class="text-xs text-gray-500 dark:text-gray-400 capitalize">{{ user?.role || 'Administrator' }}</p>
+                        <div class="text-right hidden md:block">
+                            <p class="text-xs font-semibold text-gray-900 dark:text-white leading-tight">{{ user?.name || 'Admin' }}</p>
+                            <p class="text-[10px] text-gray-500 dark:text-gray-400 capitalize leading-tight">{{ user?.role || 'Administrator' }}</p>
                         </div>
-                        <div class="w-9 h-9 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center">
+                        <div class="w-8 h-8 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
                             <span class="text-white font-semibold text-sm">{{ user?.name?.charAt(0)?.toUpperCase() || 'A' }}</span>
                         </div>
                         <svg
-                            :class="['w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform duration-200', showProfileDropdown ? 'rotate-180' : '']"
+                            :class="['w-3 h-3 text-gray-500 dark:text-gray-400 transition-transform duration-200 hidden md:block', showProfileDropdown ? 'rotate-180' : '']"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -373,11 +384,9 @@ const handleSearchNavigation = (item) => {
                     <!-- Mobile Version -->
                     <button
                         @click="toggleDropdown"
-                        class="sm:hidden flex items-center space-x-2 p-2 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg transition-colors"
+                        class="sm:hidden flex items-center justify-center w-8 h-8 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full"
                     >
-                        <div class="w-8 h-8 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center">
-                            <span class="text-white font-semibold text-sm">{{ user?.name?.charAt(0)?.toUpperCase() || 'A' }}</span>
-                        </div>
+                        <span class="text-white font-semibold text-sm">{{ user?.name?.charAt(0)?.toUpperCase() || 'A' }}</span>
                     </button>
 
                     <!-- Dropdown Menu -->

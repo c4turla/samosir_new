@@ -24,6 +24,16 @@ Route::prefix('v1')->group(function () {
         Route::get('/departures', [App\Http\Controllers\Api\V1\DepartureController::class, 'index']);
         Route::get('/departures/{id}', [App\Http\Controllers\Api\V1\DepartureController::class, 'show']);
 
+        // Vessels
+        Route::get('/vessels/available', [App\Http\Controllers\Api\V1\VesselController::class, 'available']);
+        Route::get('/vessels/summary', [App\Http\Controllers\Api\V1\VesselController::class, 'summary']);
+        Route::get('/vessels/my-vessels', [App\Http\Controllers\Api\V1\VesselController::class, 'myVessels']);
+        Route::get('/vessels/{id}', [App\Http\Controllers\Api\V1\VesselController::class, 'show']);
+        Route::post('/vessels/register-manager', [App\Http\Controllers\Api\V1\VesselController::class, 'registerManager']);
+        Route::put('/vessels/update-manager', [App\Http\Controllers\Api\V1\VesselController::class, 'updateManager']);
+        Route::delete('/vessels/unregister-manager', [App\Http\Controllers\Api\V1\VesselController::class, 'unregisterManager']);
+        Route::get('/vessels/{vesselId}/managers', [App\Http\Controllers\Api\V1\VesselController::class, 'vesselManagers']);
+
         // Fish Commodities
         Route::get('/fish', [App\Http\Controllers\Api\V1\FishController::class, 'index']);
 

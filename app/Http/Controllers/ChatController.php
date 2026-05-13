@@ -2,12 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\MessageDeleted;
 use App\Events\MessageSent;
+use App\Events\MessageUpdated;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 class ChatController extends Controller
@@ -56,8 +59,9 @@ class ChatController extends Controller
     {
         $request->validate([
             'conversation_id' => 'nullable|exists:conversations,id',
-            'receiver_id' => 'nullable|exists:users,id',
-            'message' => 'required|string',
+            'receiver_id'     => 'nullable|exists:users,id',
+            'message'         => 'nullable|string',
+            'file'            => 'nullable|file|max:10240', // 10 MB max
         ]);
 
         $conversationId = $request->conversation_id;
@@ -67,7 +71,6 @@ class ChatController extends Controller
             $receiverId = $request->receiver_id;
             $userId = Auth::id();
 
-            // Find existing private conversation
             $conversation = Conversation::where('type', 'private')
                 ->whereHas('participants', function ($query) use ($userId) {
                     $query->where('users.id', $userId);
@@ -84,19 +87,34 @@ class ChatController extends Controller
             $conversationId = $conversation->id;
         }
 
+        // Handle file upload
+        $fileUrl  = null;
+        $fileName = null;
+        $fileType = null;
+        $msgType  = 'text';
+
+        if ($request->hasFile('file')) {
+            $file     = $request->file('file');
+            $fileUrl  = $file->store('chat', 'public');
+            $fileName = $file->getClientOriginalName();
+            $fileType = $file->getMimeType();
+            $msgType  = str_starts_with($fileType, 'image/') ? 'image' : 'file';
+        }
+
         $message = Message::create([
             'conversation_id' => $conversationId,
-            'sender_id' => Auth::id(),
-            'body' => $request->message,
-            'type' => 'text',
+            'sender_id'       => Auth::id(),
+            'body'            => $request->message ?? '',
+            'type'            => $msgType,
+            'file_url'        => $fileUrl,
+            'file_name'       => $fileName,
+            'file_type'       => $fileType,
         ]);
 
-        // Update conversation timestamp
         Conversation::find($conversationId)->update([
             'last_message_at' => now()
         ]);
 
-        // Broadcast event
         broadcast(new MessageSent($message->load('sender')))->toOthers();
 
         return $message->load('sender');
@@ -142,5 +160,70 @@ class ChatController extends Controller
         $query = User::where('id', '!=', Auth::id());
         
         return $query->get(['id', 'name', 'role', 'photo']);
+    }
+
+    /**
+     * Delete a conversation (only if user is a participant).
+     */
+    public function deleteConversation(Conversation $conversation)
+    {
+        // Ensure user is a participant
+        if (!$conversation->participants->contains(Auth::id())) {
+            abort(403);
+        }
+
+        $conversation->delete(); // cascade deletes messages
+
+        return response()->json(['message' => 'Conversation deleted']);
+    }
+
+    /**
+     * Delete a single message (soft delete - only sender can delete).
+     */
+    public function deleteMessage(Message $message)
+    {
+        // Ensure user is the sender
+        if ($message->sender_id !== Auth::id()) {
+            abort(403);
+        }
+
+        // Soft delete: mark as deleted instead of actually removing
+        $message->update([
+            'is_deleted' => true,
+            'body' => 'Pesan ini telah dihapus',
+        ]);
+
+        broadcast(new MessageDeleted($message->load('sender')))->toOthers();
+
+        return $message->load('sender');
+    }
+
+    /**
+     * Update/edit a message body (only sender can edit, within 24 hours).
+     */
+    public function updateMessage(Request $request, Message $message)
+    {
+        $request->validate([
+            'body' => 'required|string|max:10000',
+        ]);
+
+        // Ensure user is the sender
+        if ($message->sender_id !== Auth::id()) {
+            abort(403);
+        }
+
+        // Ensure message is not deleted
+        if ($message->is_deleted) {
+            abort(400, 'Cannot edit a deleted message.');
+        }
+
+        $message->update([
+            'body' => $request->body,
+            'is_edited' => true,
+        ]);
+
+        broadcast(new MessageUpdated($message->load('sender')))->toOthers();
+
+        return $message->load('sender');
     }
 }

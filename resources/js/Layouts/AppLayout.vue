@@ -13,17 +13,20 @@ import { menuConfig, ROLES } from '../Config/menuPermissions'
 const page = usePage()
 
 const user = computed(() => page.props.auth?.user)
-const sidebarOpen = ref(true)
-const sidebarCollapsed = ref(window.innerWidth < 1024)
+const sidebarOpen = ref(window.innerWidth >= 1024)
+const sidebarCollapsed = ref(false)
 const darkMode = ref(localStorage.getItem('darkMode') === 'true')
 const showLogoutModal = ref(false)
 
 // Handle resize
 const handleResize = () => {
   if (window.innerWidth < 1024) {
-    sidebarCollapsed.value = true
+    // On mobile: sidebar is hidden by default, never collapsed (icons-only)
     sidebarOpen.value = false
+    sidebarCollapsed.value = false
   } else {
+    // On desktop: sidebar is open, not collapsed
+    sidebarOpen.value = true
     sidebarCollapsed.value = false
   }
 }
@@ -90,11 +93,13 @@ const closeLogoutModal = () => {
 <template>
   <div class="min-h-screen bg-gray-100 dark:bg-gray-900 transition-colors duration-300">
     <!-- Mobile Sidebar Overlay -->
-    <div
-      v-if="sidebarOpen"
-      class="fixed inset-0 bg-black/50 z-45 lg:hidden"
-      @click="sidebarOpen = false"
-    ></div>
+    <Transition enter-active-class="transition-opacity duration-300" enter-from-class="opacity-0" enter-to-class="opacity-100" leave-active-class="transition-opacity duration-300" leave-from-class="opacity-100" leave-to-class="opacity-0">
+      <div
+        v-if="sidebarOpen"
+        class="fixed inset-0 bg-black/50 z-40 lg:hidden"
+        @click="sidebarOpen = false"
+      ></div>
+    </Transition>
 
     <!-- Sidebar Component -->
     <Sidebar
@@ -115,7 +120,7 @@ const closeLogoutModal = () => {
     <div
       :class="[
         'transition-all duration-300 min-h-screen flex flex-col',
-        sidebarOpen ? (sidebarCollapsed ? 'lg:ml-16' : 'lg:ml-64') : 'lg:ml-0'
+        sidebarOpen && !sidebarCollapsed ? 'lg:ml-64' : sidebarOpen && sidebarCollapsed ? 'lg:ml-16' : 'ml-0'
       ]"
     >
       <!-- Header Component -->
@@ -126,14 +131,15 @@ const closeLogoutModal = () => {
         :is-sidebar-collapsed="sidebarCollapsed"
         @toggle-dark-mode="darkMode = !darkMode"
         @toggle-sidebar-collapse="sidebarCollapsed = !sidebarCollapsed"
+        @toggle-sidebar-mobile="sidebarOpen = !sidebarOpen"
         @logout="handleLogout"
       />
 
       <!-- Spacer for fixed header -->
-      <div class="h-14 flex-shrink-0"></div>
+      <div class="h-12 flex-shrink-0"></div>
 
       <!-- Page Content -->
-      <main class="p-4 sm:p-6 lg:p-8 flex-grow">
+      <main class="p-4 sm:p-5 lg:p-6 flex-grow">
         <slot />
       </main>
 

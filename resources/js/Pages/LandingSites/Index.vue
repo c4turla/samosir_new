@@ -2,6 +2,8 @@
 import AppLayout from '../../Layouts/AppLayout.vue'
 import { Head, Link, router, usePage } from '@inertiajs/vue3'
 import { ref, watch, computed } from 'vue'
+import { route } from 'ziggy-js'
+import GeneralConfirmModal from '../../Components/GeneralConfirmModal.vue'
 
 const page = usePage()
 const props = defineProps({
@@ -20,10 +22,24 @@ watch(search, (value) => {
     })
 })
 
+const showDeleteModal = ref(false)
+const selectedSiteId = ref(null)
+
 const deleteSite = (id) => {
-    if (confirm('Apakah Anda yakin ingin menghapus dermaga ini?')) {
-        router.delete(`/landing-sites/${id}`)
-    }
+    selectedSiteId.value = id
+    showDeleteModal.value = true
+}
+
+const confirmDelete = () => {
+    router.delete(route('landing-sites.destroy', selectedSiteId.value), {
+        onSuccess: () => {
+            showDeleteModal.value = false
+            selectedSiteId.value = null
+        },
+        onError: () => {
+            showDeleteModal.value = false
+        }
+    })
 }
 
 const userRole = computed(() => page.props.auth?.user?.role)
@@ -244,5 +260,16 @@ const userRole = computed(() => page.props.auth?.user?.role)
             </div>
         </div>
     </div>
+
+    <!-- Delete Confirmation Modal -->
+    <GeneralConfirmModal
+        :show="showDeleteModal"
+        title="Hapus Dermaga"
+        message="Apakah Anda yakin ingin menghapus dermaga ini? Tindakan ini tidak dapat dibatalkan."
+        confirm-text="Hapus Sekarang"
+        type="danger"
+        @close="showDeleteModal = false"
+        @confirm="confirmDelete"
+    />
 </AppLayout>
 </template>
