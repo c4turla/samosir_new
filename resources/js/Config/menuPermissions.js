@@ -97,7 +97,14 @@ export const menuConfig = [
             { title: 'Laporan Keberangkatan', icon: 'ri-bar-chart-grouped-line', to: '/reports/departures', roles: ALL_ROLES },
             { title: 'Laporan Data Kapal', icon: 'ri-ship-2-line', to: '/reports/vessels', roles: ALL_ROLES },
             { title: 'Laporan Tangkapan', icon: 'ri-bar-chart-grouped-line', to: '/reports/catches', roles: ALL_ROLES },
+            { title: 'Laporan Jasa', icon: 'ri-hand-heart-line', to: '/reports/services', roles: ALL_ROLES },
         ]
+    },
+    {
+        title: 'Pesan',
+        icon: 'ri-chat-3-line',
+        to: '/chat',
+        roles: ALL_ROLES
     },
     {
         title: 'Manajemen User',
@@ -110,5 +117,11 @@ export const menuConfig = [
         icon: 'ri-settings-4-line',
         to: '/settings',
         roles: ROLES.ADMIN
+    },
+    {
+        title: 'FAQ',
+        icon: 'ri-question-answer-line',
+        to: '/faq',
+        roles: ALL_ROLES
     }
 ];

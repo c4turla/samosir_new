@@ -61,6 +61,14 @@ const resetForm = () => {
         <Head title="Tambah Jasa Ice Cruiser - SAMOSIR" />
 
         <div class="max-w-5xl mx-auto py-6">
+            <div class="mb-6">
+                <Link href="/ice-cruiser-services" class="inline-flex items-center gap-2 text-sm font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors group">
+                    <svg class="w-4 h-4 transform group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                    </svg>
+                    Kembali ke Daftar
+                </Link>
+            </div>
             <div class="bg-white dark:bg-gray-800 shadow-sm rounded-xl overflow-hidden">
                 <div class="p-8">
                     <form @submit.prevent="submit">
@@ -81,20 +89,13 @@ const resetForm = () => {
                             <div class="grid grid-cols-1 md:grid-cols-3 items-center gap-4">
                                 <label class="text-sm font-semibold text-gray-700 dark:text-gray-300">Nama Penyewa</label>
                                 <div class="md:col-span-2">
-                                    <select
-                                        v-model="form.vessel_id"
+                                    <input
+                                        v-model="form.renter_name"
+                                        type="text"
+                                        placeholder="Masukkan nama penyewa"
                                         class="w-full md:w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                                        @change="e => {
-                                            const selected = vessels.find(v => v.id == e.target.value);
-                                            form.renter_name = selected ? selected.vessel_name : '';
-                                        }"
-                                    >
-                                        <option value="">Pilih Penyewa</option>
-                                        <option v-for="vessel in vessels" :key="vessel.id" :value="vessel.id">
-                                            {{ vessel.vessel_name }}
-                                        </option>
-                                    </select>
-                                    <p v-if="form.errors.vessel_id" class="mt-1 text-xs text-red-600">{{ form.errors.vessel_id }}</p>
+                                    />
+                                    <p v-if="form.errors.renter_name" class="mt-1 text-xs text-red-600">{{ form.errors.renter_name }}</p>
                                 </div>
                             </div>
 

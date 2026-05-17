@@ -1,26 +1,50 @@
 <script setup>
 import AppLayout from '../../Layouts/AppLayout.vue'
 import { Head, Link, useForm } from '@inertiajs/vue3'
+import { computed, ref } from 'vue'
 
 const props = defineProps({
     service: Object,
     vessels: Array,
 })
 
+const equipmentItems = [
+    { key: 'ice_cruiser', label: 'Ice Cruiser' },
+]
+
 const form = useForm({
     vessel_id: props.service.vessel_id,
-    service_date: props.service.service_date,
     renter_name: props.service.renter_name,
-    quantity: props.service.quantity,
-    unit_price: props.service.unit_price,
-    notes: props.service.notes,
+    service_date: props.service.service_date.split('T')[0],
+    officer: props.service.officer || '',
+    notes: props.service.notes || '',
     status: props.service.status,
+    items: equipmentItems.map(configItem => {
+        const existingItem = props.service.items.find(item => item.equipment_name === configItem.key)
+        return {
+            equipment_name: configItem.key,
+            label: configItem.label,
+            quantity: existingItem ? existingItem.quantity : 0,
+            unit_price: existingItem ? existingItem.unit_price : 0,
+            notes: existingItem ? (existingItem.notes || '') : ''
+        }
+    })
 })
 
-const totalAmount = computed(() => form.quantity * form.unit_price)
-
 const submit = () => {
-    form.put(`/ice-cruiser-services/${props.service.id}`, {
+    // Filter out items with 0 quantity
+    const filteredItems = form.items.filter(item => item.quantity > 0)
+    
+    if (filteredItems.length === 0) {
+        alert('Mohon isi minimal satu peralatan yang digunakan.')
+        return
+    }
+
+    form.transform((data) => ({
+        ...data,
+        items: filteredItems,
+        field_officer: form.officer
+    })).put(`/ice-cruiser-services/${props.service.id}`, {
         onSuccess: () => {
             // Success
         }
@@ -36,153 +60,149 @@ const cancel = () => {
     <AppLayout>
         <Head title="Edit Jasa Ice Cruiser - SAMOSIR" />
 
-        <div class="max-w-4xl mx-auto">
-            <div class="mb-4">
-                <Link href="/ice-cruiser-services" class="text-blue-600 hover:text-blue-800 text-sm flex items-center gap-1">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="max-w-5xl mx-auto py-6">
+            <div class="mb-6">
+                <Link href="/ice-cruiser-services" class="inline-flex items-center gap-2 text-sm font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors group">
+                    <svg class="w-4 h-4 transform group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                     </svg>
-                    Kembali
+                    Kembali ke Daftar
                 </Link>
             </div>
+            <div class="bg-white dark:bg-gray-800 shadow-sm rounded-xl overflow-hidden border border-gray-100 dark:border-gray-700">
+                <div class="p-8">
+                    <form @submit.prevent="submit">
+                        <!-- Top Section: Order Info -->
+                        <div class="space-y-4 mb-8">
+                            <div class="grid grid-cols-1 md:grid-cols-3 items-center gap-4">
+                                <label class="text-sm font-semibold text-gray-700 dark:text-gray-300">Nomor Order</label>
+                                <div class="md:col-span-2">
+                                    <input
+                                        type="text"
+                                        :value="service.order_number"
+                                        disabled
+                                        class="w-full md:w-64 px-4 py-2 bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-500 cursor-not-allowed"
+                                    />
+                                </div>
+                            </div>
 
-            <div class="mb-4">
-                <h1 class="text-xl font-bold text-gray-900 dark:text-white">Edit Jasa Ice Cruiser</h1>
-                <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                    Edit jasa Ice Cruiser - No. Pesanan: {{ service.order_number }}
-                </p>
-            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-3 items-center gap-4">
+                                <label class="text-sm font-semibold text-gray-700 dark:text-gray-300">Nama Penyewa</label>
+                                <div class="md:col-span-2">
+                                    <input
+                                        v-model="form.renter_name"
+                                        type="text"
+                                        placeholder="Masukkan nama penyewa"
+                                        class="w-full md:w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                                    />
+                                    <p v-if="form.errors.renter_name" class="mt-1 text-xs text-red-600">{{ form.errors.renter_name }}</p>
+                                </div>
+                            </div>
 
-            <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
-                <form @submit.prevent="submit">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Kapal</label>
-                            <select
-                                v-model="form.vessel_id"
-                                :class="[
-                                    'w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500',
-                                    form.errors.vessel_id ? 'border-red-500' : 'border-gray-300 dark:border-gray-600',
-                                    'bg-white dark:bg-gray-700 text-gray-900 dark:text-white'
-                                ]"
+                            <div class="grid grid-cols-1 md:grid-cols-3 items-center gap-4">
+                                <label class="text-sm font-semibold text-gray-700 dark:text-gray-300">Tanggal Order</label>
+                                <div class="md:col-span-2">
+                                    <div class="relative w-full md:w-64">
+                                        <input
+                                            v-model="form.service_date"
+                                            type="date"
+                                            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                                        />
+                                    </div>
+                                    <p v-if="form.errors.service_date" class="mt-1 text-xs text-red-600">{{ form.errors.service_date }}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Middle Section: Equipment Usage -->
+                        <div class="mb-8">
+                            <div class="flex items-center gap-4 mb-6">
+                                <h2 class="text-sm font-bold text-gray-800 dark:text-gray-200 uppercase tracking-wider">Pemakaian Peralatan (Ice Cruiser)</h2>
+                                <div class="h-px flex-1 bg-gray-200 dark:bg-gray-700"></div>
+                            </div>
+
+                            <div class="space-y-4">
+                                <div v-for="(item, index) in form.items" :key="item.equipment_name" class="grid grid-cols-1 md:grid-cols-12 items-center gap-4">
+                                    <div class="md:col-span-3">
+                                        <label class="text-sm font-medium text-gray-700 dark:text-gray-300" :class="{'text-indigo-600 font-bold': item.equipment_name === 'ice_cruiser'}">{{ item.label }}</label>
+                                    </div>
+                                    <div class="md:col-span-2">
+                                        <input
+                                            v-model.number="item.quantity"
+                                            type="number"
+                                            min="0"
+                                            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                                            placeholder="0"
+                                            :class="{'ring-2 ring-indigo-500/20 border-indigo-300': item.equipment_name === 'ice_cruiser'}"
+                                        />
+                                    </div>
+                                    <div class="md:col-span-1 text-center">
+                                        <span class="text-sm font-medium text-gray-600 dark:text-gray-400">Keterangan</span>
+                                    </div>
+                                    <div class="md:col-span-6">
+                                        <input
+                                            v-model="item.notes"
+                                            type="text"
+                                            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                                            placeholder="Keterangan opsional"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Bottom Section: Officer -->
+                        <div class="mb-8">
+                            <div class="grid grid-cols-1 md:grid-cols-12 items-center gap-4">
+                                <div class="md:col-span-3">
+                                    <label class="text-sm font-semibold text-gray-700 dark:text-gray-300">Petugas</label>
+                                </div>
+                                <div class="md:col-span-9">
+                                    <input
+                                        v-model="form.officer"
+                                        type="text"
+                                        class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                                        placeholder="Nama Petugas"
+                                    />
+                                    <p v-if="form.errors.field_officer" class="mt-1 text-xs text-red-600">{{ form.errors.field_officer }}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="flex items-center gap-3 pt-6 border-t border-gray-100 dark:border-gray-700">
+                            <button
+                                type="submit"
+                                :disabled="form.processing"
+                                class="inline-flex items-center px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-lg transition-all duration-200 shadow-sm disabled:opacity-50"
                             >
-                                <option value="">Pilih Kapal</option>
-                                <option v-for="vessel in vessels" :key="vessel.id" :value="vessel.id">
-                                    {{ vessel.name }}
-                                </option>
-                            </select>
-                        </div>
-
-                        <div>
-                            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Nama Penyewa</label>
-                            <input
-                                v-model="form.renter_name"
-                                type="text"
-                                :class="[
-                                    'w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500',
-                                    form.errors.renter_name ? 'border-red-500' : 'border-gray-300 dark:border-gray-600',
-                                    'bg-white dark:bg-gray-700 text-gray-900 dark:text-white'
-                                ]"
-                            />
-                        </div>
-
-                        <div>
-                            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Tanggal</label>
-                            <input
-                                v-model="form.service_date"
-                                type="date"
-                                :class="[
-                                    'w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500',
-                                    form.errors.service_date ? 'border-red-500' : 'border-gray-300 dark:border-gray-600',
-                                    'bg-white dark:bg-gray-700 text-gray-900 dark:text-white'
-                                ]"
-                            />
-                        </div>
-
-                        <div>
-                            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Jumlah (Kg)</label>
-                            <input
-                                v-model.number="form.quantity"
-                                type="number"
-                                min="1"
-                                :class="[
-                                    'w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500',
-                                    form.errors.quantity ? 'border-red-500' : 'border-gray-300 dark:border-gray-600',
-                                    'bg-white dark:bg-gray-700 text-gray-900 dark:text-white'
-                                ]"
-                            />
-                        </div>
-
-                        <div>
-                            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Harga per Kg</label>
-                            <input
-                                v-model.number="form.unit_price"
-                                type="number"
-                                min="0"
-                                :class="[
-                                    'w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500',
-                                    form.errors.unit_price ? 'border-red-500' : 'border-gray-300 dark:border-gray-600',
-                                    'bg-white dark:bg-gray-700 text-gray-900 dark:text-white'
-                                ]"
-                            />
-                        </div>
-
-                        <div>
-                            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Status</label>
-                            <select
-                                v-model="form.status"
-                                :class="[
-                                    'w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500',
-                                    form.errors.status ? 'border-red-500' : 'border-gray-300 dark:border-gray-600',
-                                    'bg-white dark:bg-gray-700 text-gray-900 dark:text-white'
-                                ]"
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                                </svg>
+                                Simpan Perubahan
+                            </button>
+                            <button
+                                type="button"
+                                @click="cancel"
+                                class="inline-flex items-center px-6 py-2.5 bg-rose-500 hover:bg-rose-600 text-white text-sm font-bold rounded-lg transition-all duration-200 shadow-sm"
                             >
-                                <option value="order">Pesanan</option>
-                                <option value="processed">Diproses</option>
-                                <option value="completed">Selesai</option>
-                                <option value="cancelled">Dibatalkan</option>
-                            </select>
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                                Batal
+                            </button>
                         </div>
-                    </div>
-
-                    <div class="mt-4 bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-                        <div class="flex justify-between items-center">
-                            <span class="text-sm text-gray-700 dark:text-gray-300">Total:</span>
-                            <span class="text-xl font-bold text-blue-600">{{ formatCurrency(totalAmount) }}</span>
-                        </div>
-                    </div>
-
-                    <div class="mt-4">
-                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Catatan</label>
-                        <textarea
-                            v-model="form.notes"
-                            rows="3"
-                            :class="[
-                                'w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none',
-                                form.errors.notes ? 'border-red-500' : 'border-gray-300 dark:border-gray-600',
-                                'bg-white dark:bg-gray-700 text-gray-900 dark:text-white'
-                            ]"
-                        ></textarea>
-                    </div>
-
-                    <div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700 mt-6">
-                        <button type="button" @click="cancel" class="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-sm">Batal</button>
-                        <button type="submit" :disabled="form.processing" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm disabled:opacity-50">
-                            {{ form.processing ? 'Menyimpan...' : 'Simpan' }}
-                        </button>
-                    </div>
-                </form>
+                    </form>
+                </div>
             </div>
         </div>
     </AppLayout>
 </template>
 
-<script>
-const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('id-ID', {
-        style: 'currency',
-        currency: 'IDR',
-        minimumFractionDigits: 0
-    }).format(amount || 0)
+<style scoped>
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
 }
-</script>
+</style>

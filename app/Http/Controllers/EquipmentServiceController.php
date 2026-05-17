@@ -17,7 +17,7 @@ class EquipmentServiceController extends Controller
 
         if ($request->has('search') && $request->search) {
             $query->where('order_number', 'like', '%' . $request->search . '%')
-                  ->orWhere('renter_name', 'like', '%' . $request->search . '%');
+                ->orWhere('renter_name', 'like', '%' . $request->search . '%');
         }
 
         if ($request->has('status') && $request->status) {
@@ -103,7 +103,7 @@ class EquipmentServiceController extends Controller
     public function edit($id)
     {
         $service = EquipmentService::with(['vessel', 'items'])->findOrFail($id);
-        $vessels = Vessel::where('status', 'approved')->get();
+        $vessels = Vessel::orderBy('vessel_name', 'asc')->get();
         return Inertia::render('EquipmentServices/Edit', [
             'service' => $service,
             'vessels' => $vessels,
@@ -167,16 +167,16 @@ class EquipmentServiceController extends Controller
     public function printOrder($id)
     {
         $service = EquipmentService::with(['vessel', 'items'])->findOrFail($id);
-        
+
         $pdf = Pdf::loadView('pdf.equipment-service-order', compact('service'));
-        
+
         return $pdf->download('order-peralatan-' . $service->order_number . '.pdf');
     }
 
     public function calculation($id)
     {
         $service = EquipmentService::with(['vessel', 'items'])->findOrFail($id);
-        
+
         return Inertia::render('EquipmentServices/Calculation', [
             'service' => $service
         ]);
@@ -185,43 +185,44 @@ class EquipmentServiceController extends Controller
     public function printCalculation($id)
     {
         $service = EquipmentService::with(['vessel', 'items'])->findOrFail($id);
-        
+
         if ($service->status !== 'processed') {
             return redirect()->back()->with('error', 'Perhitungan belum diselesaikan.');
         }
 
         $terbilang = $this->terbilang($service->total_amount) . ' rupiah';
-        
+
         $pdf = Pdf::loadView('pdf.equipment-service-calculation', compact('service', 'terbilang'));
-        
+
         return $pdf->download('perhitungan-peralatan-' . $service->order_number . '.pdf');
     }
 
-    private function terbilang($nilai) {
+    private function terbilang($nilai)
+    {
         $nilai = abs($nilai);
         $huruf = array("", "satu", "dua", "tiga", "empat", "lima", "enam", "tujuh", "delapan", "sembilan", "sepuluh", "sebelas");
         $temp = "";
         if ($nilai < 12) {
-            $temp = " ". $huruf[$nilai];
-        } else if ($nilai <20) {
-            $temp = $this->terbilang($nilai - 10). " belas";
+            $temp = " " . $huruf[$nilai];
+        } else if ($nilai < 20) {
+            $temp = $this->terbilang($nilai - 10) . " belas";
         } else if ($nilai < 100) {
-            $temp = $this->terbilang($nilai/10)." puluh". $this->terbilang($nilai % 10);
+            $temp = $this->terbilang($nilai / 10) . " puluh" . $this->terbilang($nilai % 10);
         } else if ($nilai < 200) {
             $temp = " seratus" . $this->terbilang($nilai - 100);
         } else if ($nilai < 1000) {
-            $temp = $this->terbilang($nilai/100) . " ratus" . $this->terbilang($nilai % 100);
+            $temp = $this->terbilang($nilai / 100) . " ratus" . $this->terbilang($nilai % 100);
         } else if ($nilai < 2000) {
             $temp = " seribu" . $this->terbilang($nilai - 1000);
         } else if ($nilai < 1000000) {
-            $temp = $this->terbilang($nilai/1000) . " ribu" . $this->terbilang($nilai % 1000);
+            $temp = $this->terbilang($nilai / 1000) . " ribu" . $this->terbilang($nilai % 1000);
         } else if ($nilai < 1000000000) {
-            $temp = $this->terbilang($nilai/1000000) . " juta" . $this->terbilang($nilai % 1000000);
+            $temp = $this->terbilang($nilai / 1000000) . " juta" . $this->terbilang($nilai % 1000000);
         } else if ($nilai < 1000000000000) {
-            $temp = $this->terbilang($nilai/1000000000) . " milyar" . $this->terbilang(fmod($nilai,1000000000));
+            $temp = $this->terbilang($nilai / 1000000000) . " milyar" . $this->terbilang(fmod($nilai, 1000000000));
         } else if ($nilai < 1000000000000000) {
-            $temp = $this->terbilang($nilai/1000000000000) . " trilyun" . $this->terbilang(fmod($nilai,1000000000000));
-        }     
+            $temp = $this->terbilang($nilai / 1000000000000) . " trilyun" . $this->terbilang(fmod($nilai, 1000000000000));
+        }
         return trim($temp);
     }
 
@@ -242,7 +243,7 @@ class EquipmentServiceController extends Controller
         ]);
 
         $service = EquipmentService::findOrFail($id);
-        
+
         $service->update([
             'start_time' => $request->start_time,
             'end_time' => $request->end_time,
@@ -277,7 +278,7 @@ class EquipmentServiceController extends Controller
     public function complete($id)
     {
         $service = EquipmentService::findOrFail($id);
-        
+
         if ($service->status !== 'processed') {
             return redirect()->back()->with('error', 'Pesanan harus dalam status diproses terlebih dahulu.');
         }

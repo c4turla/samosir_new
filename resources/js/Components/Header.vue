@@ -169,8 +169,15 @@ const handleSearchNavigation = (item) => {
 </script>
 
 <template>
-    <header class="sticky top-0 z-40 bg-white dark:bg-gray-800 shadow-sm">
-        <div class="flex items-center justify-between px-3 sm:px-4 lg:px-6 h-12">
+    <header 
+        :class="[
+            'fixed top-0 right-0 z-40 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md shadow-sm transition-all duration-300',
+            isSidebarOpen 
+                ? (isSidebarCollapsed ? 'lg:left-16 left-0' : 'lg:left-64 left-0') 
+                : 'left-0'
+        ]"
+    >
+        <div class="flex items-center justify-between px-3 sm:px-4 lg:px-6 h-14">
             <!-- Left Section -->
             <div class="flex items-center gap-1 sm:gap-2">
                 <!-- Mobile Hamburger Button -->

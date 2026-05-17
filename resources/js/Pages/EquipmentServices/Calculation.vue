@@ -25,6 +25,7 @@ const form = useForm({
         quantity: item.quantity,
         unit_price: getUnitPrice(item.equipment_name),
         subtotal: item.subtotal || 0,
+        disabled: item.equipment_name === 'timbangan' || item.equipment_name === 'ice_cruiser'
     }))
 })
 
@@ -209,7 +210,13 @@ const submit = () => {
                                     <input
                                         v-model.number="item.quantity"
                                         type="number"
-                                        class="w-full md:w-24 px-3 py-1.5 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-xs text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                                        :disabled="item.disabled"
+                                        :class="[
+                                            'w-full md:w-24 px-3 py-1.5 border rounded-lg text-xs transition-all',
+                                            item.disabled 
+                                                ? 'bg-gray-100 dark:bg-gray-700/50 border-gray-200 dark:border-gray-600 text-gray-400 cursor-not-allowed' 
+                                                : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500'
+                                        ]"
                                     />
                                 </div>
                                 <div class="w-full md:flex-1 flex items-center gap-3">

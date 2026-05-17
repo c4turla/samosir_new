@@ -15,7 +15,7 @@ const props = defineProps({
     stats: Object,
     recentArrivals: Array,
     recentDepartures: Array,
-    pendingVessels: Array,
+    serviceRevenue: Array,
     monthlyStats: Array,
     weeklyStats: Array,
     yearlyStats: Array,
@@ -41,11 +41,13 @@ const filterOptions = [
 const arrivalsChartRef = ref(null);
 const fishSpeciesChartRef = ref(null);
 const landingSitesChartRef = ref(null);
+const revenueChartRef = ref(null);
 
 // Chart instances
 let arrivalsChartInstance = null;
 let fishSpeciesChartInstance = null;
 let landingSitesChartInstance = null;
+let revenueChartInstance = null;
 
 // Dark mode detection
 const isDarkMode = ref(localStorage.getItem('darkMode') === 'true');
@@ -203,6 +205,18 @@ const renderLandingSitesChart = () => {
     landingSitesChartInstance = Highcharts.chart(landingSitesChartRef.value, options);
 };
 
+// Render revenue chart
+const renderRevenueChart = () => {
+    if (!revenueChartRef.value) return;
+    
+    if (revenueChartInstance) {
+        revenueChartInstance.destroy();
+    }
+    
+    const options = updateChartTheme(getRevenueChartConfig(props.serviceRevenue), isDarkMode.value);
+    revenueChartInstance = Highcharts.chart(revenueChartRef.value, options);
+};
+
 // Update all charts with current theme
 const updateAllCharts = async () => {
     // Force re-render by incrementing key
@@ -213,6 +227,7 @@ const updateAllCharts = async () => {
     renderArrivalsChart();
     renderFishSpeciesChart();
     renderLandingSitesChart();
+    renderRevenueChart();
 };
 
 // Get chart configurations
@@ -375,6 +390,57 @@ const getLandingSitesChartConfig = (sitesData) => {
     };
 };
 
+const getRevenueChartConfig = (revenueData) => {
+    return {
+        chart: {
+            type: 'column',
+            style: {
+                fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+            }
+        },
+        title: { text: null },
+        xAxis: {
+            categories: revenueData.map(item => item.month),
+            labels: { style: { fontSize: '10px' } }
+        },
+        yAxis: {
+            title: { text: 'Pendapatan (Rp)', style: { fontSize: '11px' } },
+            labels: {
+                formatter: function() {
+                    if (this.value >= 1000000) return (this.value / 1000000) + 'jt';
+                    return this.value.toLocaleString();
+                }
+            }
+        },
+        tooltip: {
+            shared: true,
+            pointFormat: '<span style="color:{series.color}">{series.name}</span>: <b>Rp {point.y:,.0f}</b><br/>',
+            style: { fontSize: '11px' }
+        },
+        legend: {
+            itemStyle: { fontSize: '11px' }
+        },
+        credits: { enabled: false },
+        series: [
+            {
+                name: 'Jasa Peralatan',
+                data: revenueData.map(item => item.equipment),
+                color: '#3B82F6'
+            },
+            {
+                name: 'Jasa Ice Cruiser',
+                data: revenueData.map(item => item.ice_cruiser),
+                color: '#10B981'
+            },
+            {
+                name: 'Jasa Air',
+                data: revenueData.map(item => item.water),
+                color: '#F59E0B'
+            }
+        ]
+    };
+};
+
 // Format tanggal ke format Indonesia
 const formatTanggal = (dateString) => {
     if (!dateString) return '-';
@@ -455,6 +521,9 @@ onUnmounted(() => {
     }
     if (landingSitesChartInstance) {
         landingSitesChartInstance.destroy();
+    }
+    if (revenueChartInstance) {
+        revenueChartInstance.destroy();
     }
 });
 
@@ -699,8 +768,18 @@ watch(() => localStorage.getItem('darkMode'), async () => {
                 <div ref="arrivalsChartRef" :key="`arrivals-${chartRenderKey}`" class="chart-sm"></div>
             </div>
 
-            <!-- Charts Section -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <!-- Revenue Chart Section -->
+        <div class="bg-white dark:bg-gray-800 shadow-sm border border-gray-100 dark:border-gray-700 rounded-2xl p-6 transition-all duration-300">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-sm font-semibold text-gray-900 dark:text-white">Analisis Pendapatan Jasa</h2>
+                <div class="bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 px-3 py-1 rounded-full text-[10px] font-bold border border-green-100 dark:border-green-800/30">
+                    Last 6 Months
+                </div>
+            </div>
+            <div ref="revenueChartRef" :key="`revenue-${chartRenderKey}`" class="chart-sm"></div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <!-- Top Landing Sites Donut Chart -->
             <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-4 transition-colors">
                 <div class="flex items-center justify-between mb-3">
@@ -876,45 +955,6 @@ watch(() => localStorage.getItem('darkMode'), async () => {
                 </div>
             </div>
 
-            <!-- Pending Vessels -->
-            <div class="bg-white dark:bg-gray-800 shadow rounded-lg transition-colors">
-                <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-                    <h2 class="text-sm font-semibold text-gray-900 dark:text-white">Pending Approval Kapal</h2>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                        <thead class="bg-gray-50 dark:bg-gray-700">
-                            <tr>
-                                <th class="px-4 py-2 text-left text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Nama Kapal</th>
-                                <th class="px-4 py-2 text-left text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Pemilik</th>
-                                <th class="px-4 py-2 text-left text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">GT</th>
-                                <th class="px-4 py-2 text-left text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Alat Tangkap</th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                            <tr v-for="vessel in pendingVessels" :key="vessel.id" class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                                <td class="px-4 py-3 whitespace-nowrap">
-                                    <div class="text-xs font-medium text-gray-900 dark:text-white">{{ vessel.vessel_name }}</div>
-                                </td>
-                                <td class="px-4 py-3 whitespace-nowrap">
-                                    <div class="text-xs text-gray-900 dark:text-white">{{ vessel.owner_name }}</div>
-                                </td>
-                                <td class="px-4 py-3 whitespace-nowrap">
-                                    <div class="text-xs text-gray-900 dark:text-white">{{ vessel.gt }}</div>
-                                </td>
-                                <td class="px-4 py-3 whitespace-nowrap">
-                                    <div class="text-xs text-gray-900 dark:text-white">{{ vessel.fishing_gear }}</div>
-                                </td>
-                            </tr>
-                            <tr v-if="pendingVessels.length === 0">
-                                <td colspan="4" class="px-4 py-3 text-center text-xs text-gray-500 dark:text-gray-400">
-                                    Tidak ada kapal yang menunggu approval
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
         </div>
 </template>
 

@@ -23,6 +23,10 @@ const showDeleteModal = ref(false)
 const serviceToDelete = ref(null)
 const isDeleting = ref(false)
 
+const showPaymentModal = ref(false)
+const serviceToPay = ref(null)
+const isPaying = ref(false)
+
 watch([search, statusFilter], () => {
     router.get('/water-services', { 
         search: search.value, 
@@ -47,6 +51,24 @@ const handleDelete = () => {
             isDeleting.value = false
             showDeleteModal.value = false
             serviceToDelete.value = null
+        }
+    })
+}
+
+const confirmPayment = (id) => {
+    serviceToPay.value = id
+    showPaymentModal.value = true
+}
+
+const handlePayment = () => {
+    if (!serviceToPay.value) return
+    
+    isPaying.value = true
+    router.post(`/water-services/${serviceToPay.value}/complete`, {}, {
+        onFinish: () => {
+            isPaying.value = false
+            showPaymentModal.value = false
+            serviceToPay.value = null
         }
     })
 }
@@ -124,6 +146,17 @@ const getProgressBarClass = (status) => {
             :is-loading="isDeleting"
             @close="showDeleteModal = false"
             @confirm="handleDelete"
+        />
+
+        <GeneralConfirmModal
+            :show="showPaymentModal"
+            title="Proses Pembayaran"
+            message="Apakah Anda yakin ingin memproses pembayaran ini? Status akan berubah menjadi Selesai."
+            confirm-text="Ya, Bayar"
+            type="primary"
+            :is-loading="isPaying"
+            @close="showPaymentModal = false"
+            @confirm="handlePayment"
         />
 
         <div class="max-w-7xl mx-auto">
@@ -229,22 +262,58 @@ const getProgressBarClass = (status) => {
                                 </td>
                                 <td class="px-4 py-3 whitespace-nowrap text-right">
                                     <div class="flex items-center justify-end gap-2">
-                                        <Link :href="`/water-services/${service.id}`" class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300" title="Detail">
+                                        <!-- Always show Detail -->
+                                        <Link :href="`/water-services/${service.id}`" class="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors" title="Detail">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                             </svg>
                                         </Link>
-                                        <Link :href="`/water-services/${service.id}/edit`" class="text-yellow-600 hover:text-yellow-900 dark:text-yellow-400 dark:hover:text-yellow-300" title="Edit">
+
+                                        <!-- Always show Print Order (unless cancelled) -->
+                                        <a v-if="service.status !== 'cancelled'" :href="`/water-services/${service.id}/print-order`" target="_blank" class="p-1.5 text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors" title="Cetak Order">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 0L11.828 15H9v-2.828l8.586-8.586z" />
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                                             </svg>
-                                        </Link>
-                                        <button @click="confirmDelete(service.id)" class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300" title="Hapus">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                            </svg>
-                                        </button>
+                                        </a>
+
+                                        <!-- Order Status: Show Edit, Delete, and Calculation -->
+                                        <template v-if="service.status === 'order'">
+                                            <Link :href="`/water-services/${service.id}/edit`" class="p-1.5 text-yellow-600 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 rounded-lg transition-colors" title="Edit">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 0L11.828 15H9v-2.828l8.586-8.586z" />
+                                                </svg>
+                                            </Link>
+                                            <button @click="confirmDelete(service.id)" class="p-1.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors" title="Hapus">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                </svg>
+                                            </button>
+                                            <Link :href="`/water-services/${service.id}/calculation`" class="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors" title="Proses Perhitungan">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                                </svg>
+                                            </Link>
+                                        </template>
+
+                                        <!-- Processed/Completed Status: Show Print Calculation & Bayar -->
+                                        <template v-else-if="service.status === 'processed' || service.status === 'completed'">
+                                            <a :href="`/water-services/${service.id}/print-calculation`" target="_blank" class="p-1.5 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-colors" title="Cetak Perhitungan">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 00-2 2v1a2 2 0 002 2h10a2 2 0 002-2v-1a2 2 0 00-2-2zM9 9l3 3m0 0l3-3m-3 3V3" />
+                                                </svg>
+                                            </a>
+                                            <button 
+                                                v-if="service.status === 'processed'" 
+                                                @click="confirmPayment(service.id)" 
+                                                class="p-1.5 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors" 
+                                                title="Proses Bayar"
+                                            >
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                                                </svg>
+                                            </button>
+                                        </template>
                                     </div>
                                 </td>
                             </tr>

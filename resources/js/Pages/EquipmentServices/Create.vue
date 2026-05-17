@@ -11,8 +11,8 @@ const equipmentItems = [
     { key: 'keranjang_plastik', label: 'Keranjang Plastik' },
     { key: 'meja_sortir', label: 'Meja Sortir' },
     { key: 'gerobak', label: 'Gerobak' },
-    { key: 'timbangan', label: 'Timbangan' },
-    { key: 'ice_cruiser', label: 'Ice Cruiser' },
+    { key: 'timbangan', label: 'Timbangan', disabled: true },
+    { key: 'ice_cruiser', label: 'Ice Cruiser', disabled: true },
 ]
 
 const form = useForm({
@@ -27,7 +27,8 @@ const form = useForm({
         label: item.label,
         quantity: 0,
         unit_price: 0, // Default price, can be updated if needed
-        notes: ''
+        notes: '',
+        disabled: item.disabled || false
     }))
 })
 
@@ -67,8 +68,17 @@ const resetForm = () => {
     <AppLayout>
         <Head title="Tambah Jasa Peralatan - SAMOSIR" />
 
-        <div class="max-w-5xl mx-auto py-6">
-            <div class="bg-white dark:bg-gray-800 shadow-sm rounded-xl overflow-hidden">
+        <div class="max-w-5xl mx-auto py-6 px-4">
+            <div class="mb-6">
+                <Link href="/equipment-services" class="inline-flex items-center gap-2 text-sm font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors group">
+                    <svg class="w-4 h-4 transform group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                    </svg>
+                    Kembali ke Daftar
+                </Link>
+            </div>
+
+            <div class="bg-white dark:bg-gray-800 shadow-sm rounded-xl overflow-hidden border border-gray-100 dark:border-gray-700">
                 <div class="p-8">
                     <form @submit.prevent="submit">
                         <!-- Top Section: Order Info -->
@@ -137,7 +147,13 @@ const resetForm = () => {
                                             v-model.number="item.quantity"
                                             type="number"
                                             min="0"
-                                            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                                            :disabled="item.disabled"
+                                            :class="[
+                                                'w-full px-4 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500',
+                                                item.disabled 
+                                                    ? 'bg-gray-100 dark:bg-gray-700/50 border-gray-200 dark:border-gray-600 text-gray-500 cursor-not-allowed' 
+                                                    : 'border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white'
+                                            ]"
                                             placeholder="0"
                                         />
                                     </div>
@@ -148,7 +164,13 @@ const resetForm = () => {
                                         <input
                                             v-model="item.notes"
                                             type="text"
-                                            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                                            :disabled="item.disabled"
+                                            :class="[
+                                                'w-full px-4 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500',
+                                                item.disabled 
+                                                    ? 'bg-gray-100 dark:bg-gray-700/50 border-gray-200 dark:border-gray-600 text-gray-500 cursor-not-allowed' 
+                                                    : 'border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white'
+                                            ]"
                                             placeholder="Keterangan opsional"
                                         />
                                     </div>

@@ -80,11 +80,6 @@ const handleComplete = () => {
     })
 }
 
-const breadcrumbs = [
-    { title: 'Dashboard', href: route('dashboard') },
-    { title: 'Jasa Air', href: route('water-services.index') },
-    { title: 'Detail Order', href: '#' }
-]
 </script>
 
 <template>
@@ -169,6 +164,10 @@ const breadcrumbs = [
                                         <span class="text-gray-500 font-medium">Pelaksana Lapangan</span>
                                         <span class="text-gray-900 dark:text-white font-semibold">{{ service.field_officer || '-' }}</span>
                                     </div>
+                                    <div class="flex justify-between py-1 border-b border-gray-50 dark:border-gray-700/50">
+                                        <span class="text-gray-500 font-medium">Bendahara</span>
+                                        <span class="text-gray-900 dark:text-white font-semibold">{{ service.treasurer || '-' }}</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -218,13 +217,24 @@ const breadcrumbs = [
 
                     <!-- Actions -->
                     <div class="grid grid-cols-1 gap-2">
-                        <button 
-                            @click="window.open(`/water-services/${service.id}/print`, '_blank')"
+                        <a 
+                            v-if="service.status !== 'cancelled'"
+                            :href="`/water-services/${service.id}/print-order`" 
+                            target="_blank"
                             class="w-full flex justify-center items-center gap-2 px-4 py-2.5 bg-gray-800 dark:bg-gray-700 hover:bg-gray-900 dark:hover:bg-gray-600 text-white rounded-xl transition-all font-bold"
                         >
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
                             Cetak Order
-                        </button>
+                        </a>
+                        <a 
+                            v-if="service.status === 'processed' || service.status === 'completed'"
+                            :href="`/water-services/${service.id}/print-calculation`" 
+                            target="_blank"
+                            class="w-full flex justify-center items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl transition-all font-bold"
+                        >
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 00-2 2v1a2 2 0 002 2h10a2 2 0 002-2v-1a2 2 0 00-2-2zM9 9l3 3m0 0l3-3m-3 3V3" /></svg>
+                            Cetak Perhitungan
+                        </a>
                     </div>
                 </div>
             </div>

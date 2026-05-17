@@ -10,6 +10,8 @@ use App\Models\Arrival;
 use App\Models\ArrivalCatch;
 use App\Models\Departure;
 use App\Models\FishSpecies;
+use App\Models\EquipmentService;
+use App\Models\WaterService;
 use Carbon\Carbon;
 
 class DashboardController extends Controller{
@@ -58,6 +60,7 @@ class DashboardController extends Controller{
         $monthlyStats = $this->getMonthlyStatistics();
         $weeklyStats = $this->getWeeklyStatistics();
         $yearlyStats = $this->getYearlyStatistics();
+        $serviceRevenue = $this->getServiceRevenue();
 
         // Vessel status distribution
         $vesselStatusDistribution = [
@@ -87,10 +90,10 @@ class DashboardController extends Controller{
             'stats' => $stats,
             'recentArrivals' => $recentArrivals,
             'recentDepartures' => $recentDepartures,
-            'pendingVessels' => $pendingVessels,
             'monthlyStats' => $monthlyStats,
             'weeklyStats' => $weeklyStats,
             'yearlyStats' => $yearlyStats,
+            'serviceRevenue' => $serviceRevenue,
             'vesselStatusDistribution' => $vesselStatusDistribution,
             'arrivalStatusDistribution' => $arrivalStatusDistribution,
             'topSitesWeekly' => $topSitesWeekly,
@@ -317,5 +320,56 @@ class DashboardController extends Controller{
                 'total_records' => (int) $item->total_records,
             ];
         });
+    }
+
+    /**
+     * Get revenue statistics for the last 6 months.
+     */
+    private function getServiceRevenue()
+    {
+        $months = [];
+        $monthNames = [
+            'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
+            'Jul', 'Agt', 'Sep', 'Okt', 'Nov', 'Des'
+        ];
+
+        for ($i = 5; $i >= 0; $i--) {
+            $date = Carbon::now()->subMonths($i);
+            $year = $date->year;
+            $month = $date->month;
+
+            // Equipment revenue (non-ice cruiser)
+            $equipmentRevenue = EquipmentService::whereYear('service_date', $year)
+                ->whereMonth('service_date', $month)
+                ->where('status', 'completed')
+                ->whereDoesntHave('items', function ($q) {
+                    $q->where('equipment_name', 'ice_cruiser');
+                })
+                ->sum('total_amount');
+
+            // Ice Cruiser revenue
+            $iceCruiserRevenue = EquipmentService::whereYear('service_date', $year)
+                ->whereMonth('service_date', $month)
+                ->where('status', 'completed')
+                ->whereHas('items', function ($q) {
+                    $q->where('equipment_name', 'ice_cruiser');
+                })
+                ->sum('total_amount');
+
+            // Water revenue
+            $waterRevenue = WaterService::whereYear('request_date', $year)
+                ->whereMonth('request_date', $month)
+                ->where('status', 'completed')
+                ->sum('total_payment');
+
+            $months[] = [
+                'month' => $monthNames[$month - 1] . ' ' . $year,
+                'equipment' => (float) $equipmentRevenue,
+                'ice_cruiser' => (float) $iceCruiserRevenue,
+                'water' => (float) $waterRevenue,
+            ];
+        }
+
+        return $months;
     }
 }

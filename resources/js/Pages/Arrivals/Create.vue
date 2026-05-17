@@ -20,6 +20,92 @@ const props = defineProps({
 
 const catches = ref([])
 
+// Searchable custom dropdown (Select2 style) for Vessels
+const isDropdownOpen = ref(false)
+const vesselSearch = ref('')
+
+const filteredVessels = computed(() => {
+    if (!vesselSearch.value) return props.vessels
+    const query = vesselSearch.value.toLowerCase().trim()
+    return props.vessels.filter(vessel => 
+        vessel.vessel_name.toLowerCase().includes(query) || 
+        (vessel.license_number && vessel.license_number.toLowerCase().includes(query))
+    )
+})
+
+const selectedVessel = computed(() => {
+    return props.vessels.find(vessel => vessel.id === form.vessel_id)
+})
+
+const selectVessel = (vesselId) => {
+    form.vessel_id = vesselId
+    isDropdownOpen.value = false
+    vesselSearch.value = ''
+}
+
+const toggleDropdown = () => {
+    isDropdownOpen.value = !isDropdownOpen.value
+}
+
+// Searchable custom dropdown for Landing Sites (Dermaga)
+const isLandingSiteDropdownOpen = ref(false)
+const landingSiteSearch = ref('')
+
+const filteredLandingSites = computed(() => {
+    if (!landingSiteSearch.value) return props.landingSites
+    const query = landingSiteSearch.value.toLowerCase().trim()
+    return props.landingSites.filter(site => 
+        site.site_name.toLowerCase().includes(query)
+    )
+})
+
+const selectedLandingSite = computed(() => {
+    return props.landingSites.find(site => site.id === form.landing_site_id)
+})
+
+const selectLandingSite = (siteId) => {
+    form.landing_site_id = siteId
+    isLandingSiteDropdownOpen.value = false
+    landingSiteSearch.value = ''
+}
+
+const toggleLandingSiteDropdown = () => {
+    isLandingSiteDropdownOpen.value = !isLandingSiteDropdownOpen.value
+}
+
+// Searchable custom dropdown for dynamic Fish Species (Jenis Ikan) rows
+const openCatchDropdownIndex = ref(null)
+const fishSearch = ref('')
+
+const getFilteredAvailableFishSpecies = (index) => {
+    const available = getAvailableFishSpecies(index)
+    if (!fishSearch.value) return available
+    const query = fishSearch.value.toLowerCase().trim()
+    return available.filter(fish => 
+        fish.species_name.toLowerCase().includes(query) ||
+        (fish.local_name && fish.local_name.toLowerCase().includes(query))
+    )
+}
+
+const getSelectedFishSpecies = (fishId) => {
+    return props.fishSpecies.find(fish => fish.id === fishId)
+}
+
+const selectFish = (index, fishId) => {
+    catches.value[index].fish_species_id = fishId
+    openCatchDropdownIndex.value = null
+    fishSearch.value = ''
+}
+
+const toggleCatchDropdown = (index) => {
+    if (openCatchDropdownIndex.value === index) {
+        openCatchDropdownIndex.value = null
+    } else {
+        openCatchDropdownIndex.value = index
+        fishSearch.value = ''
+    }
+}
+
 const form = useForm({
     vessel_id: '',
     origin: '',
@@ -104,20 +190,81 @@ const cancel = () => {
                                 <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                                     Kapal <span class="text-red-500">*</span>
                                 </label>
-                                <select
-                                    v-model="form.vessel_id"
-                                    :class="[
-                                        'w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500',
-                                        form.errors.vessel_id ? 'border-red-500' : 'border-gray-300 dark:border-gray-600 focus:border-blue-500',
-                                        'bg-white dark:bg-gray-700 text-gray-900 dark:text-white'
-                                    ]"
-                                    required
-                                >
-                                    <option value="">Pilih Kapal</option>
-                                    <option v-for="vessel in vessels" :key="vessel.id" :value="vessel.id">
-                                        {{ vessel.vessel_name }} ({{ vessel.license_number }})
-                                    </option>
-                                </select>
+                                <div class="relative">
+                                    <!-- Trigger Button -->
+                                    <button
+                                        type="button"
+                                        @click="toggleDropdown"
+                                        :class="[
+                                            'w-full px-3 py-2 border rounded-lg text-sm text-left focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center justify-between transition-colors shadow-sm',
+                                            form.errors.vessel_id ? 'border-red-500' : 'border-gray-300 dark:border-gray-600 focus:border-blue-500',
+                                            'bg-white dark:bg-gray-700 text-gray-900 dark:text-white'
+                                        ]"
+                                    >
+                                        <span v-if="selectedVessel" class="truncate font-medium">
+                                            {{ selectedVessel.vessel_name }} ({{ selectedVessel.license_number }})
+                                        </span>
+                                        <span v-else class="text-gray-400 dark:text-gray-400">
+                                            Pilih Kapal
+                                        </span>
+                                        <i class="ri-arrow-down-s-line text-lg text-gray-400"></i>
+                                    </button>
+
+                                    <!-- Invisible backdrop to close dropdown when clicked outside -->
+                                    <div v-if="isDropdownOpen" class="fixed inset-0 z-30" @click="isDropdownOpen = false"></div>
+
+                                    <!-- Dropdown panel -->
+                                    <div 
+                                        v-if="isDropdownOpen" 
+                                        class="absolute left-0 z-40 mt-1 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg overflow-hidden animate-fadeIn"
+                                    >
+                                        <!-- Search input -->
+                                        <div class="p-2 border-b border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 flex items-center">
+                                            <i class="ri-search-line text-gray-400 ml-2 mr-2"></i>
+                                            <input
+                                                type="text"
+                                                v-model="vesselSearch"
+                                                placeholder="Ketik untuk mencari kapal..."
+                                                class="w-full bg-transparent border-0 focus:ring-0 p-1 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none"
+                                                @keyup.esc="isDropdownOpen = false"
+                                            />
+                                            <button 
+                                                v-if="vesselSearch"
+                                                type="button"
+                                                @click="vesselSearch = ''"
+                                                class="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                                            >
+                                                <i class="ri-close-line text-sm"></i>
+                                            </button>
+                                        </div>
+
+                                        <!-- Options list -->
+                                        <ul class="max-h-60 overflow-y-auto py-1 divide-y divide-gray-50 dark:divide-gray-700/50">
+                                            <li
+                                                v-for="vessel in filteredVessels"
+                                                :key="vessel.id"
+                                                @click="selectVessel(vessel.id)"
+                                                :class="[
+                                                    'px-4 py-2 text-sm cursor-pointer transition-colors flex items-center justify-between',
+                                                    form.vessel_id === vessel.id
+                                                        ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-semibold'
+                                                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/30'
+                                                ]"
+                                            >
+                                                <div class="truncate">
+                                                    <span class="font-medium">{{ vessel.vessel_name }}</span>
+                                                    <span class="text-xs text-gray-400 dark:text-gray-500 ml-2">({{ vessel.license_number }})</span>
+                                                </div>
+                                                <i v-if="form.vessel_id === vessel.id" class="ri-check-line text-blue-500 dark:text-blue-400"></i>
+                                            </li>
+
+                                            <!-- No results state -->
+                                            <li v-if="filteredVessels.length === 0" class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 text-center">
+                                                Kapal tidak ditemukan
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
                             </div>
                             <div>
                                 <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Asal</label>
@@ -151,12 +298,78 @@ const cancel = () => {
                         <h3 class="text-sm font-semibold text-gray-900 dark:text-white mb-4 pb-2 border-b border-gray-200 dark:border-gray-700">Lokasi Dermaga</h3>
                         <div>
                             <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Dermaga</label>
-                            <select v-model="form.landing_site_id" :class="['w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500', form.errors.landing_site_id ? 'border-red-500' : 'border-gray-300 dark:border-gray-600', 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white']">
-                                <option value="">Pilih Dermaga</option>
-                                <option v-for="site in landingSites" :key="site.id" :value="site.id">
-                                    {{ site.site_name }} 
-                                </option>
-                            </select>
+                            <div class="relative">
+                                <!-- Trigger Button -->
+                                <button
+                                    type="button"
+                                    @click="toggleLandingSiteDropdown"
+                                    :class="[
+                                        'w-full px-3 py-2 border rounded-lg text-sm text-left focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center justify-between transition-colors shadow-sm',
+                                        form.errors.landing_site_id ? 'border-red-500' : 'border-gray-300 dark:border-gray-600 focus:border-blue-500',
+                                        'bg-white dark:bg-gray-700 text-gray-900 dark:text-white'
+                                    ]"
+                                >
+                                    <span v-if="selectedLandingSite" class="truncate font-medium">
+                                        {{ selectedLandingSite.site_name }}
+                                    </span>
+                                    <span v-else class="text-gray-400 dark:text-gray-400">
+                                        Pilih Dermaga
+                                    </span>
+                                    <i class="ri-arrow-down-s-line text-lg text-gray-400"></i>
+                                </button>
+
+                                <!-- Invisible backdrop -->
+                                <div v-if="isLandingSiteDropdownOpen" class="fixed inset-0 z-30" @click="isLandingSiteDropdownOpen = false"></div>
+
+                                <!-- Dropdown panel -->
+                                <div 
+                                    v-if="isLandingSiteDropdownOpen" 
+                                    class="absolute left-0 z-40 mt-1 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg overflow-hidden animate-fadeIn"
+                                >
+                                    <!-- Search input -->
+                                    <div class="p-2 border-b border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 flex items-center">
+                                        <i class="ri-search-line text-gray-400 ml-2 mr-2"></i>
+                                        <input
+                                            type="text"
+                                            v-model="landingSiteSearch"
+                                            placeholder="Ketik untuk mencari dermaga..."
+                                            class="w-full bg-transparent border-0 focus:ring-0 p-1 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none"
+                                            @keyup.esc="isLandingSiteDropdownOpen = false"
+                                        />
+                                        <button 
+                                            v-if="landingSiteSearch"
+                                            type="button"
+                                            @click="landingSiteSearch = ''"
+                                            class="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                                        >
+                                            <i class="ri-close-line text-sm"></i>
+                                        </button>
+                                    </div>
+
+                                    <!-- Options list -->
+                                    <ul class="max-h-60 overflow-y-auto py-1 divide-y divide-gray-50 dark:divide-gray-700/50">
+                                        <li
+                                            v-for="site in filteredLandingSites"
+                                            :key="site.id"
+                                            @click="selectLandingSite(site.id)"
+                                            :class="[
+                                                'px-4 py-2 text-sm cursor-pointer transition-colors flex items-center justify-between',
+                                                form.landing_site_id === site.id
+                                                    ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-semibold'
+                                                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/30'
+                                            ]"
+                                        >
+                                            <span class="font-medium">{{ site.site_name }}</span>
+                                            <i v-if="form.landing_site_id === site.id" class="ri-check-line text-blue-500 dark:text-blue-400"></i>
+                                        </li>
+
+                                        <!-- No results state -->
+                                        <li v-if="filteredLandingSites.length === 0" class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 text-center">
+                                            Dermaga tidak ditemukan
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -170,12 +383,78 @@ const cancel = () => {
                             <div v-for="(catchItem, index) in catches" :key="index" class="flex items-end gap-2 bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
                                 <div class="flex-1">
                                     <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Jenis Ikan</label>
-                                    <select v-model="catchItem.fish_species_id" :class="['w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500', 'border-gray-300 dark:border-gray-600', 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white']">
-                                        <option value="">Pilih Ikan</option>
-                                        <option v-for="fish in getAvailableFishSpecies(index)" :key="fish.id" :value="fish.id">
-                                            {{ fish.species_name }} 
-                                        </option>
-                                    </select>
+                                    <div class="relative">
+                                        <!-- Trigger Button -->
+                                        <button
+                                            type="button"
+                                            @click="toggleCatchDropdown(index)"
+                                            :class="[
+                                                'w-full px-3 py-2 border rounded-lg text-sm text-left focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center justify-between transition-colors shadow-sm',
+                                                'border-gray-300 dark:border-gray-600 focus:border-blue-500',
+                                                'bg-white dark:bg-gray-700 text-gray-900 dark:text-white'
+                                            ]"
+                                        >
+                                            <span v-if="catchItem.fish_species_id && getSelectedFishSpecies(catchItem.fish_species_id)" class="truncate font-medium">
+                                                {{ getSelectedFishSpecies(catchItem.fish_species_id).species_name }}
+                                            </span>
+                                            <span v-else class="text-gray-400 dark:text-gray-400">
+                                                Pilih Ikan
+                                            </span>
+                                            <i class="ri-arrow-down-s-line text-lg text-gray-400"></i>
+                                        </button>
+
+                                        <!-- Invisible backdrop -->
+                                        <div v-if="openCatchDropdownIndex === index" class="fixed inset-0 z-30" @click="openCatchDropdownIndex = null"></div>
+
+                                        <!-- Dropdown panel -->
+                                        <div 
+                                            v-if="openCatchDropdownIndex === index" 
+                                            class="absolute left-0 z-40 mt-1 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg overflow-hidden animate-fadeIn"
+                                        >
+                                            <!-- Search input -->
+                                            <div class="p-2 border-b border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 flex items-center">
+                                                <i class="ri-search-line text-gray-400 ml-2 mr-2"></i>
+                                                <input
+                                                    type="text"
+                                                    v-model="fishSearch"
+                                                    placeholder="Ketik untuk mencari jenis ikan..."
+                                                    class="w-full bg-transparent border-0 focus:ring-0 p-1 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none"
+                                                    @keyup.esc="openCatchDropdownIndex = null"
+                                                />
+                                                <button 
+                                                    v-if="fishSearch"
+                                                    type="button"
+                                                    @click="fishSearch = ''"
+                                                    class="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                                                >
+                                                    <i class="ri-close-line text-sm"></i>
+                                                </button>
+                                            </div>
+
+                                            <!-- Options list -->
+                                            <ul class="max-h-60 overflow-y-auto py-1 divide-y divide-gray-50 dark:divide-gray-700/50">
+                                                <li
+                                                    v-for="fish in getFilteredAvailableFishSpecies(index)"
+                                                    :key="fish.id"
+                                                    @click="selectFish(index, fish.id)"
+                                                    :class="[
+                                                        'px-4 py-2 text-sm cursor-pointer transition-colors flex items-center justify-between',
+                                                        catchItem.fish_species_id === fish.id
+                                                            ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-semibold'
+                                                            : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/30'
+                                                    ]"
+                                                >
+                                                    <span class="font-medium">{{ fish.species_name }}</span>
+                                                    <i v-if="catchItem.fish_species_id === fish.id" class="ri-check-line text-blue-500 dark:text-blue-400"></i>
+                                                </li>
+
+                                                <!-- No results state -->
+                                                <li v-if="getFilteredAvailableFishSpecies(index).length === 0" class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 text-center">
+                                                    Jenis ikan tidak ditemukan
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div class="w-32">
                                     <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Berat (kg)</label>

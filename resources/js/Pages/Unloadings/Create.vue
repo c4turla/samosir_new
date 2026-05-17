@@ -43,6 +43,32 @@ const showVesselDropdown = ref(false)
 const selectedArrival = ref(null)
 const dropdownContainer = ref(null)
 
+// Searchable custom dropdown (Select2 style) for Landing Sites (Lokasi Penimbangan)
+const isLandingSiteDropdownOpen = ref(false)
+const landingSiteSearch = ref('')
+
+const filteredLandingSites = computed(() => {
+    if (!landingSiteSearch.value) return props.landingSites
+    const query = landingSiteSearch.value.toLowerCase().trim()
+    return props.landingSites.filter(site => 
+        site.site_name.toLowerCase().includes(query)
+    )
+})
+
+const selectedLandingSite = computed(() => {
+    return props.landingSites.find(site => site.id === form.landing_site_id)
+})
+
+const selectLandingSite = (siteId) => {
+    form.landing_site_id = siteId
+    isLandingSiteDropdownOpen.value = false
+    landingSiteSearch.value = ''
+}
+
+const toggleLandingSiteDropdown = () => {
+    isLandingSiteDropdownOpen.value = !isLandingSiteDropdownOpen.value
+}
+
 const submit = () => {
     form.post('/unloadings', {
         onSuccess: () => {
@@ -69,11 +95,22 @@ const filteredArrivals = computed(() => {
     )
 })
 
+const formatDate = (dateStr) => {
+    if (!dateStr) return '-'
+    try {
+        const d = new Date(dateStr)
+        if (isNaN(d.getTime())) return dateStr
+        return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })
+    } catch {
+        return dateStr
+    }
+}
+
 const handleArrivalChange = (arrival, event) => {
     if (event) event.stopPropagation()
     form.arrival_id = arrival.id
     selectedArrival.value = arrival
-    vesselSearch.value = `${arrival.vessel?.vessel_name} - ${arrival.vessel?.license_number} (${arrival.arrival_date})`
+    vesselSearch.value = `${arrival.vessel?.vessel_name} - ${arrival.vessel?.license_number} (${formatDate(arrival.arrival_date)})`
     showVesselDropdown.value = false
     
     // Auto-fill some fields from arrival data
@@ -180,7 +217,7 @@ onUnmounted(() => {
                                     >
                                         <div class="font-medium">{{ arrival.vessel?.vessel_name }}</div>
                                         <div class="text-[10px] text-gray-500 dark:text-gray-400">
-                                            {{ arrival.vessel?.license_number }} - {{ arrival.arrival_date }}
+                                            {{ arrival.vessel?.license_number }} - {{ formatDate(arrival.arrival_date) }}
                                         </div>
                                     </div>
                                 </div>
@@ -355,19 +392,78 @@ onUnmounted(() => {
                             </div>
                             <div>
                                 <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Lokasi Penimbangan</label>
-                                <select
-                                    v-model="form.landing_site_id"
-                                    :class="[
-                                        'w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500',
-                                        form.errors.landing_site_id ? 'border-red-500' : 'border-gray-300 dark:border-gray-600 focus:border-blue-500',
-                                        'bg-white dark:bg-gray-700 text-gray-900 dark:text-white'
-                                    ]"
-                                >
-                                    <option value="">Pilih Lokasi Penimbangan</option>
-                                    <option v-for="site in landingSites" :key="site.id" :value="site.id">
-                                        {{ site.site_name }}
-                                    </option>
-                                </select>
+                                <div class="relative">
+                                    <!-- Trigger Button -->
+                                    <button
+                                        type="button"
+                                        @click="toggleLandingSiteDropdown"
+                                        :class="[
+                                            'w-full px-3 py-2 border rounded-lg text-sm text-left focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center justify-between transition-colors shadow-sm',
+                                            form.errors.landing_site_id ? 'border-red-500' : 'border-gray-300 dark:border-gray-600 focus:border-blue-500',
+                                            'bg-white dark:bg-gray-700 text-gray-900 dark:text-white'
+                                        ]"
+                                    >
+                                        <span v-if="selectedLandingSite" class="truncate font-medium">
+                                            {{ selectedLandingSite.site_name }}
+                                        </span>
+                                        <span v-else class="text-gray-400 dark:text-gray-400">
+                                            Pilih Lokasi Penimbangan
+                                        </span>
+                                        <i class="ri-arrow-down-s-line text-lg text-gray-400"></i>
+                                    </button>
+
+                                    <!-- Invisible backdrop -->
+                                    <div v-if="isLandingSiteDropdownOpen" class="fixed inset-0 z-30" @click="isLandingSiteDropdownOpen = false"></div>
+
+                                    <!-- Dropdown panel -->
+                                    <div 
+                                        v-if="isLandingSiteDropdownOpen" 
+                                        class="absolute left-0 z-40 mt-1 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg overflow-hidden animate-fadeIn"
+                                    >
+                                        <!-- Search input -->
+                                        <div class="p-2 border-b border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 flex items-center">
+                                            <i class="ri-search-line text-gray-400 ml-2 mr-2"></i>
+                                            <input
+                                                type="text"
+                                                v-model="landingSiteSearch"
+                                                placeholder="Ketik untuk mencari lokasi..."
+                                                class="w-full bg-transparent border-0 focus:ring-0 p-1 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none"
+                                                @keyup.esc="isLandingSiteDropdownOpen = false"
+                                            />
+                                            <button 
+                                                v-if="landingSiteSearch"
+                                                type="button"
+                                                @click="landingSiteSearch = ''"
+                                                class="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                                            >
+                                                <i class="ri-close-line text-sm"></i>
+                                            </button>
+                                        </div>
+
+                                        <!-- Options list -->
+                                        <ul class="max-h-60 overflow-y-auto py-1 divide-y divide-gray-50 dark:divide-gray-700/50">
+                                            <li
+                                                v-for="site in filteredLandingSites"
+                                                :key="site.id"
+                                                @click="selectLandingSite(site.id)"
+                                                :class="[
+                                                    'px-4 py-2 text-sm cursor-pointer transition-colors flex items-center justify-between',
+                                                    form.landing_site_id === site.id
+                                                        ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-semibold'
+                                                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/30'
+                                                ]"
+                                            >
+                                                <span class="font-medium">{{ site.site_name }}</span>
+                                                <i v-if="form.landing_site_id === site.id" class="ri-check-line text-blue-500 dark:text-blue-400"></i>
+                                            </li>
+
+                                            <!-- No results state -->
+                                            <li v-if="filteredLandingSites.length === 0" class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 text-center">
+                                                Lokasi tidak ditemukan
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
                                 <p v-if="form.errors.landing_site_id" class="mt-1 text-[10px] text-red-600 dark:text-red-400">{{ form.errors.landing_site_id }}</p>
                             </div>
                         </div>

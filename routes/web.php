@@ -19,10 +19,12 @@ use App\Http\Controllers\ReportArrivalController;
 use App\Http\Controllers\ReportDepartureController;
 use App\Http\Controllers\ReportVesselController;
 use App\Http\Controllers\ReportCatchController;
+use App\Http\Controllers\ReportServiceController;
 use App\Http\Controllers\EquipmentServiceController;
 use App\Http\Controllers\IceCruiserServiceController;
 use App\Http\Controllers\WaterServiceController;
 use App\Http\Controllers\ServicesController;
+use App\Http\Controllers\FaqController;
 
 // Guest routes (no authentication required)
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
@@ -48,6 +50,9 @@ Route::middleware('auth')->group(function () {
         Route::get('/', [SettingsController::class, 'index'])->name('settings.index');
         Route::post('/', [SettingsController::class, 'update'])->name('settings.update');
     });
+
+    // FAQ route
+    Route::get('/faq', [FaqController::class, 'index'])->name('faq.index');
     
     // User Management routes (admin only)
     Route::prefix('users')->group(function () {
@@ -163,6 +168,11 @@ Route::middleware('auth')->group(function () {
         Route::get('/catches', [ReportCatchController::class, 'index'])->name('reports.catches');
         Route::get('/catches/export-excel', [ReportCatchController::class, 'exportExcel'])->name('reports.catches.excel');
         Route::get('/catches/export-pdf', [ReportCatchController::class, 'exportPdf'])->name('reports.catches.pdf');
+        
+        // Services Report Routes
+        Route::get('/services', [ReportServiceController::class, 'index'])->name('reports.services');
+        Route::get('/services/export-excel', [ReportServiceController::class, 'exportExcel'])->name('reports.services.excel');
+        Route::get('/services/export-pdf', [ReportServiceController::class, 'exportPdf'])->name('reports.services.pdf');
     });
 
     // Notifications routes
@@ -225,6 +235,10 @@ Route::middleware('auth')->group(function () {
         Route::get('/{id}', [WaterServiceController::class, 'show'])->name('water-services.show');
         Route::get('/{id}/edit', [WaterServiceController::class, 'edit'])->name('water-services.edit');
         Route::put('/{id}', [WaterServiceController::class, 'update'])->name('water-services.update');
+        Route::get('/{id}/calculation', [WaterServiceController::class, 'calculation'])->name('water-services.calculation');
+        Route::post('/{id}/calculate', [WaterServiceController::class, 'calculate'])->name('water-services.calculate');
+        Route::get('/{id}/print-order', [WaterServiceController::class, 'printOrder'])->name('water-services.print-order');
+        Route::get('/{id}/print-calculation', [WaterServiceController::class, 'printCalculation'])->name('water-services.print-calculation');
         Route::delete('/{id}', [WaterServiceController::class, 'destroy'])->name('water-services.destroy');
         Route::post('/{id}/complete', [WaterServiceController::class, 'complete'])->name('water-services.complete');
     });
