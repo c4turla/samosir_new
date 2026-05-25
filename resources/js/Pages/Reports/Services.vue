@@ -12,7 +12,7 @@ const props = defineProps({
 })
 
 // Local filter state
-const serviceType = ref(props.filters.service_type || 'equipment')
+const serviceType = ref(props.filters.service_type || 'all')
 const search = ref(props.filters.search || '')
 const dateFrom = ref(props.filters.date_from || '')
 const dateTo = ref(props.filters.date_to || '')
@@ -150,7 +150,19 @@ const hasActiveFilters = computed(() => {
 
         <!-- Service Type Tabs -->
         <div class="border-b border-gray-200 dark:border-gray-700">
-            <nav class="flex space-x-8" aria-label="Tabs">
+            <nav class="flex space-x-8 overflow-x-auto" aria-label="Tabs">
+                <button
+                    @click="serviceType = 'all'"
+                    :class="[
+                        serviceType === 'all'
+                            ? 'border-blue-500 text-blue-600 dark:text-blue-400 font-semibold'
+                            : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 hover:border-gray-300',
+                        'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-all duration-200'
+                    ]"
+                >
+                    <i class="ri-pie-chart-2-line"></i>
+                    Keseluruhan
+                </button>
                 <button
                     @click="serviceType = 'equipment'"
                     :class="[
@@ -242,6 +254,37 @@ const hasActiveFilters = computed(() => {
             </div>
         </div>
 
+        <!-- Breakdown Total Pendapatan Jasa (Only for 'all') -->
+        <div v-if="serviceType === 'all'" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="bg-white dark:bg-gray-800 rounded-xl p-5 shadow-sm border border-gray-100 dark:border-gray-700 flex items-center gap-4">
+                <div class="w-12 h-12 bg-indigo-100 dark:bg-indigo-900/30 rounded-xl flex items-center justify-center shrink-0">
+                    <i class="ri-tools-line text-indigo-600 dark:text-indigo-400 text-xl"></i>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Peralatan</p>
+                    <p class="text-lg font-bold text-gray-900 dark:text-white">{{ formatCurrency(summary.equipment_revenue) }}</p>
+                </div>
+            </div>
+            <div class="bg-white dark:bg-gray-800 rounded-xl p-5 shadow-sm border border-gray-100 dark:border-gray-700 flex items-center gap-4">
+                <div class="w-12 h-12 bg-cyan-100 dark:bg-cyan-900/30 rounded-xl flex items-center justify-center shrink-0">
+                    <i class="ri-snowy-line text-cyan-600 dark:text-cyan-400 text-xl"></i>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Ice Cruiser</p>
+                    <p class="text-lg font-bold text-gray-900 dark:text-white">{{ formatCurrency(summary.ice_cruiser_revenue) }}</p>
+                </div>
+            </div>
+            <div class="bg-white dark:bg-gray-800 rounded-xl p-5 shadow-sm border border-gray-100 dark:border-gray-700 flex items-center gap-4">
+                <div class="w-12 h-12 bg-sky-100 dark:bg-sky-900/30 rounded-xl flex items-center justify-center shrink-0">
+                    <i class="ri-water-percent-line text-sky-600 dark:text-sky-400 text-xl"></i>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Air Tawar</p>
+                    <p class="text-lg font-bold text-gray-900 dark:text-white">{{ formatCurrency(summary.water_revenue) }}</p>
+                </div>
+            </div>
+        </div>
+
         <!-- Filters Card -->
         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-5">
             <div class="flex items-center justify-between mb-4">
@@ -315,7 +358,7 @@ const hasActiveFilters = computed(() => {
         </div>
 
         <!-- Data Table -->
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+        <div v-if="serviceType !== 'all'" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                     <thead>

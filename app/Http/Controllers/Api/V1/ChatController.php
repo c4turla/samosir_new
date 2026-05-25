@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Events\MessageDeleted;
 use App\Events\MessageSent;
+use App\Events\MessageUpdated;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\User;
@@ -90,7 +92,8 @@ class ChatController extends Controller
         $request->validate([
             'conversation_id' => 'nullable|exists:conversations,id',
             'receiver_id' => 'nullable|exists:users,id',
-            'message' => 'required|string|max:5000',
+            'message' => 'nullable|string',
+            'file' => 'nullable|file|max:10240', // 10 MB max
         ]);
 
         $userId = $request->user()->id;
@@ -134,11 +137,28 @@ class ChatController extends Controller
             ], 403);
         }
 
+        // Handle file upload
+        $fileUrl  = null;
+        $fileName = null;
+        $fileType = null;
+        $msgType  = 'text';
+
+        if ($request->hasFile('file')) {
+            $file     = $request->file('file');
+            $fileUrl  = $file->store('chat', 'public');
+            $fileName = $file->getClientOriginalName();
+            $fileType = $file->getMimeType();
+            $msgType  = str_starts_with($fileType, 'image/') ? 'image' : 'file';
+        }
+
         $message = Message::create([
             'conversation_id' => $conversationId,
             'sender_id' => $userId,
-            'body' => $request->message,
-            'type' => 'text',
+            'body' => $request->message ?? '',
+            'type' => $msgType,
+            'file_url' => $fileUrl,
+            'file_name' => $fileName,
+            'file_type' => $fileType,
         ]);
 
         // Update timestamp conversation
@@ -149,19 +169,8 @@ class ChatController extends Controller
 
         return response()->json([
             'status' => 'success',
-            'message' => 'Pesan terhasil dikirim.',
-            'data' => [
-                'id' => $message->id,
-                'conversation_id' => $message->conversation_id,
-                'sender_id' => $message->sender_id,
-                'body' => $message->body,
-                'type' => $message->type,
-                'created_at' => $message->created_at,
-                'sender' => [
-                    'id' => $message->sender->id,
-                    'name' => $message->sender->name,
-                ],
-            ]
+            'message' => 'Pesan berhasil dikirim.',
+            'data' => $message->load('sender')
         ], 201);
     }
 
@@ -187,6 +196,129 @@ class ChatController extends Controller
         return response()->json([
             'status' => 'success',
             'data' => $contacts
+        ]);
+    }
+
+    /**
+     * Find or create a conversation between users without sending a message.
+     */
+    public function getOrCreateConversation(Request $request)
+    {
+        $request->validate([
+            'receiver_id' => 'required|exists:users,id',
+        ]);
+
+        $userId = $request->user()->id;
+        $receiverId = $request->receiver_id;
+
+        // Find existing private conversation
+        $conversation = Conversation::where('type', 'private')
+            ->whereHas('participants', function ($query) use ($userId) {
+                $query->where('users.id', $userId);
+            })
+            ->whereHas('participants', function ($query) use ($receiverId) {
+                $query->where('users.id', $receiverId);
+            })
+            ->with(['participants', 'latestMessage'])
+            ->first();
+
+        if (!$conversation) {
+            $conversation = Conversation::create(['type' => 'private']);
+            $conversation->participants()->attach([$userId, $receiverId]);
+            $conversation->load(['participants', 'latestMessage']);
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $conversation
+        ]);
+    }
+
+    /**
+     * Delete a conversation (only if user is a participant).
+     */
+    public function deleteConversation(Request $request, Conversation $conversation)
+    {
+        // Ensure user is a participant
+        if (!$conversation->participants->contains($request->user()->id)) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Anda tidak memiliki akses ke percakapan ini.'
+            ], 403);
+        }
+
+        $conversation->delete(); // cascade deletes messages
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Conversation deleted'
+        ]);
+    }
+
+    /**
+     * Delete a single message (soft delete - only sender can delete).
+     */
+    public function deleteMessage(Request $request, Message $message)
+    {
+        // Ensure user is the sender
+        if ($message->sender_id !== $request->user()->id) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Anda tidak berhak menghapus pesan ini.'
+            ], 403);
+        }
+
+        // Soft delete: mark as deleted instead of actually removing
+        $message->update([
+            'is_deleted' => true,
+            'body' => 'Pesan ini telah dihapus',
+        ]);
+
+        broadcast(new MessageDeleted($message->load('sender')))->toOthers();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Pesan berhasil dihapus',
+            'data' => $message->load('sender')
+        ]);
+    }
+
+    /**
+     * Update/edit a message body (only sender can edit).
+     */
+    public function updateMessage(Request $request, Message $message)
+    {
+        $request->validate([
+            'body' => 'required|string|max:10000',
+        ]);
+
+        // Ensure user is the sender
+        if ($message->sender_id !== $request->user()->id) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Anda tidak berhak mengubah pesan ini.'
+            ], 403);
+        }
+
+        // Ensure message is not deleted
+        if ($message->is_deleted) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Tidak dapat mengubah pesan yang telah dihapus.'
+            ], 400);
+        }
+
+        $message->update([
+            'body' => $request->body,
+            'is_edited' => true,
+        ]);
+
+        broadcast(new MessageUpdated($message->load('sender')))->toOthers();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Pesan berhasil diubah',
+            'data' => $message->load('sender')
         ]);
     }
 }

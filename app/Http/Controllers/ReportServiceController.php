@@ -16,7 +16,7 @@ class ReportServiceController extends Controller
      */
     public function index(Request $request)
     {
-        $serviceType = $request->input('service_type', 'equipment');
+        $serviceType = $request->input('service_type', 'all');
         $dateFrom = $request->input('date_from', Carbon::now()->startOfMonth()->format('Y-m-d'));
         $dateTo = $request->input('date_to', Carbon::now()->format('Y-m-d'));
         $status = $request->input('status');
@@ -34,7 +34,41 @@ class ReportServiceController extends Controller
             ]
         ];
 
-        if ($serviceType === 'equipment') {
+        if ($serviceType === 'all') {
+            $equipmentQuery = EquipmentService::query()
+                ->when($status, function ($q, $status) { $q->where('status', $status); })
+                ->whereDate('service_date', '>=', $dateFrom)
+                ->whereDate('service_date', '<=', $dateTo);
+            
+            $waterQuery = WaterService::query()
+                ->when($status, function ($q, $status) { $q->where('status', $status); })
+                ->whereDate('request_date', '>=', $dateFrom)
+                ->whereDate('request_date', '<=', $dateTo);
+
+            $summary['total_records'] = (clone $equipmentQuery)->count() + (clone $waterQuery)->count();
+            
+            $eqRevenue = (clone $equipmentQuery)->where('status', 'completed')->sum('total_amount');
+            $watRevenue = (clone $waterQuery)->where('status', 'completed')->sum('total_payment');
+            $summary['total_revenue'] = $eqRevenue + $watRevenue;
+
+            $summary['equipment_revenue'] = (clone $equipmentQuery)->where('status', 'completed')->whereDoesntHave('items', function($q) { $q->where('equipment_name', 'ice_cruiser'); })->sum('total_amount');
+            $summary['ice_cruiser_revenue'] = (clone $equipmentQuery)->where('status', 'completed')->whereHas('items', function($q) { $q->where('equipment_name', 'ice_cruiser'); })->sum('total_amount');
+            $summary['water_revenue'] = $watRevenue;
+
+            $summary['status_counts']['order'] = (clone $equipmentQuery)->where('status', 'order')->count() + (clone $waterQuery)->where('status', 'order')->count();
+            $summary['status_counts']['processed'] = (clone $equipmentQuery)->where('status', 'processed')->count() + (clone $waterQuery)->where('status', 'processed')->count();
+            $summary['status_counts']['completed'] = (clone $equipmentQuery)->where('status', 'completed')->count() + (clone $waterQuery)->where('status', 'completed')->count();
+            $summary['status_counts']['cancelled'] = (clone $equipmentQuery)->where('status', 'cancelled')->count() + (clone $waterQuery)->where('status', 'cancelled')->count();
+
+            $results = [
+                'data' => [],
+                'current_page' => 1,
+                'last_page' => 1,
+                'per_page' => 15,
+                'total' => 0,
+            ];
+
+        } else if ($serviceType === 'equipment') {
             $query = EquipmentService::query()
                 ->with(['vessel', 'items'])
                 ->whereDoesntHave('items', function ($q) {
@@ -146,7 +180,7 @@ class ReportServiceController extends Controller
      */
     public function exportExcel(Request $request)
     {
-        $serviceType = $request->input('service_type', 'equipment');
+        $serviceType = $request->input('service_type', 'all');
         $dateFrom = $request->input('date_from', Carbon::now()->startOfMonth()->format('Y-m-d'));
         $dateTo = $request->input('date_to', Carbon::now()->format('Y-m-d'));
         $status = $request->input('status');
@@ -154,7 +188,9 @@ class ReportServiceController extends Controller
 
         $records = [];
 
-        if ($serviceType === 'equipment') {
+        if ($serviceType === 'all') {
+            return redirect()->back()->with('error', 'Silakan pilih spesifik jenis jasa untuk diexport.');
+        } else if ($serviceType === 'equipment') {
             $records = EquipmentService::query()
                 ->with(['vessel'])
                 ->whereDoesntHave('items', function ($q) {
@@ -313,7 +349,7 @@ class ReportServiceController extends Controller
      */
     public function exportPdf(Request $request)
     {
-        $serviceType = $request->input('service_type', 'equipment');
+        $serviceType = $request->input('service_type', 'all');
         $dateFrom = $request->input('date_from', Carbon::now()->startOfMonth()->format('Y-m-d'));
         $dateTo = $request->input('date_to', Carbon::now()->format('Y-m-d'));
         $status = $request->input('status');
@@ -323,7 +359,9 @@ class ReportServiceController extends Controller
         $serviceName = '';
         $totalRevenue = 0;
 
-        if ($serviceType === 'equipment') {
+        if ($serviceType === 'all') {
+            return redirect()->back()->with('error', 'Silakan pilih spesifik jenis jasa untuk diexport.');
+        } else if ($serviceType === 'equipment') {
             $records = EquipmentService::query()
                 ->with(['vessel'])
                 ->whereDoesntHave('items', function ($q) {

@@ -28,7 +28,6 @@ class AuthController extends Controller
         // Jika role pengelola, pastikan mengirim data kapal dan file pendukung
         if ($request->role === 'pengelola') {
             $request->validate([
-                'vessel_id' => 'required|exists:vessels,id',
                 'ktp_file' => 'required|file|mimes:jpeg,png,jpg,pdf|max:2048',
                 'surat_kuasa_file' => 'required|file|mimes:jpeg,png,jpg,pdf|max:2048',
             ]);
@@ -62,8 +61,8 @@ class AuthController extends Controller
 
             return response()->json([
                 'status' => 'success',
-                'message' => $request->role === 'pengelola' 
-                    ? 'Registrasi berhasil. Akun Anda sedang menunggu persetujuan petugas.' 
+                'message' => $request->role === 'pengelola'
+                    ? 'Registrasi berhasil. Akun Anda sedang menunggu persetujuan petugas.'
                     : 'Registrasi berhasil. Silakan login.',
             ], 201);
 
@@ -89,7 +88,7 @@ class AuthController extends Controller
 
         $user = User::where('email', $request->email)->first();
 
-        if (! $user || ! Hash::check($request->password, $user->password)) {
+        if (!$user || !Hash::check($request->password, $user->password)) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Email atau password salah.'
@@ -131,7 +130,7 @@ class AuthController extends Controller
             ]
         ], 200);
     }
-    
+
     /**
      * Handle user logout via Mobile App.
      */
@@ -144,14 +143,14 @@ class AuthController extends Controller
             'message' => 'Logout berhasil.'
         ], 200);
     }
-    
+
     /**
      * Get authenticated user profile.
      */
     public function me(Request $request)
     {
         $user = $request->user();
-        
+
         return response()->json([
             'status' => 'success',
             'data' => [

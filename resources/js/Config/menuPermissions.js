@@ -83,12 +83,6 @@ export const menuConfig = [
     },
 
     {
-        title: 'Chat',
-        icon: 'ri-chat-1-line',
-        to: '/chat',
-        roles: ALL_ROLES
-    },
-    {
         title: 'Laporan',
         icon: 'ri-bar-chart-line',
         roles: ALL_ROLES,

@@ -39,8 +39,12 @@ Route::prefix('v1')->group(function () {
 
         // Chat
         Route::get('/chat/conversations', [App\Http\Controllers\Api\V1\ChatController::class, 'conversations']);
+        Route::post('/chat/conversations/get', [App\Http\Controllers\Api\V1\ChatController::class, 'getOrCreateConversation']);
+        Route::delete('/chat/conversations/{conversation}', [App\Http\Controllers\Api\V1\ChatController::class, 'deleteConversation']);
         Route::get('/chat/conversations/{conversation}/messages', [App\Http\Controllers\Api\V1\ChatController::class, 'messages']);
         Route::post('/chat/messages', [App\Http\Controllers\Api\V1\ChatController::class, 'sendMessage']);
+        Route::delete('/chat/messages/{message}', [App\Http\Controllers\Api\V1\ChatController::class, 'deleteMessage']);
+        Route::put('/chat/messages/{message}', [App\Http\Controllers\Api\V1\ChatController::class, 'updateMessage']);
         Route::get('/chat/contacts', [App\Http\Controllers\Api\V1\ChatController::class, 'contacts']);
     });
 });
