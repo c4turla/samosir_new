@@ -16,11 +16,15 @@
     <!-- Runtime configuration for Reverb -->
     <script>
         window.ReverbConfig = {
-            key: '{{ env("REVERB_APP_KEY") }}',
-            host: '{{ env("REVERB_HOST", "localhost") }}',
-            port: {{ env("REVERB_PORT", 8080) }},
-            scheme: '{{ env("REVERB_SCHEME", "http") }}',
+            key: '{{ env("VITE_REVERB_APP_KEY", env("REVERB_APP_KEY")) }}',
+            host: '{{ env("VITE_REVERB_HOST", "localhost") }}',
+            port: {{ env("VITE_REVERB_PORT", 8080) }},
+            scheme: '{{ env("VITE_REVERB_SCHEME", "https") }}',
         };
+        // Auto-fix 0.0.0.0 to actual hostname if misconfigured
+        if (window.ReverbConfig.host === '0.0.0.0') {
+            window.ReverbConfig.host = window.location.hostname;
+        }
     </script>
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
