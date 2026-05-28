@@ -18,6 +18,14 @@ if [ ! -f .env ]; then
         *) SAFE_APP_URL="http://${SAFE_APP_URL}" ;;
     esac
 
+    # Auto-set VITE_REVERB_PORT based on scheme if not explicitly defined
+    VITE_REVERB_SCHEME=${VITE_REVERB_SCHEME:-http}
+    if [ "$VITE_REVERB_SCHEME" = "https" ]; then
+        VITE_REVERB_PORT_VAL=${VITE_REVERB_PORT:-443}
+    else
+        VITE_REVERB_PORT_VAL=${VITE_REVERB_PORT:-80}
+    fi
+
     cat > .env <<ENVEOF
 APP_NAME="${APP_NAME:-SAMOSIR}"
 APP_ENV=${APP_ENV:-production}
@@ -56,15 +64,8 @@ REVERB_SCHEME=${REVERB_SCHEME:-http}
 VITE_APP_NAME="${VITE_APP_NAME:-SAMOSIR}"
 VITE_REVERB_APP_KEY=${VITE_REVERB_APP_KEY:-samosirkey123}
 VITE_REVERB_HOST=${VITE_REVERB_HOST:-localhost}
+VITE_REVERB_PORT=${VITE_REVERB_PORT_VAL}
 VITE_REVERB_SCHEME=${VITE_REVERB_SCHEME:-http}
-
-# Auto-set port based on scheme if not explicitly defined
-if [ "$VITE_REVERB_SCHEME" = "https" ]; then
-    VITE_REVERB_PORT=${VITE_REVERB_PORT:-443}
-else
-    VITE_REVERB_PORT=${VITE_REVERB_PORT:-80}
-fi
-
 
 TELESCOPE_ENABLED=${TELESCOPE_ENABLED:-false}
 ENVEOF
