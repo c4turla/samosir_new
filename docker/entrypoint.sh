@@ -7,6 +7,58 @@ echo "============================================"
 
 cd /var/www/html
 
+# Create .env file from environment variables if it doesn't exist
+if [ ! -f .env ]; then
+    echo "[0/6] Creating .env file from environment variables..."
+    cat > .env <<EOF
+APP_NAME=${APP_NAME:-SAMOSIR}
+APP_ENV=${APP_ENV:-production}
+APP_KEY=${APP_KEY:-}
+APP_DEBUG=${APP_DEBUG:-false}
+APP_URL=${APP_URL:-http://localhost:8000}
+
+LOG_CHANNEL=stack
+LOG_LEVEL=error
+
+DB_CONNECTION=mysql
+DB_HOST=${DB_HOST:-db}
+DB_PORT=${DB_PORT:-3306}
+DB_DATABASE=${DB_DATABASE:-samosir_db}
+DB_USERNAME=${DB_USERNAME:-samosir}
+DB_PASSWORD=${DB_PASSWORD:-samosir_secret}
+
+SESSION_DRIVER=${SESSION_DRIVER:-database}
+SESSION_LIFETIME=120
+SESSION_DOMAIN=${SESSION_DOMAIN:-null}
+
+BROADCAST_CONNECTION=${BROADCAST_CONNECTION:-reverb}
+FILESYSTEM_DISK=${FILESYSTEM_DISK:-local}
+QUEUE_CONNECTION=${QUEUE_CONNECTION:-database}
+CACHE_STORE=${CACHE_STORE:-database}
+
+SANCTUM_STATEFUL_DOMAINS=${SANCTUM_STATEFUL_DOMAINS:-localhost:8000}
+
+REVERB_APP_ID=${REVERB_APP_ID:-843532}
+REVERB_APP_KEY=${REVERB_APP_KEY:-samosirkey123}
+REVERB_APP_SECRET=${REVERB_APP_SECRET:-samosirsecret456}
+REVERB_HOST=${REVERB_HOST:-0.0.0.0}
+REVERB_PORT=${REVERB_PORT:-8080}
+REVERB_SCHEME=${REVERB_SCHEME:-http}
+
+VITE_APP_NAME=${VITE_APP_NAME:-SAMOSIR}
+VITE_REVERB_APP_KEY=${VITE_REVERB_APP_KEY:-samosirkey123}
+VITE_REVERB_HOST=${VITE_REVERB_HOST:-localhost}
+VITE_REVERB_PORT=${VITE_REVERB_PORT:-8080}
+VITE_REVERB_SCHEME=${VITE_REVERB_SCHEME:-http}
+
+TELESCOPE_ENABLED=${TELESCOPE_ENABLED:-false}
+EOF
+    chown www-data:www-data .env
+    echo "  ✓ .env file created!"
+else
+    echo "[0/6] .env file already exists."
+fi
+
 # Wait for database to be ready
 echo "[1/6] Waiting for database connection..."
 maxTries=30
