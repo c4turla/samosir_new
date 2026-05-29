@@ -399,8 +399,10 @@ const closeFullScreenImage = () => {
 };
 
 onMounted(() => {
-    if (conversations.value && conversations.value.length > 0) {
-        selectConversation(conversations.value[0]);
+    if (window.innerWidth >= 768) {
+        if (conversations.value && conversations.value.length > 0) {
+            selectConversation(conversations.value[0]);
+        }
     }
     fetchUsers();
     // Join presence channel on page load
@@ -421,11 +423,16 @@ onUnmounted(() => {
     <Head title="Chat" />
 
     <AppLayout>
-        <div class="chat-container bg-white dark:bg-gray-900 rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row h-[calc(100vh-160px)] transition-all duration-500 border border-gray-100 dark:border-gray-800">
-            <!-- Sidebar -->
-            <div class="chat-sidebar w-full md:w-[350px] border-r border-gray-50 dark:border-gray-800 flex flex-col h-full overflow-hidden transition-colors duration-300">
+        <!-- Mobile: fixed full-screen below header. Desktop: normal flow -->
+        <div class="fixed inset-x-0 bottom-0 top-[3.5rem] md:static md:top-auto md:inset-x-auto md:bottom-auto md:h-[calc(100vh-160px)] chat-container bg-white dark:bg-gray-900 md:rounded-3xl md:shadow-2xl overflow-hidden flex flex-col md:flex-row transition-all duration-500 md:border md:border-gray-100 md:dark:border-gray-800 z-20">
+            <!-- Sidebar (Contact List) -->
+            <div :class="[
+                'w-full md:w-[350px] border-r border-gray-100 dark:border-gray-800 flex-col overflow-hidden transition-all duration-300 bg-white dark:bg-gray-900',
+                'md:flex',
+                selectedConversationId ? 'hidden' : 'flex'
+            ]">
                 <!-- Header & Search -->
-                <div class="px-6 pt-8 pb-4 flex-shrink-0">
+                <div class="px-4 pt-5 pb-3 flex-shrink-0">
                     <div class="flex items-center justify-between mb-6">
                         <div class="flex space-x-6">
                             <button 
@@ -467,7 +474,7 @@ onUnmounted(() => {
                 </div>
 
                 <!-- Conversation / Active List -->
-                <div class="flex-grow overflow-y-auto chat-list px-3 pb-6 h-full">
+                <div class="flex-1 overflow-y-auto chat-list px-3 pb-6">
                     <template v-if="activeTab === 'messages'">
                         <div 
                             v-for="conv in filteredConversations" 
@@ -558,11 +565,22 @@ onUnmounted(() => {
             </div>
 
             <!-- Main Chat Area -->
-            <div class="chat-main flex-grow flex flex-col bg-[#fbfbfd] dark:bg-[#0a0a0c] overflow-hidden transition-colors duration-500">
+            <div :class="[
+                'flex-1 flex-col overflow-hidden bg-gray-50 dark:bg-[#0a0a0c] transition-colors duration-300',
+                'md:flex',
+                selectedConversationId ? 'flex' : 'hidden'
+            ]">
                 <template v-if="selectedConversationId">
                     <!-- Chat Header -->
                     <div class="px-5 py-3 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border-b border-gray-100 dark:border-gray-800 flex items-center justify-between sticky top-0 z-10 transition-colors">
                         <div class="flex items-center">
+                            <!-- Back Button (Mobile only) -->
+                            <button 
+                                @click="selectedConversationId = null" 
+                                class="md:hidden mr-3 w-8 h-8 rounded-xl bg-gray-50 dark:bg-gray-800 flex items-center justify-center text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all shadow-sm"
+                            >
+                                <i class="ri-arrow-left-line text-lg"></i>
+                            </button>
                             <div class="relative flex-shrink-0 group cursor-pointer">
                                 <div 
                                     class="w-9 h-9 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-lg transition-all group-hover:rotate-6"
@@ -733,7 +751,7 @@ onUnmounted(() => {
                         </div>
                     </div>
                 </template>
-                <div v-else class="flex flex-col items-center justify-center h-full text-center p-10">
+                <div v-else class="hidden md:flex flex-col items-center justify-center h-full text-center p-10">
                     <div class="w-32 h-32 bg-gray-50 dark:bg-gray-800 rounded-[3rem] flex items-center justify-center mb-6 shadow-inner">
                         <i class="ri-chat-smile-3-line text-6xl text-gray-300"></i>
                     </div>

@@ -110,10 +110,10 @@ const handleNavigation = () => {
         @mouseleave="isCollapsed ? null : null"
     >
         <!-- Logo Section -->
-        <div class="flex items-center justify-between h-12 px-3 border-b border-gray-200 dark:border-gray-700">
+        <div class="flex items-center justify-between h-14 px-3 border-b border-gray-200 dark:border-gray-700">
             <div class="flex items-center space-x-2">
-                <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <span class="text-white font-bold text-sm">S</span>
+                <div class="w-8 h-8 flex-shrink-0 flex items-center justify-center">
+                    <img :src="'/img/logobaru.webp'" alt="SAMOSIR Logo" class="h-full w-full object-contain" />
                 </div>
 <transition name="fade">
     <div v-show="!isCollapsed" class="transition-all duration-300">
@@ -135,7 +135,7 @@ const handleNavigation = () => {
         </div>
 
         <!-- Navigation -->
-        <nav class="p-1.5 space-y-0.5 overflow-y-auto h-[calc(100vh-6rem)]">
+        <nav class="p-1.5 space-y-0.5 overflow-y-auto h-[calc(100vh-3.5rem)]">
             <template v-for="(item, index) in menuItems" :key="item.title">
                 <!-- Single Menu Item -->
                 <Link

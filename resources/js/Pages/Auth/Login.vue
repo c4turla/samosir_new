@@ -61,19 +61,23 @@ onMounted(() => {
             <!-- Content -->
             <div class="relative z-10 flex flex-col justify-between w-full p-12">
                 <!-- Top: Logo & Branding -->
-                <div class="flex items-center space-x-3">
-                    <div class="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center border border-white/10">
-                        <img :src="'/img/logobaru.png'" alt="SAMOSIR Logo" class="h-7 w-7 object-contain" />
+                <div class="flex items-center space-x-4">
+                    <div class="w-32 h-32">
+                        <img :src="'/img/logobaru.webp'" alt="SAMOSIR Logo" class="h-full w-full object-contain" />
                     </div>
-                    <span class="text-white/90 font-bold text-3xl tracking-wide">SAMOSIR <span class="text-xs font-bold">V3.0</span></span>
+                    <span class="text-white/95 font-extrabold text-3xl tracking-wide flex flex-col">
+                        SAMOSIR 
+                        <span class="text-[12px] font-medium bg-gradient-to-r from-cyan-300 to-blue-300 bg-clip-text text-transparent">Sistem Informasi dan Monitoring Aktivitas Kapal Perikanan</span>
+                        <span class="text-[12px] uppercase font-black tracking-widest text-cyan-300 mt-0.5">V.3.0</span>
+                    </span>
                 </div>
 
                 <!-- Center: Main Content -->
                 <div class="flex-1 flex flex-col justify-center max-w-lg">
                     <h1 class="text-5xl font-extrabold text-white leading-tight mb-6">
-                        Sistem Informasi
+                        Pelabuhan Perikanan
                         <span class="block bg-gradient-to-r from-cyan-300 to-blue-300 bg-clip-text text-transparent">
-                            Pelabuhan Perikanan
+                            Nusantara Sibolga
                         </span>
                     </h1>
                     <p class="text-blue-200/80 text-lg leading-relaxed mb-10">
@@ -131,7 +135,7 @@ onMounted(() => {
             <div class="w-full max-w-md">
                 <!-- Mobile Logo (shown only on small screens) -->
                 <div class="lg:hidden text-center mb-8">
-                    <div class="mx-auto h-16 w-16 flex items-center justify-center mb-4">
+                    <div class="mx-auto h-20 w-20 bg-gray-50 dark:bg-gray-800/40 rounded-2xl flex items-center justify-center border border-gray-150 dark:border-gray-800/60 p-3 shadow-md mb-4">
                         <img :src="'/img/logobaru.webp'" alt="SAMOSIR Logo" class="h-full w-full object-contain" />
                     </div>
                     <h2 class="text-2xl font-bold text-gray-900 dark:text-white">SAMOSIR</h2>
