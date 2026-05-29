@@ -132,7 +132,7 @@ onMounted(() => {
                 <!-- Mobile Logo (shown only on small screens) -->
                 <div class="lg:hidden text-center mb-8">
                     <div class="mx-auto h-16 w-16 flex items-center justify-center mb-4">
-                        <img :src="'/img/logobaru.png'" alt="SAMOSIR Logo" class="h-full w-full object-contain" />
+                        <img :src="'/img/logobaru.webp'" alt="SAMOSIR Logo" class="h-full w-full object-contain" />
                     </div>
                     <h2 class="text-2xl font-bold text-gray-900 dark:text-white">SAMOSIR</h2>
                     <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Pelabuhan Perikanan Nusantara Sibolga</p>
