@@ -235,7 +235,6 @@ const userRole = computed(() => page.props.auth?.user?.role)
                                 </td>
                                 <td class="px-4 py-3">
                                     <div class="flex items-center">
-                                        <div class="w-2 h-8 bg-blue-500 rounded-full mr-2"></div>
                                         <div>
                                             <p class="text-xs font-medium text-gray-900 dark:text-white">
                                                 {{ departure.vessel?.vessel_name }}
@@ -249,7 +248,7 @@ const userRole = computed(() => page.props.auth?.user?.role)
                                 <td class="px-4 py-3 text-xs text-gray-600 dark:text-gray-400">
                                     <div class="flex flex-col">
                                         <span>{{ departure.destination || '-' }}</span>
-                                        <span class="text-[10px] text-gray-400">{{ departure.landingSite?.site_name || '-' }}</span>
+                                        <span class="text-[10px] text-gray-400">{{ departure.landing_site?.site_name || '-' }}</span>
                                     </div>
                                 </td>
                                 <td class="px-4 py-3 whitespace-nowrap text-xs text-gray-900 dark:text-white">
@@ -277,6 +276,16 @@ const userRole = computed(() => page.props.auth?.user?.role)
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                                             </svg>
                                         </Link>
+                                        <!-- Tombol Print -->
+                                        <a
+                                            :href="`/departures/${departure.id}/print`"
+                                            class="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
+                                            title="Cetak STBLKK"
+                                        >
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                                            </svg>
+                                        </a>
                                         <Link
                                             :href="`/departures/${departure.id}/edit`"
                                             class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"

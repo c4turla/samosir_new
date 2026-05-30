@@ -398,11 +398,72 @@ const closeFullScreenImage = () => {
     fullScreenImage.value = null;
 };
 
-onMounted(() => {
-    if (window.innerWidth >= 768) {
-        if (conversations.value && conversations.value.length > 0) {
-            selectConversation(conversations.value[0]);
+// Visual Viewport tracking for mobile keyboard
+const keyboardHeightOffset = ref(0);
+
+const updateViewport = () => {
+    if (!window.visualViewport) return;
+    const vv = window.visualViewport;
+    
+    if (window.innerWidth < 768) {
+        // Calculate offset between layout viewport and visual viewport
+        const offset = window.innerHeight - vv.height;
+        keyboardHeightOffset.value = offset > 40 ? offset : 0;
+        
+        if (keyboardHeightOffset.value > 0) {
+            setTimeout(() => {
+                scrollToBottom();
+            }, 100);
         }
+    } else {
+        keyboardHeightOffset.value = 0;
+    }
+};
+
+const handleInputFocus = () => {
+    if (window.innerWidth < 768) {
+        setTimeout(() => {
+            scrollToBottom();
+        }, 150);
+    }
+};
+
+const mobileContainerStyle = computed(() => {
+    if (typeof window === 'undefined') return {};
+    if (window.innerWidth >= 768) return {};
+    
+    return {
+        bottom: `${keyboardHeightOffset.value}px`,
+        transition: 'none'
+    };
+});
+
+const inputAreaStyle = computed(() => {
+    if (typeof window === 'undefined') return {};
+    if (window.innerWidth >= 768) return {};
+    
+    if (keyboardHeightOffset.value === 0) {
+        return {
+            paddingBottom: 'calc(env(safe-area-inset-bottom) + 4px)'
+        };
+    }
+    return {
+        paddingBottom: '4px'
+    };
+});
+
+onMounted(() => {
+    if (typeof window !== 'undefined') {
+        if (window.innerWidth >= 768) {
+            if (conversations.value && conversations.value.length > 0) {
+                selectConversation(conversations.value[0]);
+            }
+        }
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', updateViewport);
+            window.visualViewport.addEventListener('scroll', updateViewport);
+        }
+        updateViewport();
     }
     fetchUsers();
     // Join presence channel on page load
@@ -416,6 +477,10 @@ onUnmounted(() => {
     if (window.Echo) {
         window.Echo.leave('chat-presence');
     }
+    if (typeof window !== 'undefined' && window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', updateViewport);
+        window.visualViewport.removeEventListener('scroll', updateViewport);
+    }
 });
 </script>
 
@@ -424,7 +489,7 @@ onUnmounted(() => {
 
     <AppLayout>
         <!-- Mobile: fixed full-screen below header. Desktop: normal flow -->
-        <div class="fixed inset-x-0 bottom-0 top-[3.5rem] md:static md:top-auto md:inset-x-auto md:bottom-auto md:h-[calc(100vh-160px)] chat-container bg-white dark:bg-gray-900 md:rounded-3xl md:shadow-2xl overflow-hidden flex flex-col md:flex-row transition-all duration-500 md:border md:border-gray-100 md:dark:border-gray-800 z-20">
+        <div :style="mobileContainerStyle" class="fixed inset-x-0 bottom-0 top-[3.5rem] md:static md:top-auto md:inset-x-auto md:bottom-auto md:h-[calc(100vh-160px)] chat-container bg-white dark:bg-gray-900 md:rounded-3xl md:shadow-2xl overflow-hidden flex flex-col md:flex-row md:transition-all md:duration-500 md:border md:border-gray-100 md:dark:border-gray-800 z-20">
             <!-- Sidebar (Contact List) -->
             <div :class="[
                 'w-full md:w-[350px] border-r border-gray-100 dark:border-gray-800 flex-col overflow-hidden transition-all duration-300 bg-white dark:bg-gray-900',
@@ -713,7 +778,7 @@ onUnmounted(() => {
                     </div>
 
                     <!-- Message Input Area -->
-                    <div class="bg-white dark:bg-gray-900 border-t border-gray-50 dark:border-gray-800 transition-colors">
+                    <div :style="inputAreaStyle" class="bg-white dark:bg-gray-900 border-t border-gray-50 dark:border-gray-800 transition-colors">
                         <!-- File Preview -->  
                         <div v-if="selectedFile" class="px-4 pt-3 flex items-center gap-2">
                             <img v-if="filePreview" :src="filePreview" class="h-12 w-12 object-cover rounded-lg border border-gray-200" />
@@ -736,6 +801,7 @@ onUnmounted(() => {
                                 <input 
                                     v-model="newMessage"
                                     @keyup.enter="handleSend"
+                                    @focus="handleInputFocus"
                                     type="text" 
                                     placeholder="Tulis pesan..." 
                                     class="flex-grow bg-transparent border-none focus:ring-0 focus:outline-none text-xs text-gray-700 dark:text-gray-200 placeholder-gray-400 dark:placeholder-gray-600 py-2 outline-none shadow-none"

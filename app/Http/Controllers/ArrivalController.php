@@ -54,7 +54,7 @@ class ArrivalController extends Controller
     {
         return Inertia::render('Arrivals/Create', [
             'vessels' => \App\Models\Vessel::whereDate('sipi_end_date', '>=', now()) // Tambahan filter tanggal
-                ->select('id', 'vessel_name', 'license_number')
+                ->select('id', 'vessel_name', 'selar_mark')
                 ->orderBy('vessel_name')
                 ->get(),
             'landingSites' => \App\Models\LandingSite::where('is_active', true)
@@ -164,8 +164,8 @@ class ArrivalController extends Controller
         $arrival->load(['vessel', 'landingSite', 'catches.fishSpecies']);
         return Inertia::render('Arrivals/Edit', [
             'arrival' => $arrival,
-            'vessels' => \App\Models\Vessel::where('approval_status', true)
-                ->select('id', 'vessel_name', 'license_number')
+            'vessels' => \App\Models\Vessel::whereDate('sipi_end_date', '>=', now())
+                ->select('id', 'vessel_name', 'selar_mark')
                 ->orderBy('vessel_name')
                 ->get(),
             'landingSites' => \App\Models\LandingSite::where('is_active', true)
