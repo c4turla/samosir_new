@@ -138,7 +138,7 @@ SAMOSIR adalah sistem berbasis web yang dirancang untuk mempermudah pengelolaan 
 
 ## Kontak
 
-Untuk pertanyaan dan dukungan, silakan hubungi tim development.
+Untuk pertanyaan dan dukungan, silakan hubungi tim development catur.crh@gmail.com
 
 ## Dukungan Teknis
 
