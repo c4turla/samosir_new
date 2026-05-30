@@ -97,7 +97,7 @@ SAMOSIR adalah sistem berbasis web yang dirancang untuk mempermudah pengelolaan 
 
 1. **Clone Repository**
    ```bash
-   git clone [url-repo]
+   git clone https://github.com/c4turla/samosir_new.git
    cd samosir_new
    ```
 
