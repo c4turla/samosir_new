@@ -125,6 +125,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/{departure}/edit', [DepartureController::class, 'edit'])->name('departures.edit');
         Route::put('/{departure}', [DepartureController::class, 'update'])->name('departures.update');
         Route::delete('/{departure}', [DepartureController::class, 'destroy'])->name('departures.destroy');
+        Route::get('/{departure}/print', [DepartureController::class, 'print'])->name('departures.print');
         Route::post('/{departure}/approve', [DepartureController::class, 'approve'])->name('departures.approve');
         Route::post('/{departure}/reject', [DepartureController::class, 'reject'])->name('departures.reject');
     });

@@ -39,6 +39,18 @@ watch(() => form.settings, (newVal) => {
     hasChanges.value = JSON.stringify(newVal) !== originalData
 }, { deep: true })
 
+// Watch activeTab to scroll active tab into view on mobile
+watch(activeTab, (newTab) => {
+    if (typeof window !== 'undefined') {
+        setTimeout(() => {
+            const el = document.getElementById(`tab-${newTab}`)
+            if (el) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
+            }
+        }, 50)
+    }
+})
+
 const submit = () => {
     form.post('/settings', {
         preserveScroll: true,
@@ -88,24 +100,23 @@ const groupDescriptions = {
                 </div>
             </div>
 
-
-
-            <div class="flex gap-6">
-                <!-- Sidebar Tabs -->
-                <div class="w-56 flex-shrink-0">
-                    <nav class="bg-white dark:bg-gray-800 shadow rounded-lg p-2 space-y-0.5 sticky top-4">
+            <div class="flex flex-col md:flex-row gap-4 md:gap-6">
+                <!-- Sidebar Tabs / Horizontal Tabs on Mobile -->
+                <div class="w-full md:w-56 flex-shrink-0 md:sticky md:top-20 z-20">
+                    <nav class="flex flex-row md:flex-col overflow-x-auto md:overflow-x-visible gap-1.5 p-1.5 md:p-2 bg-white dark:bg-gray-800 shadow rounded-xl md:rounded-lg space-y-0 md:space-y-0.5 scrollbar-none snap-x scroll-smooth">
                         <button
                             v-for="(label, group) in groupLabels"
                             :key="group"
+                            :id="`tab-${group}`"
                             @click="activeTab = group"
                             :class="[
-                                'w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-left transition-all duration-200 text-xs font-medium',
+                                'flex items-center gap-2 px-3 py-2 md:py-2.5 rounded-lg text-left transition-all duration-200 text-xs font-medium whitespace-nowrap snap-center shrink-0',
                                 activeTab === group
-                                    ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 shadow-sm'
-                                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700/50'
+                                    ? 'bg-blue-600 text-white dark:bg-blue-600 shadow-sm md:bg-blue-50 md:dark:bg-blue-900/30 md:text-blue-600 md:dark:text-blue-400 md:shadow-none'
+                                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700/50 hover:text-gray-900 dark:hover:text-white'
                             ]"
                         >
-                            <i :class="[groupIcons[group], 'text-base']"></i>
+                            <i :class="[groupIcons[group], 'text-sm md:text-base']"></i>
                             <span>{{ label }}</span>
                         </button>
                     </nav>
@@ -115,22 +126,22 @@ const groupDescriptions = {
                 <div class="flex-1">
                     <form @submit.prevent="submit">
                         <template v-for="(items, group) in settings" :key="group">
-                            <div v-show="activeTab === group" class="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
+                            <div v-show="activeTab === group" class="bg-white dark:bg-gray-800 shadow rounded-xl md:rounded-lg overflow-hidden">
                                 <!-- Group Header -->
-                                <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                                <div class="px-4 md:px-6 py-4 border-b border-gray-200 dark:border-gray-700">
                                     <div class="flex items-center gap-3">
-                                        <div class="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center">
+                                        <div class="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
                                             <i :class="[groupIcons[group], 'text-blue-600 dark:text-blue-400 text-lg']"></i>
                                         </div>
                                         <div>
-                                            <h2 class="text-sm font-semibold text-gray-900 dark:text-white">{{ groupLabels[group] }}</h2>
-                                            <p class="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">{{ groupDescriptions[group] }}</p>
+                                            <h2 class="text-xs md:text-sm font-semibold text-gray-900 dark:text-white">{{ groupLabels[group] }}</h2>
+                                            <p class="text-[10px] md:text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">{{ groupDescriptions[group] }}</p>
                                         </div>
                                     </div>
                                 </div>
 
                                 <!-- Settings Fields -->
-                                <div class="p-6 space-y-5">
+                                <div class="p-4 md:p-6 space-y-5">
                                     <div v-for="setting in items" :key="setting.key">
                                         <label :for="setting.key" class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                                             {{ setting.label }}
@@ -144,7 +155,7 @@ const groupDescriptions = {
                                             :type="setting.type === 'email' ? 'email' : 'text'"
                                             :disabled="!isAdmin"
                                             :placeholder="setting.label"
-                                            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                            class="w-full px-3.5 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                                         />
 
                                         <!-- Number Input -->
@@ -155,7 +166,7 @@ const groupDescriptions = {
                                             type="number"
                                             :disabled="!isAdmin"
                                             :placeholder="setting.label"
-                                            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                            class="w-full px-3.5 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                                         />
 
                                         <!-- Textarea -->
@@ -166,7 +177,7 @@ const groupDescriptions = {
                                             rows="3"
                                             :disabled="!isAdmin"
                                             :placeholder="setting.label"
-                                            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                            class="w-full px-3.5 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 resize-none disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                                         ></textarea>
 
                                         <!-- Select -->
@@ -175,7 +186,7 @@ const groupDescriptions = {
                                             :id="setting.key"
                                             v-model="form.settings[setting.key]"
                                             :disabled="!isAdmin"
-                                            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                            class="w-full px-3.5 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                                         >
                                             <option v-for="(label, val) in setting.options" :key="val" :value="val">
                                                 {{ label }}
@@ -183,7 +194,10 @@ const groupDescriptions = {
                                         </select>
 
                                         <!-- Boolean Toggle -->
-                                        <div v-else-if="setting.type === 'boolean'" class="flex items-center">
+                                        <div v-else-if="setting.type === 'boolean'" class="flex items-center justify-between p-3.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/30">
+                                            <span class="text-xs text-gray-700 dark:text-gray-300">
+                                                Status: <span class="font-semibold text-blue-600 dark:text-blue-400">{{ form.settings[setting.key] === '1' ? 'Aktif' : 'Nonaktif' }}</span>
+                                            </span>
                                             <button
                                                 type="button"
                                                 :disabled="!isAdmin"
@@ -201,9 +215,6 @@ const groupDescriptions = {
                                                     ]"
                                                 ></span>
                                             </button>
-                                            <span class="ml-3 text-xs text-gray-600 dark:text-gray-400">
-                                                {{ form.settings[setting.key] === '1' ? 'Aktif' : 'Nonaktif' }}
-                                            </span>
                                         </div>
 
                                         <!-- Description -->
@@ -216,8 +227,8 @@ const groupDescriptions = {
                         </template>
 
                         <!-- Action Bar -->
-                        <div v-if="isAdmin" class="mt-4 bg-white dark:bg-gray-800 shadow rounded-lg px-6 py-3 flex items-center justify-between sticky bottom-4">
-                            <div class="flex items-center gap-2">
+                        <div v-if="isAdmin" class="mt-4 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md shadow rounded-xl p-4 md:px-6 md:py-3.5 flex flex-col sm:flex-row items-center justify-between gap-3 sticky bottom-4 z-30 border border-gray-100 dark:border-gray-700/50">
+                            <div class="flex items-center justify-center sm:justify-start w-full sm:w-auto">
                                 <transition
                                     enter-active-class="transition ease-out duration-200"
                                     enter-from-class="opacity-0"
@@ -236,7 +247,7 @@ const groupDescriptions = {
                                 type="submit"
                                 :disabled="form.processing || !hasChanges"
                                 :class="[
-                                    'px-5 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2',
+                                    'w-full sm:w-auto px-5 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 active:scale-[0.98]',
                                     hasChanges
                                         ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-sm hover:shadow'
                                         : 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed'
@@ -255,3 +266,16 @@ const groupDescriptions = {
         </div>
     </AppLayout>
 </template>
+
+<style scoped>
+/* Hide scrollbar for Chrome, Safari and Opera */
+.scrollbar-none::-webkit-scrollbar {
+    display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.scrollbar-none {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+}
+</style>

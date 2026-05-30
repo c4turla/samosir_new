@@ -249,7 +249,7 @@ const userRole = computed(() => page.props.auth?.user?.role)
                                     {{ arrival.origin || '-' }}
                                 </td>
                                 <td class="px-4 py-3 text-xs text-gray-600 dark:text-gray-400">
-                                    {{ arrival.landingSite?.site_name || '-' }}
+                                    {{ arrival.landing_site?.site_name || '-' }}
                                 </td>
                                 <td class="px-4 py-3 whitespace-nowrap">
                                     <span :class="['inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium', getStatusBadgeClass(arrival.status)]">

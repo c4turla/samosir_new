@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Departure;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class DepartureController extends Controller
 {
@@ -243,6 +244,31 @@ class DepartureController extends Controller
 
         return redirect()->route('departures.index')
             ->with('success', 'Data keberangkatan kapal berhasil dihapus.');
+    }
+
+    /**
+     * Print the departure letter (STBLKK).
+     */
+    public function print(Departure $departure)
+    {
+        $departure->load(['vessel', 'landingSite', 'approvedBy']);
+
+        // Find syahbandar user by name stored in the syahbandar field
+        $syahbandarUser = null;
+        if ($departure->approvedBy && $departure->approvedBy->role === 'syahbandar') {
+            $syahbandarUser = $departure->approvedBy;
+        } elseif ($departure->syahbandar) {
+            $syahbandarUser = \App\Models\User::where('name', $departure->syahbandar)
+                ->where('role', 'syahbandar')
+                ->first();
+        }
+
+        $pdf = Pdf::loadView('departures.print', compact('departure', 'syahbandarUser'))
+            ->setPaper('a4', 'portrait');
+
+        $filename = 'stblkk_' . str_replace('/', '_', $departure->nomor) . '.pdf';
+
+        return $pdf->download($filename);
     }
 
     /**

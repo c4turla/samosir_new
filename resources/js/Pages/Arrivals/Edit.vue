@@ -19,11 +19,25 @@ if (props.arrival.catches && props.arrival.catches.length > 0) {
     }))
 }
 
+// Format date to YYYY-MM-DD for <input type="date">
+const formatDate = (val) => {
+    if (!val) return ''
+    return val.substring(0, 10)
+}
+
+// Format time to HH:MM for <input type="time">
+const formatTime = (val) => {
+    if (!val) return ''
+    // Handle full datetime string or time-only string
+    if (val.length > 10) val = val.substring(11)
+    return val.substring(0, 5)
+}
+
 const form = useForm({
     vessel_id: props.arrival.vessel_id,
     origin: props.arrival.origin || '',
-    arrival_date: props.arrival.arrival_date,
-    arrival_time: props.arrival.arrival_time || '',
+    arrival_date: formatDate(props.arrival.arrival_date),
+    arrival_time: formatTime(props.arrival.arrival_time),
     landing_site_id: props.arrival.landing_site_id || '',
     mutu: props.arrival.mutu || '',
     fish_quality: props.arrival.fish_quality || '',
@@ -92,7 +106,7 @@ const cancel = () => (window.location.href = '/arrivals')
                                 <select v-model="form.vessel_id" :class="['w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500', form.errors.vessel_id ? 'border-red-500' : 'border-gray-300 dark:border-gray-600', 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white']" required>
                                     <option value="">Pilih Kapal</option>
                                     <option v-for="vessel in vessels" :key="vessel.id" :value="vessel.id">
-                                        {{ vessel.vessel_name }} ({{ vessel.license_number }})
+                                        {{ vessel.vessel_name }} ({{ vessel.selar_mark }})
                                     </option>
                                 </select>
                             </div>
@@ -177,9 +191,9 @@ const cancel = () => (window.location.href = '/arrivals')
                                     :class="['w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500', form.errors.fish_quality ? 'border-red-500' : 'border-gray-300 dark:border-gray-600', 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white']"
                                 >
                                     <option value="" disabled>Pilih Produk</option>
-                                    <option value="Segar">Segar</option>
-                                    <option value="Beku">Beku</option>
-                                    <option value="Olahan">Olahan</option>
+                                    <option value="SEGAR">Segar</option>
+                                    <option value="BEKU">Beku</option>
+                                    <option value="OLAHAN">Olahan</option>
                                 </select>
                             </div>
                             <div>

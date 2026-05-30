@@ -29,7 +29,7 @@ const filteredVessels = computed(() => {
     const query = vesselSearch.value.toLowerCase().trim()
     return props.vessels.filter(vessel => 
         vessel.vessel_name.toLowerCase().includes(query) || 
-        (vessel.license_number && vessel.license_number.toLowerCase().includes(query))
+        (vessel.selar_mark && vessel.selar_mark.toLowerCase().includes(query))
     )
 })
 
@@ -202,7 +202,7 @@ const cancel = () => {
                                         ]"
                                     >
                                         <span v-if="selectedVessel" class="truncate font-medium">
-                                            {{ selectedVessel.vessel_name }} ({{ selectedVessel.license_number }})
+                                            {{ selectedVessel.vessel_name }} ({{ selectedVessel.selar_mark }})
                                         </span>
                                         <span v-else class="text-gray-400 dark:text-gray-400">
                                             Pilih Kapal
@@ -253,7 +253,7 @@ const cancel = () => {
                                             >
                                                 <div class="truncate">
                                                     <span class="font-medium">{{ vessel.vessel_name }}</span>
-                                                    <span class="text-xs text-gray-400 dark:text-gray-500 ml-2">({{ vessel.license_number }})</span>
+                                                    <span class="text-xs text-gray-400 dark:text-gray-500 ml-2">({{ vessel.selar_mark }})</span>
                                                 </div>
                                                 <i v-if="form.vessel_id === vessel.id" class="ri-check-line text-blue-500 dark:text-blue-400"></i>
                                             </li>
