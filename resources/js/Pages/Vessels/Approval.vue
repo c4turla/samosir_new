@@ -418,43 +418,25 @@ const updateManager = () => {
 
             <!-- Pagination -->
             <div v-if="vessels.last_page > 1" class="mt-6 bg-white dark:bg-gray-800 shadow rounded-lg px-4 py-3">
-                <div class="flex flex-col sm:flex-row items-center justify-between">
+                <div class="flex flex-col sm:flex-row items-center justify-between gap-2">
                     <div class="text-xs text-gray-700 dark:text-gray-300 mb-2 sm:mb-0">
                         Halaman {{ vessels.current_page }} dari {{ vessels.last_page }}
                     </div>
-                    <div class="flex space-x-2">
+                    <div class="flex flex-wrap items-center gap-1">
                         <Link
-                            v-if="vessels.prev_page_url"
-                            :href="vessels.prev_page_url"
-                            class="px-3 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
-                        >
-                            Sebelumnya
-                        </Link>
-                        <span
-                            v-for="page in Math.min(vessels.last_page, 5)"
-                            :key="page"
-                            class="px-3 py-1 text-xs border rounded-md transition-colors"
+                            v-for="(link, index) in vessels.links"
+                            :key="index"
+                            :href="link.url || '#'"
+                            class="px-2.5 py-1 text-xs rounded-md border transition-all duration-200 font-medium"
                             :class="[
-                                page === vessels.current_page
-                                    ? 'bg-blue-600 text-white border-blue-600'
-                                    : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600'
+                                link.active
+                                    ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                                    : link.url
+                                        ? 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600'
+                                        : 'border-gray-200 dark:border-gray-700 text-gray-300 dark:text-gray-600 cursor-not-allowed opacity-50 pointer-events-none'
                             ]"
-                        >
-                            <Link
-                                v-if="Math.abs(page - vessels.current_page) <= 2"
-                                :href="`${vessels.path}?page=${page}${search ? '&search=' + search : ''}${status ? '&status=' + status : ''}`"
-                                class="block"
-                            >
-                                {{ page }}
-                            </Link>
-                        </span>
-                        <Link
-                            v-if="vessels.next_page_url"
-                            :href="vessels.next_page_url"
-                            class="px-3 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
-                        >
-                            Selanjutnya
-                        </Link>
+                            v-html="link.label"
+                        />
                     </div>
                 </div>
             </div>

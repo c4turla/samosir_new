@@ -315,43 +315,25 @@ const userRole = computed(() => page.props.auth?.user?.role)
 
                 <!-- Pagination -->
                 <div v-if="arrivals.last_page > 1" class="bg-gray-50 dark:bg-gray-700 px-3 py-2 border-t border-gray-200 dark:border-gray-600 sm:px-4">
-                    <div class="flex flex-col sm:flex-row items-center justify-between">
+                    <div class="flex flex-col sm:flex-row items-center justify-between gap-2">
                         <div class="text-xs text-gray-700 dark:text-gray-300 mb-2 sm:mb-0">
                             Halaman {{ arrivals.current_page }} dari {{ arrivals.last_page }}
                         </div>
-                        <div class="flex space-x-2">
+                        <div class="flex flex-wrap items-center gap-1">
                             <Link
-                                v-if="arrivals.prev_page_url"
-                                :href="arrivals.prev_page_url"
-                                class="px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
-                            >
-                                Sebelumnya
-                            </Link>
-                            <span
-                                v-for="page in Math.min(arrivals.last_page, 5)"
-                                :key="page"
-                                class="px-2 py-1 text-xs border rounded-md transition-colors"
+                                v-for="(link, index) in arrivals.links"
+                                :key="index"
+                                :href="link.url || '#'"
+                                class="px-2.5 py-1 text-xs rounded-md border transition-all duration-200 font-medium"
                                 :class="[
-                                    page === arrivals.current_page
-                                        ? 'bg-blue-600 text-white border-blue-600'
-                                        : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600'
+                                    link.active
+                                        ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                                        : link.url
+                                            ? 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600'
+                                            : 'border-gray-200 dark:border-gray-700 text-gray-300 dark:text-gray-600 cursor-not-allowed opacity-50 pointer-events-none'
                                 ]"
-                            >
-                                <Link
-                                    v-if="Math.abs(page - arrivals.current_page) <= 2"
-                                    :href="`${arrivals.path}?page=${page}${search ? '&search=' + search : ''}${status ? '&status=' + status : ''}${dateFrom ? '&date_from=' + dateFrom : ''}${dateTo ? '&date_to=' + dateTo : ''}`"
-                                    class="block"
-                                >
-                                    {{ page }}
-                                </Link>
-                            </span>
-                            <Link
-                                v-if="arrivals.next_page_url"
-                                :href="arrivals.next_page_url"
-                                class="px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
-                            >
-                                Selanjutnya
-                            </Link>
+                                v-html="link.label"
+                            />
                         </div>
                     </div>
                 </div>
