@@ -83,7 +83,7 @@ DB_READY_PORT="${DB_PORT:-3306}"
 DB_READY_USER="${DB_USERNAME:-samosir}"
 DB_READY_PASS="${DB_PASSWORD:-samosir_secret}"
 
-maxTries=30
+maxTries=10
 tries=0
 while [ $tries -lt $maxTries ]; do
     if mysqladmin ping -h "$DB_READY_HOST" -P "$DB_READY_PORT" -u "$DB_READY_USER" -p"$DB_READY_PASS" --silent 2>/dev/null; then
