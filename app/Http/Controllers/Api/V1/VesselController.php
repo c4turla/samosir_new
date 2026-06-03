@@ -94,8 +94,8 @@ class VesselController extends Controller
         // Attach with pending status
         $vessel->managers()->attach($user->id, [
             'address' => $request->address,
-            'id_card' => $request->id_card,
-            'authorization_letter' => $request->authorization_letter,
+            'id_card' => $request->id_card ?? $user->id_card,
+            'authorization_letter' => $request->authorization_letter ?? $user->authorization_letter,
             'status' => $hasApprovedManager ? 'pending' : 'approved', // Auto-approve if no approved manager
             'is_primary' => !$vessel->managers()->wherePivot('is_primary', true)->exists(),
             'approved_by' => $hasApprovedManager ? null : $user->id,
