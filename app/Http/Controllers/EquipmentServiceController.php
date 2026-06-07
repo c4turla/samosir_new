@@ -161,6 +161,8 @@ class EquipmentServiceController extends Controller
             ]);
         }
 
+        $this->notifyManagers($service);
+
         return redirect()->route('equipment-services.index')->with('success', 'Jasa peralatan berhasil diperbarui.');
     }
 
@@ -263,6 +265,8 @@ class EquipmentServiceController extends Controller
             ]);
         }
 
+        $this->notifyManagers($service);
+
         return redirect()->route('equipment-services.index')->with('success', 'Perhitungan biaya berhasil disimpan.');
     }
 
@@ -285,6 +289,48 @@ class EquipmentServiceController extends Controller
 
         $service->update(['status' => 'completed']);
 
+        $this->notifyManagers($service);
+
         return redirect()->back()->with('success', 'Pembayaran berhasil diselesaikan.');
+    }
+
+    private function notifyManagers(EquipmentService $service)
+    {
+        $service->load('vessel.managers');
+        if ($service->vessel && $service->vessel->managers) {
+            $vesselName = $service->vessel->vessel_name;
+            $orderNumber = $service->order_number;
+            $status = $service->status;
+
+            $isIceCruiser = $service->items()->where('equipment_name', 'ice_cruiser')->exists();
+            $serviceLabel = $isIceCruiser ? 'Jasa Ice Cruiser' : 'Jasa Peralatan';
+
+            $title = "Pemesanan {$serviceLabel}";
+            $message = "Status pemesanan {$serviceLabel} untuk kapal {$vesselName} ({$orderNumber}) berubah menjadi {$status}.";
+            $type = 'info';
+
+            if ($status === 'processed') {
+                $title = "Perhitungan {$serviceLabel}";
+                $message = "Perhitungan biaya {$serviceLabel} untuk kapal {$vesselName} ({$orderNumber}) telah selesai diproses.";
+                $type = 'warning';
+            } elseif ($status === 'completed') {
+                $title = "{$serviceLabel} Selesai";
+                $message = "Pemesanan {$serviceLabel} untuk kapal {$vesselName} ({$orderNumber}) telah selesai dan lunas.";
+                $type = 'success';
+            } elseif ($status === 'cancelled') {
+                $title = "{$serviceLabel} Dibatalkan";
+                $message = "Pemesanan {$serviceLabel} untuk kapal {$vesselName} ({$orderNumber}) telah dibatalkan.";
+                $type = 'danger';
+            }
+
+            foreach ($service->vessel->managers as $manager) {
+                $manager->notify(new \App\Notifications\DataInputNotification(
+                    $title,
+                    $message,
+                    '/services',
+                    $type
+                ));
+            }
+        }
     }
 }

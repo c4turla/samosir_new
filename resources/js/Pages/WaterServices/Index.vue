@@ -242,7 +242,7 @@ const getProgressBarClass = (status) => {
                         <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
                             <tr v-for="service in (services.data || [])" :key="service.id" class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                                 <td class="px-4 py-3 whitespace-nowrap text-xs font-medium text-gray-900 dark:text-white">{{ service.order_number }}</td>
-                                <td class="px-4 py-3 whitespace-nowrap text-xs text-gray-600 dark:text-gray-400">{{ service.vessel?.name || '-' }}</td>
+                                <td class="px-4 py-3 whitespace-nowrap text-xs text-gray-600 dark:text-gray-400">{{ service.vessel?.vessel_name || '-' }}</td>
                                 <td class="px-4 py-3 whitespace-nowrap text-xs text-gray-600 dark:text-gray-400">{{ service.requester || '-' }}</td>
                                 <td class="px-4 py-3 whitespace-nowrap text-xs text-gray-600 dark:text-gray-400">{{ formatDate(service.request_date) }}</td>
                                 <td class="px-4 py-3 whitespace-nowrap text-xs text-gray-600 dark:text-gray-400">{{ service.volume }} Liter</td>

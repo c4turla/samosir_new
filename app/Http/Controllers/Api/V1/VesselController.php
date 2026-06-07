@@ -94,19 +94,17 @@ class VesselController extends Controller
         // Attach with pending status
         $vessel->managers()->attach($user->id, [
             'address' => $request->address,
-            'id_card' => $request->id_card,
-            'authorization_letter' => $request->authorization_letter,
-            'status' => $hasApprovedManager ? 'pending' : 'approved', // Auto-approve if no approved manager
+            'id_card' => $request->id_card ?? $user->id_card,
+            'authorization_letter' => $request->authorization_letter ?? $user->authorization_letter,
+            'status' => 'pending', // Always pending until approved by officers
             'is_primary' => !$vessel->managers()->wherePivot('is_primary', true)->exists(),
-            'approved_by' => $hasApprovedManager ? null : $user->id,
-            'approved_at' => $hasApprovedManager ? null : now(),
+            'approved_by' => null,
+            'approved_at' => null,
             'created_at' => now(),
             'updated_at' => now(),
         ]);
 
-        $message = $hasApprovedManager
-            ? 'Pendaftaran pengelola kapal berhasil diajukan. Mohon tunggu persetujuan pengelola utama.'
-            : 'Pendaftaran berhasil. Anda sekarang terdaftar sebagai pengelola kapal.';
+        $message = 'Pendaftaran pengelola kapal berhasil diajukan. Mohon tunggu persetujuan petugas.';
 
         return response()->json([
             'status' => 'success',

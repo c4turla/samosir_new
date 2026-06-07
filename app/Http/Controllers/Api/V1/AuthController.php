@@ -25,45 +25,22 @@ class AuthController extends Controller
             'role' => 'required|in:umum,pengelola',
         ]);
 
-        // Jika role pengelola, pastikan mengirim data kapal dan file pendukung
-        if ($request->role === 'pengelola') {
-            $request->validate([
-                'ktp_file' => 'required|file|mimes:jpeg,png,jpg,pdf|max:2048',
-                'surat_kuasa_file' => 'required|file|mimes:jpeg,png,jpg,pdf|max:2048',
-            ]);
-        }
-
         DB::beginTransaction();
 
         try {
-            $isActive = $request->role === 'umum' ? true : false;
-
             $user = User::create([
                 'name' => $request->name,
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
                 'role' => $request->role,
-                'is_active' => $isActive,
+                'is_active' => true,
             ]);
-
-            if ($request->role === 'pengelola') {
-                $ktpPath = $request->file('ktp_file')->store('vessel_managers/ktp', 'public');
-                $suratKuasaPath = $request->file('surat_kuasa_file')->store('vessel_managers/surat_kuasa', 'public');
-
-                $user->vessels()->attach($request->vessel_id, [
-                    'id_card' => $ktpPath,
-                    'authorization_letter' => $suratKuasaPath,
-                    'is_primary' => true,
-                ]);
-            }
 
             DB::commit();
 
             return response()->json([
                 'status' => 'success',
-                'message' => $request->role === 'pengelola'
-                    ? 'Registrasi berhasil. Akun Anda sedang menunggu persetujuan petugas.'
-                    : 'Registrasi berhasil. Silakan login.',
+                'message' => 'Registrasi berhasil. Silakan login.',
             ], 201);
 
         } catch (\Exception $e) {
@@ -125,6 +102,9 @@ class AuthController extends Controller
                     'role' => $user->role,
                     'phone' => $user->phone,
                     'photo' => $user->photo ? asset('storage/' . $user->photo) : null,
+                    'id_card' => $user->id_card ? asset('storage/' . $user->id_card) : null,
+                    'authorization_letter' => $user->authorization_letter ? asset('storage/' . $user->authorization_letter) : null,
+                    'signature' => $user->signature ? asset('storage/' . $user->signature) : null,
                 ],
                 'token' => $token,
             ]
@@ -161,6 +141,9 @@ class AuthController extends Controller
                 'phone' => $user->phone,
                 'address' => $user->address,
                 'photo' => $user->photo ? asset('storage/' . $user->photo) : null,
+                'id_card' => $user->id_card ? asset('storage/' . $user->id_card) : null,
+                'authorization_letter' => $user->authorization_letter ? asset('storage/' . $user->authorization_letter) : null,
+                'signature' => $user->signature ? asset('storage/' . $user->signature) : null,
             ]
         ]);
     }
@@ -178,6 +161,8 @@ class AuthController extends Controller
             'phone' => 'sometimes|nullable|string|max:30',
             'address' => 'sometimes|nullable|string',
             'photo' => 'sometimes|nullable|file|mimes:jpeg,png,jpg|max:2048',
+            'ktp_file' => 'sometimes|nullable|file|mimes:jpeg,png,jpg,pdf|max:2048',
+            'surat_kuasa_file' => 'sometimes|nullable|file|mimes:jpeg,png,jpg,pdf|max:2048',
         ]);
 
         // Update text fields
@@ -199,6 +184,26 @@ class AuthController extends Controller
             $user->photo = $path;
         }
 
+        // Handle KTP file upload
+        if ($request->hasFile('ktp_file')) {
+            if ($user->id_card) {
+                Storage::disk('public')->delete($user->id_card);
+            }
+
+            $path = $request->file('ktp_file')->store('users/ktp', 'public');
+            $user->id_card = $path;
+        }
+
+        // Handle Surat Kuasa file upload
+        if ($request->hasFile('surat_kuasa_file')) {
+            if ($user->authorization_letter) {
+                Storage::disk('public')->delete($user->authorization_letter);
+            }
+
+            $path = $request->file('surat_kuasa_file')->store('users/surat_kuasa', 'public');
+            $user->authorization_letter = $path;
+        }
+
         $user->save();
 
         return response()->json([
@@ -212,8 +217,77 @@ class AuthController extends Controller
                 'phone' => $user->phone,
                 'address' => $user->address,
                 'photo' => $user->photo ? asset('storage/' . $user->photo) : null,
+                'id_card' => $user->id_card ? asset('storage/' . $user->id_card) : null,
+                'authorization_letter' => $user->authorization_letter ? asset('storage/' . $user->authorization_letter) : null,
+                'signature' => $user->signature ? asset('storage/' . $user->signature) : null,
             ]
         ]);
+    }
+
+    /**
+     * Update authenticated user signature.
+     */
+    public function updateSignature(Request $request)
+    {
+        $request->validate([
+            'signature' => 'required|string',
+        ]);
+
+        $user = $request->user();
+
+        // This feature is for pengelola and syahbandar
+        if (!in_array($user->role, ['pengelola', 'syahbandar'])) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Role Anda tidak diizinkan untuk mengunggah tanda tangan.'
+            ], 403);
+        }
+
+        $data = $request->signature;
+
+        if (preg_match('/^data:image\/(\w+);base64,/', $data, $type)) {
+            $data = substr($data, strpos($data, ',') + 1);
+            $type = strtolower($type[1]);
+
+            if (!in_array($type, ['png', 'jpg', 'jpeg'])) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Format gambar tidak valid.'
+                ], 422);
+            }
+
+            $data = base64_decode($data);
+
+            if ($data === false) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Gagal memproses gambar tanda tangan.'
+                ], 422);
+            }
+
+            $fileName = 'signatures/' . $user->id . '_' . time() . '.' . $type;
+
+            if ($user->signature && Storage::disk('public')->exists($user->signature)) {
+                Storage::disk('public')->delete($user->signature);
+            }
+
+            Storage::disk('public')->put($fileName, $data);
+
+            $user->update([
+                'signature' => $fileName
+            ]);
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Tanda tangan berhasil diperbarui.',
+                'signature_url' => asset('storage/' . $fileName)
+            ]);
+        }
+
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Data tanda tangan tidak valid.'
+        ], 422);
     }
 
     /**

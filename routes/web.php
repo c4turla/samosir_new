@@ -134,6 +134,9 @@ Route::middleware('auth')->group(function () {
     Route::prefix('spr-departures')->group(function () {
         Route::get('/', [App\Http\Controllers\SprDepartureController::class, 'index'])->name('spr-departures.index');
         Route::get('/{sprDeparture}', [App\Http\Controllers\SprDepartureController::class, 'show'])->name('spr-departures.show');
+        Route::post('/{sprDeparture}/forward', [App\Http\Controllers\SprDepartureController::class, 'forward'])->name('spr-departures.forward');
+        Route::post('/{sprDeparture}/approve', [App\Http\Controllers\SprDepartureController::class, 'approve'])->name('spr-departures.approve');
+        Route::post('/{sprDeparture}/reject', [App\Http\Controllers\SprDepartureController::class, 'reject'])->name('spr-departures.reject');
     });
     
     // Unloadings routes

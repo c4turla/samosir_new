@@ -1,6 +1,7 @@
 <script setup>
 import AppLayout from '../../Layouts/AppLayout.vue'
-import { Head, Link } from '@inertiajs/vue3'
+import { Head, Link, usePage, router } from '@inertiajs/vue3'
+import { computed } from 'vue'
 
 const props = defineProps({
     sprDeparture: {
@@ -8,6 +9,10 @@ const props = defineProps({
         required: true
     }
 })
+
+const page = usePage()
+const userRole = computed(() => page.props.auth?.user?.role)
+const flash = computed(() => page.props.flash || {})
 
 const formatDate = (dateString) => {
     if (!dateString) return '-'
@@ -42,6 +47,78 @@ const getStatusBadgeClass = (status) => {
             return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
     }
 }
+
+const getStatusLabel = (status) => {
+    switch (status) {
+        case 'pending':
+            return 'Pending (Menunggu Petugas)'
+        case 'processed':
+            return 'Diteruskan ke Syahbandar'
+        case 'approved':
+            return 'Disetujui Syahbandar'
+        case 'rejected':
+            return 'Ditolak Syahbandar'
+        default:
+            return status
+    }
+}
+
+// Parse combined muatan (BBM, Air, Es)
+const parsedMuatan = computed(() => {
+    const muatanStr = props.sprDeparture.muatan || ''
+    const bbmMatch = muatanStr.match(/BBM:\s*([^,]+)/i)
+    const airMatch = muatanStr.match(/AIR:\s*([^,]+)/i)
+    const esMatch = muatanStr.match(/ES:\s*([^,]+)/i)
+    if (!bbmMatch && !airMatch && !esMatch) {
+        return null // raw muatan
+    }
+    return {
+        bbm: bbmMatch ? bbmMatch[1].trim() : '-',
+        air: airMatch ? airMatch[1].trim() : '-',
+        es: esMatch ? esMatch[1].trim() : '-'
+    }
+})
+
+// Parse combined additional_notes (Kegiatan, Pemohon, Catatan)
+const parsedNotes = computed(() => {
+    const notesStr = props.sprDeparture.additional_notes || ''
+    const kegiatanMatch = notesStr.match(/Kegiatan:\s*([^|]+)/i)
+    const pemohonMatch = notesStr.match(/Pemohon:\s*([^|]+)/i)
+    const catatanMatch = notesStr.match(/Catatan:\s*(.+)/i)
+    
+    if (!kegiatanMatch && !pemohonMatch) {
+        return {
+            kegiatan: '-',
+            pemohon: props.sprDeparture.user?.name || '-',
+            catatan: notesStr
+        }
+    }
+    
+    return {
+        kegiatan: kegiatanMatch ? kegiatanMatch[1].trim() : '-',
+        pemohon: pemohonMatch ? pemohonMatch[1].trim() : (props.sprDeparture.user?.name || '-'),
+        catatan: catatanMatch ? catatanMatch[1].trim() : '-'
+    }
+})
+
+// Action triggers
+const forwardSpr = () => {
+    if (confirm('Apakah Anda yakin ingin memverifikasi dan meneruskan SPR ini ke Syahbandar?')) {
+        router.post(`/spr-departures/${props.sprDeparture.id}/forward`)
+    }
+}
+
+const approveSpr = () => {
+    if (confirm('Apakah Anda yakin ingin menyetujui permohonan SPR ini?')) {
+        router.post(`/spr-departures/${props.sprDeparture.id}/approve`)
+    }
+}
+
+const rejectSpr = () => {
+    if (confirm('Apakah Anda yakin ingin menolak permohonan SPR ini?')) {
+        router.post(`/spr-departures/${props.sprDeparture.id}/reject`)
+    }
+}
 </script>
 
 <template>
@@ -49,6 +126,14 @@ const getStatusBadgeClass = (status) => {
         <Head title="Detail SPR Keberangkatan" />
 
         <div class="max-w-4xl mx-auto">
+            <!-- Flash Message -->
+            <div v-if="flash.success" class="mb-4 p-4 bg-green-50 dark:bg-green-900/20 rounded-xl border border-green-200 dark:border-green-800 text-sm text-green-800 dark:text-green-200">
+                {{ flash.success }}
+            </div>
+            <div v-if="flash.error" class="mb-4 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl border border-red-200 dark:border-red-800 text-sm text-red-800 dark:text-red-200">
+                {{ flash.error }}
+            </div>
+
             <div class="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div class="flex items-center gap-3">
                     <Link href="/spr-departures" class="p-2 bg-white dark:bg-gray-800 shadow-sm border border-gray-200 dark:border-gray-700 rounded-lg text-gray-500 hover:text-blue-600 transition-colors">
@@ -59,8 +144,26 @@ const getStatusBadgeClass = (status) => {
                         <p class="text-xs text-gray-600 dark:text-gray-400">ID Permohonan: #{{ sprDeparture.id.toString().padStart(5, '0') }}</p>
                     </div>
                 </div>
-                <div :class="['px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider', getStatusBadgeClass(sprDeparture.status)]">
-                    {{ sprDeparture.status }}
+                <div class="flex items-center gap-3">
+                    <!-- Action buttons based on status & role -->
+                    <template v-if="sprDeparture.status === 'pending' && userRole === 'petugas'">
+                        <button @click="forwardSpr" class="px-4 py-2 bg-blue-650 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition-all shadow-md flex items-center gap-1.5">
+                            <i class="ri-checkbox-circle-line"></i> Verifikasi & Teruskan ke Syahbandar
+                        </button>
+                    </template>
+                    
+                    <template v-if="sprDeparture.status === 'processed' && userRole === 'syahbandar'">
+                        <button @click="approveSpr" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-xs font-bold transition-all shadow-md flex items-center gap-1.5">
+                            <i class="ri-check-line"></i> Setujui SPR
+                        </button>
+                        <button @click="rejectSpr" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold transition-all shadow-md flex items-center gap-1.5">
+                            <i class="ri-close-line"></i> Tolak
+                        </button>
+                    </template>
+
+                    <div :class="['px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider', getStatusBadgeClass(sprDeparture.status)]">
+                        {{ getStatusLabel(sprDeparture.status) }}
+                    </div>
                 </div>
             </div>
 
@@ -103,10 +206,28 @@ const getStatusBadgeClass = (status) => {
                                 <p class="text-[10px] text-gray-400 uppercase">Merk / Kekuatan Mesin</p>
                                 <p class="text-sm font-medium text-gray-900 dark:text-white">{{ sprDeparture.vessel?.engine_power || '-' }}</p>
                             </div>
+                            <div class="space-y-0.5">
+                                <p class="text-[10px] text-gray-400 uppercase">Kegiatan</p>
+                                <p class="text-sm font-bold text-gray-900 dark:text-white">{{ parsedNotes.kegiatan }}</p>
+                            </div>
                         </div>
                         <div class="mt-4 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-100 dark:border-gray-600">
                             <p class="text-[10px] text-gray-400 uppercase mb-1">Muatan Kapal</p>
-                            <p class="text-sm font-medium text-gray-900 dark:text-white">{{ sprDeparture.muatan || '-' }}</p>
+                            <div v-if="parsedMuatan" class="grid grid-cols-3 gap-4 text-xs font-semibold">
+                                <div>
+                                    <span class="text-gray-400 font-normal block">BBM</span>
+                                    <span class="text-gray-900 dark:text-white">{{ parsedMuatan.bbm }}</span>
+                                </div>
+                                <div>
+                                    <span class="text-gray-400 font-normal block">AIR</span>
+                                    <span class="text-gray-900 dark:text-white">{{ parsedMuatan.air }}</span>
+                                </div>
+                                <div>
+                                    <span class="text-gray-400 font-normal block">ES</span>
+                                    <span class="text-gray-900 dark:text-white">{{ parsedMuatan.es }}</span>
+                                </div>
+                            </div>
+                            <p v-else class="text-sm font-medium text-gray-900 dark:text-white">{{ sprDeparture.muatan || '-' }}</p>
                         </div>
                     </section>
 
@@ -118,12 +239,12 @@ const getStatusBadgeClass = (status) => {
                                 <div>
                                     <p class="text-[10px] text-gray-400 uppercase">Kedatangan (Masuk)</p>
                                     <p class="text-xs font-medium text-gray-900 dark:text-white">{{ formatDate(sprDeparture.cp_arrival_date) }}</p>
-                                    <p class="text-[10px] text-gray-500 italic">No. STBL: {{ sprDeparture.cp_arrival_stbl || '-' }}</p>
+                                    <p class="text-[10px] text-gray-555 dark:text-gray-200 italic">No. STBL: {{ sprDeparture.cp_arrival_stbl || '-' }}</p>
                                 </div>
                                 <div>
                                     <p class="text-[10px] text-gray-400 uppercase">Keberangkatan (Keluar)</p>
                                     <p class="text-xs font-medium text-gray-900 dark:text-white">{{ formatDate(sprDeparture.cp_departure_date) }}</p>
-                                    <p class="text-[10px] text-gray-500 italic">No. STBL: {{ sprDeparture.cp_departure_stbl || '-' }}</p>
+                                    <p class="text-[10px] text-gray-555 dark:text-gray-200 italic">No. STBL: {{ sprDeparture.cp_departure_stbl || '-' }}</p>
                                 </div>
                             </div>
                         </section>
@@ -134,12 +255,12 @@ const getStatusBadgeClass = (status) => {
                                 <div>
                                     <p class="text-[10px] text-gray-400 uppercase">Kedatangan (Masuk)</p>
                                     <p class="text-xs font-medium text-gray-900 dark:text-white">{{ formatDate(sprDeparture.physical_arrival_date) }}</p>
-                                    <p class="text-[10px] text-gray-500 italic">No. STBL: {{ sprDeparture.physical_arrival_stbl || '-' }}</p>
+                                    <p class="text-[10px] text-gray-555 dark:text-gray-200 italic">No. STBL: {{ sprDeparture.physical_arrival_stbl || '-' }}</p>
                                 </div>
                                 <div>
                                     <p class="text-[10px] text-gray-400 uppercase">Keberangkatan (Keluar)</p>
                                     <p class="text-xs font-medium text-gray-900 dark:text-white">{{ formatDate(sprDeparture.physical_departure_date) }}</p>
-                                    <p class="text-[10px] text-gray-500 italic">No. STBL: {{ sprDeparture.physical_departure_stbl || '-' }}</p>
+                                    <p class="text-[10px] text-gray-555 dark:text-gray-200 italic">No. STBL: {{ sprDeparture.physical_departure_stbl || '-' }}</p>
                                 </div>
                             </div>
                         </section>
@@ -164,10 +285,10 @@ const getStatusBadgeClass = (status) => {
                     </section>
 
                     <!-- Bagian D: Catatan -->
-                    <section v-if="sprDeparture.additional_notes">
+                    <section v-if="parsedNotes.catatan">
                         <h3 class="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-widest mb-2">Keterangan Tambahan</h3>
                         <div class="p-4 bg-gray-50 dark:bg-gray-700/30 rounded-lg text-xs text-gray-600 dark:text-gray-400 italic leading-relaxed">
-                            {{ sprDeparture.additional_notes }}
+                            {{ parsedNotes.catatan }}
                         </div>
                     </section>
 
@@ -179,11 +300,11 @@ const getStatusBadgeClass = (status) => {
                             <p>Waktu Submit: {{ formatDate(sprDeparture.created_at) }} {{ formatWaktu(sprDeparture.created_at) }}</p>
                         </div>
                         <div class="text-center w-48">
-                            <p class="text-[10px] text-gray-500 mb-12">Pemohon,</p>
+                            <p class="text-[10px] text-gray-555 dark:text-gray-200 mb-12">Pemohon,</p>
                             <p class="text-sm font-bold text-gray-900 dark:text-white border-b border-gray-900 dark:border-white inline-block px-4 pb-1">
-                                {{ sprDeparture.nakhoda_name }}
+                                {{ parsedNotes.pemohon }}
                             </p>
-                            <p class="text-[10px] text-gray-400 mt-1 uppercase tracking-tighter">Nakhoda Kapal</p>
+                            <p class="text-[10px] text-gray-400 mt-1 uppercase tracking-tighter">Pemohon / Pengelola</p>
                         </div>
                     </div>
                 </div>

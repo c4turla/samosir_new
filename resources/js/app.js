@@ -19,8 +19,9 @@ if (Ziggy) {
 // Setup route() as global function
 if (window.Ziggy) {
     window.route = (name, params = {}, absolute = false) => {
-        return Ziggy.namedRoutes[name]
-            ? Ziggy.namedRoutes[name].uri
+        const routes = Ziggy.routes || Ziggy.namedRoutes;
+        return routes && routes[name]
+            ? (routes[name].uri || routes[name])
                 .replace(/\{([^}]+)\}/g, (_, key) => {
                     const value = params[key];
                     delete params[key];
@@ -40,6 +41,7 @@ createInertiaApp({
     setup({ el, App, props, plugin }) {
         return createApp({ render: () => h(App, props) })
             .use(plugin)
+            .use(ZiggyVue, Ziggy)
             .mount(el);
     },
     progress: {

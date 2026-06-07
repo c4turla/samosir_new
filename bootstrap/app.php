@@ -18,6 +18,10 @@ return Application::configure(basePath: dirname(__DIR__))
             App\Http\Middleware\HandleInertiaRequests::class,
         ]);
         
+        $middleware->alias([
+            'ensure.docs' => \App\Http\Middleware\EnsureDocumentsCompleted::class,
+        ]);
+        
         // Trust all proxies (important for Docker/EasyPanel behind Traefik/Nginx)
         $middleware->trustProxies(at: '*');
     })
