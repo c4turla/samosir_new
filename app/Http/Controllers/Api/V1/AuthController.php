@@ -104,6 +104,7 @@ class AuthController extends Controller
                     'photo' => $user->photo ? asset('storage/' . $user->photo) : null,
                     'id_card' => $user->id_card ? asset('storage/' . $user->id_card) : null,
                     'authorization_letter' => $user->authorization_letter ? asset('storage/' . $user->authorization_letter) : null,
+                    'signature' => $user->signature ? asset('storage/' . $user->signature) : null,
                 ],
                 'token' => $token,
             ]
@@ -142,6 +143,7 @@ class AuthController extends Controller
                 'photo' => $user->photo ? asset('storage/' . $user->photo) : null,
                 'id_card' => $user->id_card ? asset('storage/' . $user->id_card) : null,
                 'authorization_letter' => $user->authorization_letter ? asset('storage/' . $user->authorization_letter) : null,
+                'signature' => $user->signature ? asset('storage/' . $user->signature) : null,
             ]
         ]);
     }
@@ -217,8 +219,75 @@ class AuthController extends Controller
                 'photo' => $user->photo ? asset('storage/' . $user->photo) : null,
                 'id_card' => $user->id_card ? asset('storage/' . $user->id_card) : null,
                 'authorization_letter' => $user->authorization_letter ? asset('storage/' . $user->authorization_letter) : null,
+                'signature' => $user->signature ? asset('storage/' . $user->signature) : null,
             ]
         ]);
+    }
+
+    /**
+     * Update authenticated user signature.
+     */
+    public function updateSignature(Request $request)
+    {
+        $request->validate([
+            'signature' => 'required|string',
+        ]);
+
+        $user = $request->user();
+
+        // This feature is for pengelola and syahbandar
+        if (!in_array($user->role, ['pengelola', 'syahbandar'])) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Role Anda tidak diizinkan untuk mengunggah tanda tangan.'
+            ], 403);
+        }
+
+        $data = $request->signature;
+
+        if (preg_match('/^data:image\/(\w+);base64,/', $data, $type)) {
+            $data = substr($data, strpos($data, ',') + 1);
+            $type = strtolower($type[1]);
+
+            if (!in_array($type, ['png', 'jpg', 'jpeg'])) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Format gambar tidak valid.'
+                ], 422);
+            }
+
+            $data = base64_decode($data);
+
+            if ($data === false) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Gagal memproses gambar tanda tangan.'
+                ], 422);
+            }
+
+            $fileName = 'signatures/' . $user->id . '_' . time() . '.' . $type;
+
+            if ($user->signature && Storage::disk('public')->exists($user->signature)) {
+                Storage::disk('public')->delete($user->signature);
+            }
+
+            Storage::disk('public')->put($fileName, $data);
+
+            $user->update([
+                'signature' => $fileName
+            ]);
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Tanda tangan berhasil diperbarui.',
+                'signature_url' => asset('storage/' . $fileName)
+            ]);
+        }
+
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Data tanda tangan tidak valid.'
+        ], 422);
     }
 
     /**

@@ -1,16 +1,21 @@
 <script setup>
 import AppLayout from '../../Layouts/AppLayout.vue'
 import { Head, Link, useForm } from '@inertiajs/vue3'
-import { computed } from 'vue'
+import { computed,ref } from 'vue'
 
 const props = defineProps({
     service: Object,
     vessels: Array,
 })
 
+const formatDateForInput = (dateString) => {
+    if (!dateString) return ''
+    return dateString.includes('T') ? dateString.split('T')[0] : dateString.split(' ')[0]
+}
+
 const form = useForm({
     vessel_id: props.service.vessel_id,
-    request_date: props.service.request_date,
+    request_date: formatDateForInput(props.service.request_date),
     requester: props.service.requester,
     volume: props.service.volume,
     price: props.service.price,

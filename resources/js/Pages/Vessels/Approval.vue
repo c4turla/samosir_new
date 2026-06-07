@@ -162,6 +162,27 @@ const updateManager = () => {
         }
     })
 }
+
+const isFile = (path) => {
+    if (!path) return false
+    const parts = path.split('.')
+    if (parts.length < 2) return false
+    const ext = parts.pop().toLowerCase()
+    return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'pdf'].includes(ext)
+}
+
+const isPdf = (path) => {
+    if (!path) return false
+    return path.toLowerCase().endsWith('.pdf')
+}
+
+const getFileUrl = (path) => {
+    if (!path) return ''
+    if (path.startsWith('http://') || path.startsWith('https://')) {
+        return path
+    }
+    return `/storage/${path}`
+}
 </script>
 
 <template>
@@ -368,10 +389,58 @@ const updateManager = () => {
                                             </button>
                                         </div>
                                     </div>
-                                    <div v-if="manager.pivot.id_card || manager.pivot.authorization_letter || manager.pivot.address" class="mt-3 space-y-1 text-xs text-gray-600 dark:text-gray-400">
-                                        <p v-if="manager.pivot.id_card">No. KTP: {{ manager.pivot.id_card }}</p>
-                                        <p v-if="manager.pivot.authorization_letter">Surat Kuasa: {{ manager.pivot.authorization_letter }}</p>
-                                        <p v-if="manager.pivot.address">Alamat: {{ manager.pivot.address }}</p>
+                                    <div v-if="manager.pivot.id_card || manager.pivot.authorization_letter || manager.pivot.address" class="mt-4 pt-3 border-t border-gray-100 dark:border-gray-700/50 space-y-3.5 text-xs">
+                                        <!-- KTP -->
+                                        <div v-if="manager.pivot.id_card" class="flex flex-col gap-1.5">
+                                            <span class="font-semibold text-gray-500 dark:text-gray-400 text-[10px] uppercase tracking-wider">No. KTP / Berkas KTP</span>
+                                            <div v-if="isFile(manager.pivot.id_card)">
+                                                <div v-if="isPdf(manager.pivot.id_card)">
+                                                    <a :href="getFileUrl(manager.pivot.id_card)" target="_blank" class="inline-flex items-center gap-2 px-3 py-1.5 bg-rose-50 text-rose-700 hover:bg-rose-100 dark:bg-rose-950/20 dark:text-rose-400 dark:hover:bg-rose-900/30 border border-rose-200/55 dark:border-rose-800/50 rounded-lg transition-colors font-medium w-fit">
+                                                        <svg class="w-4 h-4 text-rose-600 dark:text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                        </svg>
+                                                        <span>Lihat Berkas KTP (PDF)</span>
+                                                    </a>
+                                                </div>
+                                                <div v-else class="max-w-[200px]">
+                                                    <a :href="getFileUrl(manager.pivot.id_card)" target="_blank" class="block overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow transition-shadow">
+                                                        <img :src="getFileUrl(manager.pivot.id_card)" alt="KTP" class="w-full h-24 object-cover hover:scale-105 transition-transform duration-300 cursor-zoom-in" />
+                                                    </a>
+                                                </div>
+                                            </div>
+                                            <div v-else class="font-medium text-gray-900 dark:text-white bg-gray-100 dark:bg-gray-800/80 px-2.5 py-1 rounded w-fit">
+                                                {{ manager.pivot.id_card }}
+                                            </div>
+                                        </div>
+
+                                        <!-- Surat Kuasa -->
+                                        <div v-if="manager.pivot.authorization_letter" class="flex flex-col gap-1.5">
+                                            <span class="font-semibold text-gray-500 dark:text-gray-400 text-[10px] uppercase tracking-wider">Surat Kuasa</span>
+                                            <div v-if="isFile(manager.pivot.authorization_letter)">
+                                                <div v-if="isPdf(manager.pivot.authorization_letter)">
+                                                    <a :href="getFileUrl(manager.pivot.authorization_letter)" target="_blank" class="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 dark:bg-blue-950/20 dark:text-blue-400 dark:hover:bg-blue-900/30 border border-blue-200/55 dark:border-blue-800/50 rounded-lg transition-colors font-medium w-fit">
+                                                        <svg class="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                        </svg>
+                                                        <span>Lihat Surat Kuasa (PDF)</span>
+                                                    </a>
+                                                </div>
+                                                <div v-else class="max-w-[200px]">
+                                                    <a :href="getFileUrl(manager.pivot.authorization_letter)" target="_blank" class="block overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow transition-shadow">
+                                                        <img :src="getFileUrl(manager.pivot.authorization_letter)" alt="Surat Kuasa" class="w-full h-24 object-cover hover:scale-105 transition-transform duration-300 cursor-zoom-in" />
+                                                    </a>
+                                                </div>
+                                            </div>
+                                            <div v-else class="font-medium text-gray-900 dark:text-white bg-gray-100 dark:bg-gray-800/80 px-2.5 py-1 rounded w-fit">
+                                                {{ manager.pivot.authorization_letter }}
+                                            </div>
+                                        </div>
+
+                                        <!-- Alamat -->
+                                        <div v-if="manager.pivot.address" class="flex flex-col gap-0.5">
+                                            <span class="font-semibold text-gray-500 dark:text-gray-400 text-[10px] uppercase tracking-wider">Alamat</span>
+                                            <p class="font-medium text-gray-900 dark:text-white">{{ manager.pivot.address }}</p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

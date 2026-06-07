@@ -87,7 +87,7 @@ class WaterServiceController extends Controller
     public function edit($id)
     {
         $service = WaterService::findOrFail($id);
-        $vessels = Vessel::where('status', 'approved')->get();
+        $vessels = Vessel::where('id', $service->vessel_id)->get();
         return Inertia::render('WaterServices/Edit', [
             'service' => $service,
             'vessels' => $vessels,
@@ -124,6 +124,8 @@ class WaterServiceController extends Controller
             'status' => $request->status,
         ]);
 
+        $this->notifyManagers($service);
+
         return redirect()->route('water-services.index')->with('success', 'Jasa Air berhasil diperbarui.');
     }
 
@@ -142,6 +144,8 @@ class WaterServiceController extends Controller
         $service->update([
             'status' => 'completed'
         ]);
+
+        $this->notifyManagers($service);
 
         return redirect()->back()->with('success', 'Orderan berhasil diselesaikan.');
     }
@@ -178,6 +182,8 @@ class WaterServiceController extends Controller
             'status' => 'processed',
         ]);
 
+        $this->notifyManagers($service);
+
         return redirect()->route('water-services.index')->with('success', 'Perhitungan jasa air berhasil disimpan.');
     }
 
@@ -212,5 +218,42 @@ class WaterServiceController extends Controller
         $pdf = Pdf::loadView('pdf.water-service-order', compact('service', 'hari', 'tanggal'));
         
         return $pdf->stream('perhitungan-air-' . $service->order_number . '.pdf');
+    }
+
+    private function notifyManagers(WaterService $service)
+    {
+        $service->load('vessel.managers');
+        if ($service->vessel && $service->vessel->managers) {
+            $vesselName = $service->vessel->vessel_name;
+            $orderNumber = $service->order_number;
+            $status = $service->status;
+
+            $title = 'Pemesanan Jasa Air';
+            $message = "Status pemesanan Jasa Air Tawar untuk kapal {$vesselName} ({$orderNumber}) berubah menjadi {$status}.";
+            $type = 'info';
+
+            if ($status === 'processed') {
+                $title = 'Perhitungan Jasa Air';
+                $message = "Perhitungan biaya Jasa Air Tawar untuk kapal {$vesselName} ({$orderNumber}) telah selesai diproses.";
+                $type = 'warning';
+            } elseif ($status === 'completed') {
+                $title = 'Jasa Air Selesai';
+                $message = "Pemesanan Jasa Air Tawar untuk kapal {$vesselName} ({$orderNumber}) telah selesai dan lunas.";
+                $type = 'success';
+            } elseif ($status === 'cancelled') {
+                $title = 'Jasa Air Dibatalkan';
+                $message = "Pemesanan Jasa Air Tawar untuk kapal {$vesselName} ({$orderNumber}) telah dibatalkan.";
+                $type = 'danger';
+            }
+
+            foreach ($service->vessel->managers as $manager) {
+                $manager->notify(new \App\Notifications\DataInputNotification(
+                    $title,
+                    $message,
+                    '/services',
+                    $type
+                ));
+            }
+        }
     }
 }

@@ -223,9 +223,31 @@ class DepartureController extends Controller
             if ($request->approval_status) {
                 $validated['approved_by'] = auth()->id();
                 $validated['approved_at'] = now();
+                
+                if ($departure->inputBy) {
+                    $departure->load('vessel');
+                    $vesselName = $departure->vessel ? $departure->vessel->vessel_name : 'Tidak Diketahui';
+                    $departure->inputBy->notify(new \App\Notifications\DataInputNotification(
+                        'Laporan Keberangkatan Disetujui',
+                        "Laporan Keberangkatan Kapal {$vesselName} telah disetujui oleh petugas.",
+                        '/departures',
+                        'success'
+                    ));
+                }
             } else {
                 $validated['approved_by'] = null;
                 $validated['approved_at'] = null;
+                
+                if ($departure->inputBy) {
+                    $departure->load('vessel');
+                    $vesselName = $departure->vessel ? $departure->vessel->vessel_name : 'Tidak Diketahui';
+                    $departure->inputBy->notify(new \App\Notifications\DataInputNotification(
+                        'Laporan Keberangkatan Ditolak',
+                        "Laporan Keberangkatan Kapal {$vesselName} ditolak oleh petugas.",
+                        '/departures',
+                        'danger'
+                    ));
+                }
             }
         }
 
@@ -271,9 +293,6 @@ class DepartureController extends Controller
         return $pdf->download($filename);
     }
 
-    /**
-     * Approve a departure.
-     */
     public function approve(Departure $departure)
     {
         $departure->update([
@@ -281,6 +300,17 @@ class DepartureController extends Controller
             'approved_by' => auth()->id(),
             'approved_at' => now(),
         ]);
+
+        if ($departure->inputBy) {
+            $departure->load('vessel');
+            $vesselName = $departure->vessel ? $departure->vessel->vessel_name : 'Tidak Diketahui';
+            $departure->inputBy->notify(new \App\Notifications\DataInputNotification(
+                'Laporan Keberangkatan Disetujui',
+                "Laporan Keberangkatan Kapal {$vesselName} telah disetujui oleh petugas.",
+                '/departures',
+                'success'
+            ));
+        }
 
         return redirect()->route('departures.index')
             ->with('success', 'Keberangkatan kapal berhasil disetujui.');
@@ -296,6 +326,17 @@ class DepartureController extends Controller
             'approved_by' => null,
             'approved_at' => null,
         ]);
+
+        if ($departure->inputBy) {
+            $departure->load('vessel');
+            $vesselName = $departure->vessel ? $departure->vessel->vessel_name : 'Tidak Diketahui';
+            $departure->inputBy->notify(new \App\Notifications\DataInputNotification(
+                'Laporan Keberangkatan Ditolak',
+                "Laporan Keberangkatan Kapal {$vesselName} ditolak oleh petugas.",
+                '/departures',
+                'danger'
+            ));
+        }
 
         return redirect()->route('departures.index')
             ->with('success', 'Keberangkatan kapal berhasil ditolak.');

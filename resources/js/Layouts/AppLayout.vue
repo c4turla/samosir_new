@@ -34,10 +34,25 @@ const handleResize = () => {
 onMounted(() => {
   handleResize()
   window.addEventListener('resize', handleResize)
+  if (window.Echo) {
+    window.Echo.join('chat-presence')
+      .here((users) => {
+        // Option to track online users on web side
+      })
+      .joining((user) => {
+        // Option to handle user joining
+      })
+      .leaving((user) => {
+        // Option to handle user leaving
+      })
+  }
 })
 
 onUnmounted(() => {
   window.removeEventListener('resize', handleResize)
+  if (window.Echo) {
+    window.Echo.leave('chat-presence')
+  }
 })
 
 // Watch dark mode changes

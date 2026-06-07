@@ -66,20 +66,41 @@ Route::prefix('v1')->group(function () {
             ]);
         });
 
-        // Profile
+                // Profile
         Route::post('/profile/update', [AuthController::class, 'updateProfile']);
+        Route::post('/profile/signature', [AuthController::class, 'updateSignature']);
         Route::post('/profile/change-password', [AuthController::class, 'changePassword']);
+
+        // Notifications
+        Route::get('/notifications', [App\Http\Controllers\Api\V1\NotificationController::class, 'index']);
+        Route::post('/notifications/{id}/read', [App\Http\Controllers\Api\V1\NotificationController::class, 'markAsRead']);
+        Route::post('/notifications/read-all', [App\Http\Controllers\Api\V1\NotificationController::class, 'markAllAsRead']);
+
+        // Schedules
+        Route::get('/schedules', [App\Http\Controllers\Api\V1\ScheduleController::class, 'index']);
+
+        // Landing Sites & Syahbandars
+        Route::get('/landing-sites', [App\Http\Controllers\Api\V1\LandingSiteController::class, 'index']);
+        Route::get('/syahbandars', [App\Http\Controllers\Api\V1\SyahbandarController::class, 'index']);
 
         // Arrivals
         Route::middleware('ensure.docs')->group(function () {
             Route::get('/arrivals', [App\Http\Controllers\Api\V1\ArrivalController::class, 'index']);
+            Route::post('/arrivals', [App\Http\Controllers\Api\V1\ArrivalController::class, 'store']);
             Route::get('/arrivals/{id}', [App\Http\Controllers\Api\V1\ArrivalController::class, 'show']);
         });
 
         // Departures
         Route::middleware('ensure.docs')->group(function () {
             Route::get('/departures', [App\Http\Controllers\Api\V1\DepartureController::class, 'index']);
+            Route::post('/departures', [App\Http\Controllers\Api\V1\DepartureController::class, 'store']);
             Route::get('/departures/{id}', [App\Http\Controllers\Api\V1\DepartureController::class, 'show']);
+        });
+
+        // SPR Departures
+        Route::get('/spr-departures', [App\Http\Controllers\Api\V1\SprDepartureController::class, 'index']);
+        Route::middleware('ensure.docs')->group(function () {
+            Route::post('/spr-departures', [App\Http\Controllers\Api\V1\SprDepartureController::class, 'store']);
         });
 
         // Vessels
@@ -93,6 +114,14 @@ Route::prefix('v1')->group(function () {
             Route::post('/vessels/register-manager', [App\Http\Controllers\Api\V1\VesselController::class, 'registerManager']);
             Route::put('/vessels/update-manager', [App\Http\Controllers\Api\V1\VesselController::class, 'updateManager']);
             Route::delete('/vessels/unregister-manager', [App\Http\Controllers\Api\V1\VesselController::class, 'unregisterManager']);
+        });
+
+        // Services
+        Route::get('/services', [App\Http\Controllers\Api\V1\ServiceController::class, 'index']);
+        Route::middleware('ensure.docs')->group(function () {
+            Route::post('/services/water', [App\Http\Controllers\Api\V1\ServiceController::class, 'storeWater']);
+            Route::post('/services/equipment', [App\Http\Controllers\Api\V1\ServiceController::class, 'storeEquipment']);
+            Route::post('/services/ice-cruiser', [App\Http\Controllers\Api\V1\ServiceController::class, 'storeIceCruiser']);
         });
 
         // Fish Commodities

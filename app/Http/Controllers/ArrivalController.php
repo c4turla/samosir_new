@@ -210,9 +210,31 @@ class ArrivalController extends Controller
             if ($request->approval_status) {
                 $validated['approved_by'] = auth()->id();
                 $validated['approved_at'] = now();
+                
+                if ($arrival->inputBy) {
+                    $arrival->load('vessel');
+                    $vesselName = $arrival->vessel ? $arrival->vessel->vessel_name : 'Tidak Diketahui';
+                    $arrival->inputBy->notify(new \App\Notifications\DataInputNotification(
+                        'Laporan Kedatangan Disetujui',
+                        "Laporan Kedatangan Kapal {$vesselName} telah disetujui oleh petugas.",
+                        '/arrivals',
+                        'success'
+                    ));
+                }
             } else {
                 $validated['approved_by'] = null;
                 $validated['approved_at'] = null;
+                
+                if ($arrival->inputBy) {
+                    $arrival->load('vessel');
+                    $vesselName = $arrival->vessel ? $arrival->vessel->vessel_name : 'Tidak Diketahui';
+                    $arrival->inputBy->notify(new \App\Notifications\DataInputNotification(
+                        'Laporan Kedatangan Ditolak',
+                        "Laporan Kedatangan Kapal {$vesselName} ditolak oleh petugas.",
+                        '/arrivals',
+                        'danger'
+                    ));
+                }
             }
         }
 
@@ -259,6 +281,17 @@ class ArrivalController extends Controller
             'approved_at' => now(),
         ]);
 
+        if ($arrival->inputBy) {
+            $arrival->load('vessel');
+            $vesselName = $arrival->vessel ? $arrival->vessel->vessel_name : 'Tidak Diketahui';
+            $arrival->inputBy->notify(new \App\Notifications\DataInputNotification(
+                'Laporan Kedatangan Disetujui',
+                "Laporan Kedatangan Kapal {$vesselName} telah disetujui oleh petugas.",
+                '/arrivals',
+                'success'
+            ));
+        }
+
         return redirect()->route('arrivals.index')
             ->with('success', 'Kedatangan kapal berhasil disetujui.');
     }
@@ -273,6 +306,17 @@ class ArrivalController extends Controller
             'approved_by' => null,
             'approved_at' => null,
         ]);
+
+        if ($arrival->inputBy) {
+            $arrival->load('vessel');
+            $vesselName = $arrival->vessel ? $arrival->vessel->vessel_name : 'Tidak Diketahui';
+            $arrival->inputBy->notify(new \App\Notifications\DataInputNotification(
+                'Laporan Kedatangan Ditolak',
+                "Laporan Kedatangan Kapal {$vesselName} ditolak oleh petugas.",
+                '/arrivals',
+                'danger'
+            ));
+        }
 
         return redirect()->route('arrivals.index')
             ->with('success', 'Kedatangan kapal berhasil ditolak.');
