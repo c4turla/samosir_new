@@ -1,6 +1,6 @@
 <script setup>
-import { ref, onMounted, nextTick } from 'vue'
-import { Head } from '@inertiajs/vue3'
+import { ref, onMounted, onUnmounted, nextTick, watch } from 'vue'
+import { Head, router } from '@inertiajs/vue3'
 import AppLayout from '../../Layouts/AppLayout.vue'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
@@ -29,6 +29,46 @@ const props = defineProps({
 
 const mapContainer = ref(null);
 let map = null;
+let markerGroup = null;
+let refreshInterval = null;
+
+const renderMarkers = (positions) => {
+    if (!map) return;
+
+    // Clear existing markers
+    if (markerGroup) {
+        markerGroup.clearLayers();
+    } else {
+        markerGroup = L.featureGroup().addTo(map);
+    }
+
+    // Filter out sites without valid coordinates
+    const validPositions = positions.filter(p => p.latitude && p.longitude);
+
+    validPositions.forEach(site => {
+        const vesselList = site.vessels.map(v => `
+            <div class="mb-2 p-2 bg-gray-50 border-l-4 ${v.status === 'Persiapan Berangkat' ? 'border-orange-500' : 'border-blue-500'} rounded">
+                <div class="font-bold text-gray-800">${v.name}</div>
+                <div class="text-xs text-gray-600">GT: ${v.gt} | Status: <span class="font-medium">${v.status}</span></div>
+                <div class="text-[10px] text-gray-400 mt-1">
+                    <i class="ri-time-line align-middle"></i> ${v.arrival_time}
+                </div>
+            </div>
+        `).join('');
+
+        const popupContent = `
+            <div class="p-1 min-w-[200px]">
+                <h3 class="font-bold text-sm mb-2 border-b pb-1">${site.name}</h3>
+                <div class="max-h-[200px] overflow-y-auto pr-1">
+                    ${vesselList || '<p class="text-xs text-gray-500">Tidak ada kapal saat ini</p>'}
+                </div>
+            </div>
+        `;
+
+        const marker = L.marker([site.latitude, site.longitude]).bindPopup(popupContent);
+        markerGroup.addLayer(marker);
+    });
+};
 
 onMounted(async () => {
     // Wait for Inertia transition and DOM rendering
@@ -55,33 +95,11 @@ onMounted(async () => {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         }).addTo(map);
 
-        validPositions.forEach(site => {
-            const vesselList = site.vessels.map(v => `
-                <div class="mb-2 p-2 bg-gray-50 border-l-4 border-blue-500 rounded">
-                    <div class="font-bold text-blue-700">${v.name}</div>
-                    <div class="text-xs text-gray-600">GT: ${v.gt} | Status: <span class="font-medium">${v.status}</span></div>
-                    <div class="text-[10px] text-gray-400 mt-1">Tiba: ${v.arrival_time}</div>
-                </div>
-            `).join('');
-
-            const popupContent = `
-                <div class="p-1 min-w-[200px]">
-                    <h3 class="font-bold text-sm mb-2 border-b pb-1">${site.name}</h3>
-                    <div class="max-h-[200px] overflow-y-auto">
-                        ${vesselList || '<p class="text-xs text-gray-500">Tidak ada kapal saat ini</p>'}
-                    </div>
-                </div>
-            `;
-
-            L.marker([site.latitude, site.longitude])
-                .addTo(map)
-                .bindPopup(popupContent);
-        });
+        renderMarkers(props.positions);
 
         // If multiple markers, fit bounds
-        if (validPositions.length > 1) {
-            const bounds = L.latLngBounds(validPositions.map(p => [p.latitude, p.longitude]));
-            map.fitBounds(bounds, { padding: [50, 50] });
+        if (validPositions.length > 1 && markerGroup) {
+            map.fitBounds(markerGroup.getBounds(), { padding: [50, 50], maxZoom: 18 });
         }
 
         // Force Leaflet to recalculate the map size after rendering
@@ -92,7 +110,27 @@ onMounted(async () => {
     } catch (error) {
         console.error("Map initialization failed:", error);
     }
+
+    // Set interval to fetch updated data silently every 15 seconds
+    refreshInterval = setInterval(() => {
+        router.reload({
+            only: ['positions'],
+            preserveState: true,
+            preserveScroll: true
+        });
+    }, 15000);
 });
+
+onUnmounted(() => {
+    if (refreshInterval) clearInterval(refreshInterval);
+    if (map) map.remove();
+});
+
+// Watch for prop changes to update map without full reload
+watch(() => props.positions, (newPositions) => {
+    renderMarkers(newPositions);
+}, { deep: true });
+
 </script>
 
 <template>
