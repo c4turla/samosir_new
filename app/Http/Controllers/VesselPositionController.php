@@ -47,8 +47,9 @@ class VesselPositionController extends Controller
 
             $depTime = null;
             if ($lastDeparture) {
-                $depTime = $lastDeparture->departure_datetime 
-                    ? Carbon::parse($lastDeparture->departure_datetime, 'Asia/Jakarta') 
+                $rawDepDatetime = $lastDeparture->getRawOriginal('departure_datetime');
+                $depTime = $rawDepDatetime 
+                    ? Carbon::parse($rawDepDatetime, 'Asia/Jakarta') 
                     : null;
                     
                 if (!$depTime) {
