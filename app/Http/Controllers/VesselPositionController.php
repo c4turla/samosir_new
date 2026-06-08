@@ -36,26 +36,26 @@ class VesselPositionController extends Controller
                 continue;
             }
             
-            // Get exact timestamps for comparison
+            // Get exact timestamps for comparison (using Asia/Jakarta timezone)
             $arrTime = null;
             if ($lastArrival) {
                 $arrDateStr = $lastArrival->arrival_date instanceof Carbon 
                     ? $lastArrival->arrival_date->format('Y-m-d') 
                     : Carbon::parse($lastArrival->arrival_date)->format('Y-m-d');
-                $arrTime = Carbon::parse($arrDateStr . ' ' . ($lastArrival->arrival_time instanceof Carbon ? $lastArrival->arrival_time->format('H:i:s') : $lastArrival->arrival_time));
+                $arrTime = Carbon::parse($arrDateStr . ' ' . ($lastArrival->arrival_time instanceof Carbon ? $lastArrival->arrival_time->format('H:i:s') : $lastArrival->arrival_time), 'Asia/Jakarta');
             }
 
             $depTime = null;
             if ($lastDeparture) {
                 $depTime = $lastDeparture->departure_datetime 
-                    ? Carbon::parse($lastDeparture->departure_datetime) 
+                    ? Carbon::parse($lastDeparture->departure_datetime, 'Asia/Jakarta') 
                     : null;
                     
                 if (!$depTime) {
                     $depDateStr = $lastDeparture->departure_date instanceof Carbon 
                         ? $lastDeparture->departure_date->format('Y-m-d') 
                         : Carbon::parse($lastDeparture->departure_date)->format('Y-m-d');
-                    $depTime = Carbon::parse($depDateStr . ' ' . ($lastDeparture->departure_time instanceof Carbon ? $lastDeparture->departure_time->format('H:i:s') : $lastDeparture->departure_time));
+                    $depTime = Carbon::parse($depDateStr . ' ' . ($lastDeparture->departure_time instanceof Carbon ? $lastDeparture->departure_time->format('H:i:s') : $lastDeparture->departure_time), 'Asia/Jakarta');
                 }
             }
 
@@ -63,12 +63,13 @@ class VesselPositionController extends Controller
             $currentSiteId = null;
             $statusStr = '';
             $timeRef = null;
+            $now = Carbon::now('Asia/Jakarta');
 
             if ($lastArrival && $lastDeparture) {
                 // Compare actual event times
                 if ($depTime->gt($arrTime)) {
                     // Departure is the most recent event
-                    if (now()->lte($depTime)) {
+                    if ($now->lte($depTime)) {
                         $isAtPort = true;
                         $currentSiteId = $lastDeparture->landing_site_id;
                         $statusStr = 'Persiapan Berangkat';
@@ -87,7 +88,7 @@ class VesselPositionController extends Controller
                 $statusStr = $lastArrival->status;
                 $timeRef = $arrTime;
             } elseif ($lastDeparture) {
-                if (now()->lte($depTime)) {
+                if ($now->lte($depTime)) {
                     $isAtPort = true;
                     $currentSiteId = $lastDeparture->landing_site_id;
                     $statusStr = 'Persiapan Berangkat';
@@ -116,7 +117,7 @@ class VesselPositionController extends Controller
                         'owner' => $vessel->owner_name ?? '-',
                         'gt' => $vessel->gt ?? '-',
                         'status' => $statusStr,
-                        'arrival_time' => $timeRef ? $timeRef->diffForHumans() : '-'
+                        'arrival_time' => $timeRef ? $timeRef->diffForHumans($now) : '-'
                     ];
                 }
             }
