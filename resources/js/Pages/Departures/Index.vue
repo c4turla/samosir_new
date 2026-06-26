@@ -30,6 +30,21 @@ watch([search, status, dateFrom, dateTo], () => {
     })
 })
 
+const showDetailModal = ref(false)
+const selectedDeparture = ref(null)
+
+const openDetailModal = (departure) => {
+    selectedDeparture.value = departure
+    showDetailModal.value = true
+}
+
+const closeDetailModal = () => {
+    showDetailModal.value = false
+    selectedDeparture.value = null
+}
+
+const user = computed(() => page.props.auth?.user)
+
 const deleteDeparture = (id) => {
     if (confirm('Apakah Anda yakin ingin menghapus data keberangkatan ini?')) {
         router.delete(`/departures/${id}`)
@@ -37,14 +52,18 @@ const deleteDeparture = (id) => {
 }
 
 const approveDeparture = (id) => {
-    if (confirm('Apakah Anda yakin ingin menyetujui keberangkatan ini?')) {
-        router.post(`/departures/${id}/approve`)
-    }
+    closeDetailModal()
+    router.post(`/departures/${id}/approve`)
 }
 
 const rejectDeparture = (id) => {
-    if (confirm('Apakah Anda yakin ingin menolak keberangkatan ini?')) {
-        router.post(`/departures/${id}/reject`)
+    closeDetailModal()
+    router.post(`/departures/${id}/reject`)
+}
+
+const forwardDeparture = (id) => {
+    if (confirm('Apakah Anda yakin ingin meneruskan data keberangkatan ini ke Syahbandar untuk approval?')) {
+        router.post(`/departures/${id}/forward`)
     }
 }
 
@@ -61,12 +80,24 @@ const getStatusBadgeClass = (status) => {
     }
 }
 
-const getApprovalBadgeClass = (status) => {
-    if (status === true || status === '1' || status === 1) {
-        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-    } else {
-        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+const getApprovalStatusText = (departure) => {
+    if (departure.approval_status === true || departure.approval_status === '1' || departure.approval_status === 1) {
+        return 'Disetujui'
     }
+    if (!departure.is_processed) {
+        return 'Perlu Diperiksa'
+    }
+    return 'Menunggu Approval'
+}
+
+const getApprovalBadgeClass = (departure) => {
+    if (departure.approval_status === true || departure.approval_status === '1' || departure.approval_status === 1) {
+        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+    }
+    if (!departure.is_processed) {
+        return 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200'
+    }
+    return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-200'
 }
 
 const formatTanggal = (dateString) => {
@@ -91,6 +122,11 @@ const formatWaktu = (timeString) => {
     return timeString.substring(0, 5) // Format HH:MM
 }
 const userRole = computed(() => page.props.auth?.user?.role)
+
+const isApproved = (departure) => {
+    return departure.approval_status === true || departure.approval_status === '1' || departure.approval_status === 1
+}
+
 </script>
 
 <template>
@@ -259,25 +295,53 @@ const userRole = computed(() => page.props.auth?.user?.role)
                                         <span :class="['inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium w-fit', getStatusBadgeClass(departure.status)]">
                                             {{ departure.status }}
                                         </span>
-                                        <span :class="['inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium w-fit', getApprovalBadgeClass(departure.approval_status)]">
-                                            {{ departure.approval_status ? 'Approved' : 'Pending' }}
+                                        <span :class="['inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium w-fit', getApprovalBadgeClass(departure)]">
+                                            {{ getApprovalStatusText(departure) }}
                                         </span>
                                     </div>
                                 </td>
                                 <td v-if="userRole !== 'kepala_pelabuhan'" class="px-4 py-3 whitespace-nowrap text-right">
                                     <div class="flex items-center justify-end gap-2">
-                                        <Link
-                                            v-if="!departure.approval_status"
-                                            @click.prevent="approveDeparture(departure.id)"
-                                            class="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300"
-                                            title="Setujui"
+                                        <!-- Teruskan Button (for petugas/admin to forward to syahbandar) -->
+                                        <button
+                                            v-if="userRole !== 'syahbandar' && !isApproved(departure) && !departure.is_processed"
+                                            @click.prevent="forwardDeparture(departure.id)"
+                                            class="text-orange-600 hover:text-orange-900 dark:text-orange-400 dark:hover:text-orange-300 cursor-pointer"
+                                            title="Teruskan ke Syahbandar"
                                         >
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7M5 12h11" />
                                             </svg>
-                                        </Link>
-                                        <!-- Tombol Print -->
+                                        </button>
+
+                                        <!-- Periksa Button for Syahbandar (opens detail modal before approval) -->
+                                         <button
+                                             v-if="userRole === 'syahbandar' && !isApproved(departure) && departure.is_processed"
+                                             @click="openDetailModal(departure)"
+                                             class="inline-flex items-center px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-[10px] font-semibold transition-colors cursor-pointer animate-pulse"
+                                             title="Periksa & Setujui"
+                                         >
+                                             <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                             </svg>
+                                             Periksa
+                                         </button>
+
+                                         <!-- Detail/Eye button for non-syahbandar or already approved -->
+                                         <button
+                                             v-if="isApproved(departure) || userRole !== 'syahbandar'"
+                                             @click="openDetailModal(departure)"
+                                             class="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-300 cursor-pointer"
+                                             title="Lihat Detail"
+                                         >
+                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                             </svg>
+                                         </button>
+                                         <!-- Tombol Print (always available if approved) -->
                                         <a
+                                            v-if="isApproved(departure)"
                                             :href="`/departures/${departure.id}/print`"
                                             class="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
                                             title="Cetak STBLKK"
@@ -286,7 +350,10 @@ const userRole = computed(() => page.props.auth?.user?.role)
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                                             </svg>
                                         </a>
+
+                                        <!-- Edit Button (petugas/admin only) -->
                                         <Link
+                                            v-if="userRole === 'admin' || (userRole !== 'syahbandar' && !isApproved(departure))"
                                             :href="`/departures/${departure.id}/edit`"
                                             class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
                                             title="Edit"
@@ -295,7 +362,10 @@ const userRole = computed(() => page.props.auth?.user?.role)
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 0L11.828 15H9v-2.828l8.586-8.586z" />
                                             </svg>
                                         </Link>
+
+                                        <!-- Delete Button (petugas/admin only) -->
                                         <button
+                                            v-if="userRole === 'admin' || (userRole !== 'syahbandar' && !isApproved(departure))"
                                             @click="deleteDeparture(departure.id)"
                                             class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
                                             title="Hapus"
@@ -352,5 +422,169 @@ const userRole = computed(() => page.props.auth?.user?.role)
                 </div>
             </div>
         </div>
+        <!-- Detail & Approval Modal -->
+        <Teleport to="body">
+        <div v-if="showDetailModal && selectedDeparture">
+            <!-- Backdrop -->
+            <div class="fixed inset-0 z-[50] bg-gray-900/60 backdrop-blur-sm" @click="closeDetailModal"></div>
+            <!-- Modal wrapper -->
+            <div class="fixed inset-0 z-[51] flex items-center justify-center p-4" aria-modal="true">
+                <!-- Modal panel -->
+                <div class="relative bg-white dark:bg-gray-800 rounded-xl text-left overflow-hidden shadow-2xl w-full max-w-2xl border border-gray-200 dark:border-gray-700">
+                    <!-- Modal Header -->
+                    <div class="bg-gray-50 dark:bg-gray-700/50 px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                        <div>
+                            <h3 class="text-sm font-bold text-gray-900 dark:text-white" id="modal-title">
+                                Detail Keberangkatan Kapal
+                            </h3>
+                            <p class="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">
+                                No. Keberangkatan: {{ selectedDeparture.nomor || '-' }}
+                            </p>
+                        </div>
+                        <button @click="closeDetailModal" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-pointer">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <!-- Modal Body -->
+                    <div class="px-6 py-4 max-h-[460px] overflow-y-auto space-y-4">
+                        <!-- Data Kapal & Keberangkatan -->
+                        <div>
+                            <p class="text-[10px] font-bold text-blue-500 uppercase tracking-widest mb-2 flex items-center gap-1">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                                Informasi Kapal & Pelayaran
+                            </p>
+                            <div class="grid grid-cols-2 gap-x-6 gap-y-3">
+                                <div>
+                                    <span class="block text-[10px] font-semibold text-gray-400 dark:text-gray-505 uppercase tracking-wider">Nama Kapal</span>
+                                    <span class="text-xs font-semibold text-gray-900 dark:text-white">{{ selectedDeparture.vessel?.vessel_name || '-' }}</span>
+                                </div>
+                                <div>
+                                    <span class="block text-[10px] font-semibold text-gray-400 dark:text-gray-505 uppercase tracking-wider">Dermaga Singgah</span>
+                                    <span class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ selectedDeparture.landing_site?.site_name || '-' }}</span>
+                                </div>
+                                <div>
+                                    <span class="block text-[10px] font-semibold text-gray-400 dark:text-gray-505 uppercase tracking-wider">Tujuan Operasi Kapal</span>
+                                    <span class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ selectedDeparture.destination || '-' }}</span>
+                                </div>
+                                <div>
+                                    <span class="block text-[10px] font-semibold text-gray-400 dark:text-gray-505 uppercase tracking-wider">Jumlah ABK</span>
+                                    <span class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ selectedDeparture.crew_count || 0 }} Orang</span>
+                                </div>
+                                <div>
+                                    <span class="block text-[10px] font-semibold text-gray-400 dark:text-gray-505 uppercase tracking-wider">Nama Nakhoda</span>
+                                    <span class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ selectedDeparture.nakhoda_name || '-' }}</span>
+                                </div>
+                                <div>
+                                    <span class="block text-[10px] font-semibold text-gray-400 dark:text-gray-505 uppercase tracking-wider">Waktu Keberangkatan Aktual</span>
+                                    <span class="text-xs font-medium text-gray-700 dark:text-gray-300">
+                                        {{ formatTanggal(selectedDeparture.departure_date) }} {{ selectedDeparture.departure_time ? formatWaktu(selectedDeparture.departure_time) + ' WIB' : '' }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Logistik & Perbekalan -->
+                        <div class="border-t border-gray-100 dark:border-gray-700 pt-3">
+                            <p class="text-[10px] font-bold text-blue-500 uppercase tracking-widest mb-2 flex items-center gap-1">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4v10l8 4 8-4V7z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 22V11M20 7L12 11M4 7l8 4"/></svg>
+                                Logistik & Perbekalan
+                            </p>
+                            <div class="grid grid-cols-4 gap-4">
+                                <div>
+                                    <span class="block text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Es (Balok/Ember)</span>
+                                    <span class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ selectedDeparture.ice_supply || 0 }}</span>
+                                </div>
+                                <div>
+                                    <span class="block text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Air Tawar</span>
+                                    <span class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ selectedDeparture.water_supply || 0 }} L</span>
+                                </div>
+                                <div>
+                                    <span class="block text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Solar</span>
+                                    <span class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ selectedDeparture.diesel_supply || 0 }} L</span>
+                                </div>
+                                <div>
+                                    <span class="block text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Oli</span>
+                                    <span class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ selectedDeparture.oil_supply || 0 }} L</span>
+                                </div>
+                                <div class="col-span-4" v-if="selectedDeparture.other_supplies">
+                                    <span class="block text-[10px] font-semibold text-gray-400 dark:text-gray-505 uppercase tracking-wider">Perbekalan Lainnya</span>
+                                    <span class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ selectedDeparture.other_supplies }}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Penandatangan -->
+                        <div class="border-t border-gray-100 dark:border-gray-700 pt-3">
+                            <p class="text-[10px] font-bold text-blue-500 uppercase tracking-widest mb-2 flex items-center gap-1">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                Pejabat Penandatangan
+                            </p>
+                            <div class="grid grid-cols-2 gap-x-6 gap-y-3">
+                                <div>
+                                    <span class="block text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Syahbandar</span>
+                                    <span class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ selectedDeparture.syahbandar || '-' }}</span>
+                                </div>
+                                <div>
+                                    <span class="block text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Petugas Administrasi</span>
+                                    <span class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ selectedDeparture.administrative_officer || '-' }}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Catatan -->
+                        <div v-if="selectedDeparture.notes" class="border-t border-gray-100 dark:border-gray-700 pt-3">
+                            <span class="block text-[10px] font-semibold text-gray-400 dark:text-gray-505 uppercase tracking-wider mb-1">Catatan Khusus</span>
+                            <p class="text-xs text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-900/30 p-2.5 rounded border border-gray-100 dark:border-gray-700">
+                                {{ selectedDeparture.notes }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Modal Footer -->
+                    <div class="bg-gray-50 dark:bg-gray-700/50 px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row justify-between items-center gap-2">
+                        <div>
+                            <span class="text-[10px] font-bold text-gray-400 dark:text-gray-505 uppercase tracking-wider block">Status Approval</span>
+                            <span :class="['inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold mt-0.5', getApprovalBadgeClass(selectedDeparture)]">
+                                {{ getApprovalStatusText(selectedDeparture) }}
+                            </span>
+                        </div>
+                        <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+                            <button 
+                                @click="closeDetailModal" 
+                                class="w-full sm:w-auto px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors cursor-pointer"
+                            >
+                                Tutup
+                            </button>
+                            
+                            <!-- Syahbandar Approval actions in footer -->
+                             <button
+                                 v-if="userRole === 'syahbandar' && !isApproved(selectedDeparture) && selectedDeparture.is_processed"
+                                 @click="rejectDeparture(selectedDeparture.id)"
+                                 class="w-full sm:w-auto px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-semibold shadow transition-colors flex items-center justify-center cursor-pointer"
+                             >
+                                 <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                 </svg>
+                                 Tolak
+                             </button>
+                             <button
+                                 v-if="userRole === 'syahbandar' && !isApproved(selectedDeparture) && selectedDeparture.is_processed"
+                                 @click="approveDeparture(selectedDeparture.id)"
+                                 class="w-full sm:w-auto px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-xs font-semibold shadow transition-colors flex items-center justify-center cursor-pointer"
+                             >
+                                 <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                 </svg>
+                                 Setujui
+                             </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        </Teleport>
     </AppLayout>
 </template>

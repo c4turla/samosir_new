@@ -19,6 +19,7 @@ const form = useForm({
     officer: props.service.officer || '',
     notes: props.service.notes || '',
     status: props.service.status,
+    billing_number: props.service.billing_number || '',
     items: equipmentItems.map(configItem => {
         const existingItem = props.service.items.find(item => item.equipment_name === configItem.key)
         return {
@@ -151,20 +152,67 @@ const cancel = () => {
                             </div>
                         </div>
 
-                        <!-- Bottom Section: Officer -->
-                        <div class="mb-8">
+                        <!-- Bottom Section: Officer & Status -->
+                        <div class="mb-8 space-y-4">
                             <div class="grid grid-cols-1 md:grid-cols-12 items-center gap-4">
                                 <div class="md:col-span-3">
-                                    <label class="text-sm font-semibold text-gray-700 dark:text-gray-300">Petugas</label>
+                                     <label class="text-sm font-semibold text-gray-700 dark:text-gray-300">Petugas</label>
+                                </div>
+                                <div class="md:col-span-9">
+                                     <input
+                                         v-model="form.officer"
+                                         type="text"
+                                         class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                                         placeholder="Nama Petugas"
+                                     />
+                                     <p v-if="form.errors.field_officer" class="mt-1 text-xs text-red-600">{{ form.errors.field_officer }}</p>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-12 items-center gap-4">
+                                <div class="md:col-span-3">
+                                    <label class="text-sm font-semibold text-gray-700 dark:text-gray-300">Status</label>
+                                </div>
+                                <div class="md:col-span-9">
+                                    <select
+                                        v-model="form.status"
+                                        class="w-full md:w-64 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                                    >
+                                        <option value="order">Pesanan</option>
+                                        <option value="processed">Diproses</option>
+                                        <option value="completed">Selesai</option>
+                                        <option value="cancelled">Dibatalkan</option>
+                                    </select>
+                                    <p v-if="form.errors.status" class="mt-1 text-xs text-red-600">{{ form.errors.status }}</p>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-12 items-center gap-4">
+                                <div class="md:col-span-3">
+                                    <label class="text-sm font-semibold text-gray-700 dark:text-gray-300">Nomor Billing</label>
                                 </div>
                                 <div class="md:col-span-9">
                                     <input
-                                        v-model="form.officer"
+                                        v-model="form.billing_number"
                                         type="text"
                                         class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-                                        placeholder="Nama Petugas"
-                                    />
-                                    <p v-if="form.errors.field_officer" class="mt-1 text-xs text-red-600">{{ form.errors.field_officer }}</p>
+                                        placeholder="Masukkan Nomor Billing (Opsional)"
+                                     />
+                                     <p v-if="form.errors.billing_number" class="mt-1 text-xs text-red-600">{{ form.errors.billing_number }}</p>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-12 items-start gap-4 pt-2">
+                                <div class="md:col-span-3">
+                                    <label class="text-sm font-semibold text-gray-700 dark:text-gray-300">Catatan</label>
+                                </div>
+                                <div class="md:col-span-9">
+                                    <textarea
+                                        v-model="form.notes"
+                                        rows="3"
+                                        class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                                        placeholder="Catatan tambahan..."
+                                    ></textarea>
                                 </div>
                             </div>
                         </div>

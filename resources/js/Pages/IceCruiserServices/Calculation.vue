@@ -17,6 +17,7 @@ const form = useForm({
     officer: props.service.officer || '',
     treasurer: props.service.treasurer || '',
     notes: props.service.notes || '',
+    billing_number: props.service.billing_number || '',
     total_amount: 0,
     items: props.service.items.map(item => ({
         id: item.id,
@@ -236,7 +237,7 @@ const submit = () => {
                     </div>
 
                     <!-- Footer Section -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                         <div>
                             <label class="block text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Petugas Lapangan</label>
                             <input
@@ -251,6 +252,15 @@ const submit = () => {
                                 v-model="form.treasurer"
                                 type="text"
                                 class="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-xs text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                            />
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Nomor Billing</label>
+                            <input
+                                v-model="form.billing_number"
+                                type="text"
+                                class="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-xs text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                                placeholder="Masukkan Nomor Billing"
                             />
                         </div>
                     </div>

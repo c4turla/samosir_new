@@ -91,17 +91,10 @@ class SprDepartureController extends Controller
         // Notify Syahbandar & Others
         $users = User::where('is_active', true)->get();
         foreach ($users as $user) {
-            if ($user->role === 'syahbandar') {
+            if (in_array($user->role, ['syahbandar', 'petugas'])) {
                 $user->notify(new DataInputNotification(
-                    'Menunggu Approval SPR',
-                    "Permohonan SPR Keberangkatan Kapal {$vesselName} menunggu approval Anda.",
-                    '/spr-departures',
-                    'warning'
-                ));
-            } else {
-                $user->notify(new DataInputNotification(
-                    'Permohonan SPR Keberangkatan',
-                    "Permohonan SPR Keberangkatan Kapal {$vesselName} baru saja ditambahkan.",
+                    'Pemberitahuan SPR Keberangkatan',
+                    "Pemberitahuan SPR Keberangkatan Kapal {$vesselName} baru saja ditambahkan oleh Pengelola.",
                     '/spr-departures',
                     'info'
                 ));

@@ -218,6 +218,10 @@ const printCalculation = () => {
                                 <label class="block text-gray-400 mb-1">Bendahara</label>
                                 <p class="text-gray-900 dark:text-white font-semibold">{{ service.treasurer || '-' }}</p>
                             </div>
+                            <div v-if="service.billing_number">
+                                <label class="block text-gray-400 mb-1">Nomor Billing</label>
+                                <p class="text-blue-600 dark:text-blue-400 font-bold text-sm bg-blue-50 dark:bg-blue-900/20 px-2.5 py-1 rounded inline-block">{{ service.billing_number }}</p>
+                            </div>
                         </div>
                     </div>
 

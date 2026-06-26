@@ -112,7 +112,8 @@ class DepartureController extends Controller
         $validated['nomor'] = $this->generateNextNomor();
 
         $validated['input_by'] = auth()->id();
-        $validated['approval_status'] = 1;
+        $validated['approval_status'] = '0';
+        $validated['is_processed'] = true;
         $validated['status'] = $validated['status'] ?? 'Sesuai Jadwal';
 
         $departure = Departure::create($validated);
@@ -295,8 +296,12 @@ class DepartureController extends Controller
 
     public function approve(Departure $departure)
     {
+        if (auth()->user()->role !== 'syahbandar') {
+            return redirect()->route('departures.index')->with('error', 'Hanya Syahbandar yang dapat menyetujui laporan ini.');
+        }
+
         $departure->update([
-            'approval_status' => true,
+            'approval_status' => '1',
             'approved_by' => auth()->id(),
             'approved_at' => now(),
         ]);
@@ -306,7 +311,7 @@ class DepartureController extends Controller
             $vesselName = $departure->vessel ? $departure->vessel->vessel_name : 'Tidak Diketahui';
             $departure->inputBy->notify(new \App\Notifications\DataInputNotification(
                 'Laporan Keberangkatan Disetujui',
-                "Laporan Keberangkatan Kapal {$vesselName} telah disetujui oleh petugas.",
+                "Laporan Keberangkatan Kapal {$vesselName} telah disetujui oleh syahbandar.",
                 '/departures',
                 'success'
             ));
@@ -321,8 +326,12 @@ class DepartureController extends Controller
      */
     public function reject(Departure $departure)
     {
+        if (auth()->user()->role !== 'syahbandar') {
+            return redirect()->route('departures.index')->with('error', 'Hanya Syahbandar yang dapat menolak laporan ini.');
+        }
+
         $departure->update([
-            'approval_status' => false,
+            'approval_status' => '0',
             'approved_by' => null,
             'approved_at' => null,
         ]);
@@ -332,7 +341,7 @@ class DepartureController extends Controller
             $vesselName = $departure->vessel ? $departure->vessel->vessel_name : 'Tidak Diketahui';
             $departure->inputBy->notify(new \App\Notifications\DataInputNotification(
                 'Laporan Keberangkatan Ditolak',
-                "Laporan Keberangkatan Kapal {$vesselName} ditolak oleh petugas.",
+                "Laporan Keberangkatan Kapal {$vesselName} ditolak oleh syahbandar.",
                 '/departures',
                 'danger'
             ));
@@ -340,6 +349,32 @@ class DepartureController extends Controller
 
         return redirect()->route('departures.index')
             ->with('success', 'Keberangkatan kapal berhasil ditolak.');
+    }
+
+    /**
+     * Forward a departure to syahbandar for approval.
+     */
+    public function forward(Departure $departure)
+    {
+        $departure->update([
+            'is_processed' => true,
+        ]);
+
+        $departure->load('vessel');
+        $vesselName = $departure->vessel ? $departure->vessel->vessel_name : 'Tidak Diketahui';
+
+        $users = \App\Models\User::where('role', 'syahbandar')->where('is_active', true)->get();
+        foreach ($users as $user) {
+            $user->notify(new \App\Notifications\DataInputNotification(
+                'Menunggu Approval',
+                "Data Keberangkatan Kapal {$vesselName} telah diperiksa oleh petugas dan menunggu approval Anda.",
+                '/departures',
+                'warning'
+            ));
+        }
+
+        return redirect()->route('departures.index')
+            ->with('success', 'Keberangkatan kapal berhasil diteruskan ke Syahbandar.');
     }
 
     /**

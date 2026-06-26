@@ -12,24 +12,30 @@
             padding: 20px;
         }
         .header {
-            text-align: center;
             margin-bottom: 30px;
+            border-bottom: 2px solid #000;
+            padding-bottom: 10px;
             position: relative;
         }
-        .order-no {
-            position: absolute;
-            top: 0;
-            right: 0;
-            border: 1px solid #000;
-            padding: 5px 10px;
-            font-size: 10px;
+        .header-inner {
+            display: table;
+            width: 100%;
         }
-        .order-no span {
-            color: red;
-            font-weight: bold;
-            font-size: 12px;
+        .header-logo {
+            display: table-cell;
+            width: 80px;
+            vertical-align: middle;
         }
-        .header h2 {
+        .header-logo img {
+            width: 70px;
+            height: auto;
+        }
+        .header-text {
+            display: table-cell;
+            vertical-align: middle;
+            text-align: center;
+        }
+        .header-text h2 {
             margin: 0;
             text-transform: uppercase;
             font-size: 13px;
@@ -91,8 +97,19 @@
 </head>
 <body>
     <div class="header">
-        <div class="order-no">No: <span>{{ substr($service->order_number, -4) }}</span></div>
-        <h2>DAFTAR PERHITUNGAN JASA PENGGUNAAN PERALATAN<br>PELABUHAN PERIKANAN NUSANTARA SIBOLGA</h2>
+        <div class="header-inner">
+            <div class="header-logo">
+                <img src="{{ public_path('img/logo_kkp.png') }}" alt="Logo KKP">
+            </div>
+            <div class="header-text">
+                <h2>DAFTAR PERHITUNGAN JASA PENGGUNAAN PERALATAN<br>PELABUHAN PERIKANAN NUSANTARA SIBOLGA</h2>
+            </div>
+            <div style="display: table-cell; width: 80px; vertical-align: top; text-align: right;">
+                <div style="border: 1px solid #000; padding: 5px 8px; font-size: 10px; display: inline-block;">
+                    No: <span style="color: red; font-weight: bold; font-size: 12px;">{{ substr($service->order_number, -4) }}</span>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="info-section">

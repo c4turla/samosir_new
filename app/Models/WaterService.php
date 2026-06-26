@@ -23,6 +23,7 @@ class WaterService extends Model
         'treasurer',
         'notes',
         'status',
+        'billing_number',
     ];
 
     protected $casts = [

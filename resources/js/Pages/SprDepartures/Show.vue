@@ -33,35 +33,6 @@ const formatWaktu = (dateString) => {
     }) + ' WIB'
 }
 
-const getStatusBadgeClass = (status) => {
-    switch (status) {
-        case 'pending':
-            return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-200'
-        case 'processed':
-            return 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-200'
-        case 'approved':
-            return 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-200'
-        case 'rejected':
-            return 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200'
-        default:
-            return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
-    }
-}
-
-const getStatusLabel = (status) => {
-    switch (status) {
-        case 'pending':
-            return 'Pending (Menunggu Petugas)'
-        case 'processed':
-            return 'Diteruskan ke Syahbandar'
-        case 'approved':
-            return 'Disetujui Syahbandar'
-        case 'rejected':
-            return 'Ditolak Syahbandar'
-        default:
-            return status
-    }
-}
 
 // Parse combined muatan (BBM, Air, Es)
 const parsedMuatan = computed(() => {
@@ -101,24 +72,7 @@ const parsedNotes = computed(() => {
     }
 })
 
-// Action triggers
-const forwardSpr = () => {
-    if (confirm('Apakah Anda yakin ingin memverifikasi dan meneruskan SPR ini ke Syahbandar?')) {
-        router.post(`/spr-departures/${props.sprDeparture.id}/forward`)
-    }
-}
 
-const approveSpr = () => {
-    if (confirm('Apakah Anda yakin ingin menyetujui permohonan SPR ini?')) {
-        router.post(`/spr-departures/${props.sprDeparture.id}/approve`)
-    }
-}
-
-const rejectSpr = () => {
-    if (confirm('Apakah Anda yakin ingin menolak permohonan SPR ini?')) {
-        router.post(`/spr-departures/${props.sprDeparture.id}/reject`)
-    }
-}
 </script>
 
 <template>
@@ -142,27 +96,6 @@ const rejectSpr = () => {
                     <div>
                         <h1 class="text-xl font-bold text-gray-900 dark:text-white">Detail SPR Keberangkatan</h1>
                         <p class="text-xs text-gray-600 dark:text-gray-400">ID Permohonan: #{{ sprDeparture.id.toString().padStart(5, '0') }}</p>
-                    </div>
-                </div>
-                <div class="flex items-center gap-3">
-                    <!-- Action buttons based on status & role -->
-                    <template v-if="sprDeparture.status === 'pending' && userRole === 'petugas'">
-                        <button @click="forwardSpr" class="px-4 py-2 bg-blue-650 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition-all shadow-md flex items-center gap-1.5">
-                            <i class="ri-checkbox-circle-line"></i> Verifikasi & Teruskan ke Syahbandar
-                        </button>
-                    </template>
-                    
-                    <template v-if="sprDeparture.status === 'processed' && userRole === 'syahbandar'">
-                        <button @click="approveSpr" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-xs font-bold transition-all shadow-md flex items-center gap-1.5">
-                            <i class="ri-check-line"></i> Setujui SPR
-                        </button>
-                        <button @click="rejectSpr" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold transition-all shadow-md flex items-center gap-1.5">
-                            <i class="ri-close-line"></i> Tolak
-                        </button>
-                    </template>
-
-                    <div :class="['px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider', getStatusBadgeClass(sprDeparture.status)]">
-                        {{ getStatusLabel(sprDeparture.status) }}
                     </div>
                 </div>
             </div>

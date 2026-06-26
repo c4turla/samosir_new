@@ -8,6 +8,11 @@ use Inertia\Inertia;
 use Carbon\Carbon;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
 
 class ReportVesselController extends Controller
 {
@@ -84,7 +89,7 @@ class ReportVesselController extends Controller
     }
 
     /**
-     * Export vessels data to Excel (CSV format).
+     * Export vessels data to Excel (XLSX format).
      */
     public function exportExcel(Request $request)
     {
@@ -124,53 +129,75 @@ class ReportVesselController extends Controller
             ->orderBy('vessel_name')
             ->get();
 
-        $filename = 'laporan_data_kapal_' . Carbon::now()->format('YmdHis') . '.csv';
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Laporan Data Kapal');
 
+        // Header columns
         $headers = [
-            'Content-Type' => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'No', 'Nama Kapal', 'Pemilik', 'No. Izin / Selar', 'GT',
+            'Alat Tangkap', 'Jenis Kapal', 'No SIUP', 'Tgl Akhir SIPI',
+            'Status SIPI', 'Panjang (m)', 'Catatan',
         ];
 
-        $callback = function () use ($vessels) {
-            $file = fopen('php://output', 'w');
-            fprintf($file, chr(0xEF) . chr(0xBB) . chr(0xBF));
+        $col = 'A';
+        foreach ($headers as $header) {
+            $sheet->setCellValue($col . '1', $header);
+            $col++;
+        }
 
-            fputcsv($file, [
-                'No',
-                'Nama Kapal',
-                'Pemilik',
-                'No. Izin / Selar',
-                'GT',
-                'Alat Tangkap',
-                'Jenis Kapal',
-                'No SIUP',
-                'Tgl Akhir SIPI',
-                'Status SIPI',
-                'Panjang (m)',
-                'Catatan',
+        // Style header
+        $lastCol = chr(ord('A') + count($headers) - 1);
+        $headerRange = 'A1:' . $lastCol . '1';
+        $sheet->getStyle($headerRange)->applyFromArray([
+            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '4472C4']],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
+            'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]],
+        ]);
+
+        // Data rows
+        $row = 2;
+        foreach ($vessels as $index => $vessel) {
+            $sheet->setCellValue('A' . $row, $index + 1);
+            $sheet->setCellValue('B' . $row, $vessel->vessel_name);
+            $sheet->setCellValue('C' . $row, $vessel->owner_name ?? '-');
+            $sheet->setCellValue('D' . $row, $vessel->license_number ?? $vessel->selar_mark ?? '-');
+            $sheet->setCellValue('E' . $row, $vessel->gt ?? 0);
+            $sheet->setCellValue('F' . $row, $vessel->fishing_gear ?? '-');
+            $sheet->setCellValue('G' . $row, $vessel->vessel_type ?? '-');
+            $sheet->setCellValue('H' . $row, $vessel->siup_number ?? '-');
+            $sheet->setCellValue('I' . $row, $vessel->sipi_end_date ? $vessel->sipi_end_date->format('d/m/Y') : '-');
+            $sheet->setCellValue('J' . $row, $vessel->sipi_status_text);
+            $sheet->setCellValue('K' . $row, $vessel->length ?? 0);
+            $sheet->setCellValue('L' . $row, $vessel->notes ?? '-');
+
+            $row++;
+        }
+
+        // Style data rows with borders
+        if ($row > 2) {
+            $dataRange = 'A2:' . $lastCol . ($row - 1);
+            $sheet->getStyle($dataRange)->applyFromArray([
+                'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]],
+                'alignment' => ['vertical' => Alignment::VERTICAL_TOP, 'wrapText' => true],
             ]);
+        }
 
-            foreach ($vessels as $index => $vessel) {
-                fputcsv($file, [
-                    $index + 1,
-                    $vessel->vessel_name,
-                    $vessel->owner_name ?? '-',
-                    $vessel->license_number ?? $vessel->selar_mark ?? '-',
-                    $vessel->gt ?? 0,
-                    $vessel->fishing_gear ?? '-',
-                    $vessel->vessel_type ?? '-',
-                    $vessel->siup_number ?? '-',
-                    $vessel->sipi_end_date ? $vessel->sipi_end_date->format('d/m/Y') : '-',
-                    $vessel->sipi_status_text,
-                    $vessel->length ?? 0,
-                    $vessel->notes ?? '-',
-                ]);
-            }
+        // Auto-size columns
+        foreach (range('A', $lastCol) as $columnID) {
+            $sheet->getColumnDimension($columnID)->setAutoSize(true);
+        }
 
-            fclose($file);
-        };
+        $filename = 'laporan_data_kapal_' . Carbon::now()->format('YmdHis') . '.xlsx';
 
-        return response()->stream($callback, 200, $headers);
+        $tempFile = tempnam(sys_get_temp_dir(), 'xlsx_');
+        $writer = new Xlsx($spreadsheet);
+        $writer->save($tempFile);
+
+        return response()->download($tempFile, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ])->deleteFileAfterSend(true);
     }
 
     /**

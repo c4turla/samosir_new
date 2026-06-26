@@ -53,6 +53,14 @@ export const menuConfig = [
         ]
     },
     {
+        title: 'Penimbangan Ikan',
+        icon: 'ri-download-cloud-2-line',
+        roles: ALL_ROLES,
+        items: [
+            { title: 'Daftar Penimbangan', icon: 'ri-list-check', to: '/unloadings', roles: ALL_ROLES },
+        ]
+    },
+    {
         title: 'Keberangkatan',
         icon: 'ri-sailboat-line',
         roles: ALL_ROLES,
@@ -60,15 +68,6 @@ export const menuConfig = [
             { title: 'Daftar Keberangkatan', icon: 'ri-sailboat-line', to: '/departures', roles: ALL_ROLES },
             { title: 'Tambah Keberangkatan', icon: 'ri-add-circle-line', to: '/departures/create', roles: NOT_KEPALA_PELABUHAN },
             { title: 'Permohonan SPR', icon: 'ri-file-info-line', to: '/spr-departures', roles: NOT_KEPALA_PELABUHAN },
-        ]
-    },
-    {
-        title: 'Penimbangan Ikan',
-        icon: 'ri-download-cloud-2-line',
-        roles: ALL_ROLES,
-        items: [
-            { title: 'Daftar Penimbangan', icon: 'ri-list-check', to: '/unloadings', roles: ALL_ROLES },
-            { title: 'Approval Penimbangan', icon: 'ri-check-double-line', to: '/approval', roles: [ROLES.SYAHBANDAR] },
         ]
     },
     {

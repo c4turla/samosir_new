@@ -11,19 +11,39 @@
             line-height: 1.5;
         }
         .header {
-            text-align: center;
             margin-bottom: 20px;
+            border-bottom: 2px solid #000;
+            padding-bottom: 10px;
         }
-        .header h2 {
+        .header-inner {
+            display: table;
+            width: 100%;
+        }
+        .header-logo {
+            display: table-cell;
+            width: 80px;
+            vertical-align: middle;
+        }
+        .header-logo img {
+            width: 70px;
+            height: auto;
+        }
+        .header-text {
+            display: table-cell;
+            vertical-align: middle;
+            text-align: center;
+        }
+        .header-text h2 {
             margin: 0;
             text-transform: uppercase;
-            font-size: 16px;
-            text-decoration: underline;
+            font-size: 13px;
+            font-weight: bold;
         }
-        .header h3 {
-            margin: 5px 0;
-            font-size: 14px;
+        .header-text h3 {
+            margin: 4px 0 0;
+            font-size: 12px;
             text-decoration: underline;
+            text-transform: uppercase;
         }
         .info-section {
             margin-bottom: 20px;
@@ -83,9 +103,17 @@
 </head>
 <body>
     <div class="header">
-        <h2>PELABUHAN PERIKANAN NUSANTARA SIBOLGA</h2>
-        <h3>ORDER PEMAKAIAN PERALATAN</h3>
-        <p>No Order : {{ $service->order_number }}</p>
+        <div class="header-inner">
+            <div class="header-logo">
+                <img src="{{ public_path('img/logo_kkp.png') }}" alt="Logo KKP">
+            </div>
+            <div class="header-text">
+                <h2>PELABUHAN PERIKANAN NUSANTARA SIBOLGA</h2>
+                <h3>ORDER PEMAKAIAN PERALATAN</h3>
+                <p style="margin: 4px 0 0; font-size: 11px;">No Order : {{ $service->order_number }}</p>
+            </div>
+            <div style="display: table-cell; width: 80px;"></div>
+        </div>
     </div>
 
     <div class="info-section">

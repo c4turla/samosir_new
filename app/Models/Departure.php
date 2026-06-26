@@ -17,7 +17,7 @@ class Departure extends Model
         'departure_datetime', 'arrival_datetime', 'etmal_days', 'etmal_hours', 'landing_site_id', 'syahbandar',
         'ice_supply', 'water_supply', 'diesel_supply',
         'oil_supply', 'gasoline_supply', 'other_supplies', 'notes', 'status', 'floating_status', 'unloading_status', 'admin_completion',
-        'approval_status', 'approved_by', 'approved_at', 'input_by', 'signature'
+        'approval_status', 'approved_by', 'approved_at', 'input_by', 'signature', 'is_processed'
     ];
 
     protected $casts = [
@@ -31,6 +31,7 @@ class Departure extends Model
         'oil_supply' => 'integer',
         'gasoline_supply' => 'integer',
         'approved_at' => 'datetime',
+        'is_processed' => 'boolean',
     ];
 
     // Relationships
@@ -68,5 +69,49 @@ class Departure extends Model
     public function scopeToday($query)
     {
         return $query->whereDate('departure_date', today());
+    }
+
+    public function setApprovalStatusAttribute($value)
+    {
+        if ($value === true || $value === '1' || $value === 1) {
+            $this->attributes['approval_status'] = '1';
+        } else {
+            $this->attributes['approval_status'] = '0';
+        }
+    }
+
+    public function setIceSupplyAttribute($value)
+    {
+        $this->attributes['ice_supply'] = $value ?? 0;
+    }
+
+    public function setWaterSupplyAttribute($value)
+    {
+        $this->attributes['water_supply'] = $value ?? 0;
+    }
+
+    public function setDieselSupplyAttribute($value)
+    {
+        $this->attributes['diesel_supply'] = $value ?? 0;
+    }
+
+    public function setOilSupplyAttribute($value)
+    {
+        $this->attributes['oil_supply'] = $value ?? 0;
+    }
+
+    public function setGasolineSupplyAttribute($value)
+    {
+        $this->attributes['gasoline_supply'] = $value ?? 0;
+    }
+
+    public function setCrewCountAttribute($value)
+    {
+        $this->attributes['crew_count'] = $value ?? 0;
+    }
+
+    public function setEtmalDaysAttribute($value)
+    {
+        $this->attributes['etmal_days'] = $value ?? 0;
     }
 }

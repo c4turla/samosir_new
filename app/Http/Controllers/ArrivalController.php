@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Arrival;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class ArrivalController extends Controller
 {
@@ -19,7 +20,7 @@ class ArrivalController extends Controller
         $dateTo = $request->input('date_to');
         
         $arrivals = Arrival::query()
-            ->with(['vessel', 'landingSite', 'inputBy', 'approvedBy'])
+            ->with(['vessel', 'landingSite', 'inputBy', 'approvedBy', 'catches.fishSpecies'])
             ->when($search, function ($query, $search) {
                 $query->whereHas('vessel', function ($q) use ($search) {
                     $q->where('vessel_name', 'like', "%{$search}%")
@@ -95,7 +96,8 @@ class ArrivalController extends Controller
         ]);
 
         $validated['input_by'] = auth()->id();
-        $validated['approval_status'] = 1;
+        $validated['approval_status'] = '0';
+        $validated['is_processed'] = true;
 
         // Extract catches before creating arrival
         $catchesData = $validated['catches'] ?? [];
@@ -275,8 +277,12 @@ class ArrivalController extends Controller
      */
     public function approve(Arrival $arrival)
     {
+        if (auth()->user()->role !== 'syahbandar') {
+            return redirect()->route('arrivals.index')->with('error', 'Hanya Syahbandar yang dapat menyetujui laporan ini.');
+        }
+
         $arrival->update([
-            'approval_status' => true,
+            'approval_status' => '1',
             'approved_by' => auth()->id(),
             'approved_at' => now(),
         ]);
@@ -286,7 +292,7 @@ class ArrivalController extends Controller
             $vesselName = $arrival->vessel ? $arrival->vessel->vessel_name : 'Tidak Diketahui';
             $arrival->inputBy->notify(new \App\Notifications\DataInputNotification(
                 'Laporan Kedatangan Disetujui',
-                "Laporan Kedatangan Kapal {$vesselName} telah disetujui oleh petugas.",
+                "Laporan Kedatangan Kapal {$vesselName} telah disetujui oleh syahbandar.",
                 '/arrivals',
                 'success'
             ));
@@ -301,8 +307,12 @@ class ArrivalController extends Controller
      */
     public function reject(Arrival $arrival)
     {
+        if (auth()->user()->role !== 'syahbandar') {
+            return redirect()->route('arrivals.index')->with('error', 'Hanya Syahbandar yang dapat menolak laporan ini.');
+        }
+
         $arrival->update([
-            'approval_status' => false,
+            'approval_status' => '0',
             'approved_by' => null,
             'approved_at' => null,
         ]);
@@ -320,5 +330,49 @@ class ArrivalController extends Controller
 
         return redirect()->route('arrivals.index')
             ->with('success', 'Kedatangan kapal berhasil ditolak.');
+    }
+
+    /**
+     * Forward an arrival to syahbandar for approval.
+     */
+    public function forward(Arrival $arrival)
+    {
+        $arrival->update([
+            'is_processed' => true,
+        ]);
+
+        $arrival->load('vessel');
+        $vesselName = $arrival->vessel ? $arrival->vessel->vessel_name : 'Tidak Diketahui';
+
+        $users = \App\Models\User::where('role', 'syahbandar')->where('is_active', true)->get();
+        foreach ($users as $user) {
+            $user->notify(new \App\Notifications\DataInputNotification(
+                'Menunggu Approval',
+                "Data Kedatangan Kapal {$vesselName} telah diperiksa oleh petugas dan menunggu approval Anda.",
+                '/arrivals',
+                'warning'
+            ));
+        }
+
+        return redirect()->route('arrivals.index')
+            ->with('success', 'Kedatangan kapal berhasil diteruskan ke Syahbandar.');
+    }
+
+    public function print(Arrival $arrival)
+    {
+        $arrival->load(['vessel', 'landingSite', 'approvedBy', 'catches.fishSpecies']);
+
+        $syahbandarUser = null;
+        if ($arrival->approvedBy && $arrival->approvedBy->role === 'syahbandar') {
+            $syahbandarUser = $arrival->approvedBy;
+        }
+
+        $pdf = Pdf::loadView('arrivals.print', compact('arrival', 'syahbandarUser'))
+            ->setPaper('a4', 'portrait');
+
+        $vesselName = $arrival->vessel ? str_replace(' ', '_', $arrival->vessel->vessel_name) : 'kapal';
+        $filename = 'stb_kedatangan_' . strtolower($vesselName) . '_' . $arrival->id . '.pdf';
+
+        return $pdf->download($filename);
     }
 }

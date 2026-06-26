@@ -8,6 +8,11 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Carbon\Carbon;
 use Barryvdh\DomPDF\Facade\Pdf;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
 
 class ReportServiceController extends Controller
 {
@@ -176,7 +181,7 @@ class ReportServiceController extends Controller
     }
 
     /**
-     * Export services report data to CSV/Excel.
+     * Export services report data to Excel (XLSX format).
      */
     public function exportExcel(Request $request)
     {
@@ -186,11 +191,14 @@ class ReportServiceController extends Controller
         $status = $request->input('status');
         $search = $request->input('search');
 
-        $records = [];
-
         if ($serviceType === 'all') {
             return redirect()->back()->with('error', 'Silakan pilih spesifik jenis jasa untuk diexport.');
-        } else if ($serviceType === 'equipment') {
+        }
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+
+        if ($serviceType === 'equipment') {
             $records = EquipmentService::query()
                 ->with(['vessel'])
                 ->whereDoesntHave('items', function ($q) {
@@ -212,35 +220,50 @@ class ReportServiceController extends Controller
                 ->whereDate('service_date', '<=', $dateTo)
                 ->orderBy('service_date', 'desc')
                 ->get();
-                
-            $filename = 'laporan_jasa_peralatan_' . $dateFrom . '_sd_' . $dateTo . '.csv';
+
+            $sheet->setTitle('Jasa Peralatan');
+
             $headers = [
-                'Content-Type' => 'text/csv; charset=UTF-8',
-                'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+                'No', 'No. Order', 'Nama Penyewa', 'Nama Kapal',
+                'Tanggal Pelayanan', 'Durasi (Jam)', 'Total Biaya (Rp)',
+                'Status', 'Petugas', 'Bendahara',
             ];
-            
-            $callback = function () use ($records) {
-                $file = fopen('php://output', 'w');
-                fprintf($file, chr(0xEF) . chr(0xBB) . chr(0xBF));
-                fputcsv($file, ['No', 'No. Order', 'Nama Penyewa', 'Nama Kapal', 'Tanggal Pelayanan', 'Durasi (Jam)', 'Total Biaya (Rp)', 'Status', 'Petugas', 'Bendahara']);
-                
-                foreach ($records as $index => $record) {
-                    fputcsv($file, [
-                        $index + 1,
-                        $record->order_number,
-                        $record->renter_name ?? '-',
-                        $record->vessel->vessel_name ?? '-',
-                        Carbon::parse($record->service_date)->format('d/m/Y'),
-                        $record->duration ?? 0,
-                        number_format($record->total_amount, 0, ',', '.'),
-                        ucfirst($record->status),
-                        $record->officer ?? '-',
-                        $record->treasurer ?? '-',
-                    ]);
-                }
-                fclose($file);
-            };
-            return response()->stream($callback, 200, $headers);
+
+            $col = 'A';
+            foreach ($headers as $header) {
+                $sheet->setCellValue($col . '1', $header);
+                $col++;
+            }
+
+            $lastCol = chr(ord('A') + count($headers) - 1);
+
+            $row = 2;
+            foreach ($records as $index => $record) {
+                $sheet->setCellValue('A' . $row, $index + 1);
+                $sheet->setCellValue('B' . $row, $record->order_number);
+                $sheet->setCellValue('C' . $row, $record->renter_name ?? '-');
+                $sheet->setCellValue('D' . $row, $record->vessel->vessel_name ?? '-');
+                $sheet->setCellValue('E' . $row, Carbon::parse($record->service_date)->format('d/m/Y'));
+                $sheet->setCellValue('F' . $row, $record->duration ?? 0);
+                $sheet->setCellValue('G' . $row, $record->total_amount ?? 0);
+                $sheet->setCellValue('H' . $row, ucfirst($record->status));
+                $sheet->setCellValue('I' . $row, $record->officer ?? '-');
+                $sheet->setCellValue('J' . $row, $record->treasurer ?? '-');
+                $row++;
+            }
+
+            // Totals row
+            if ($row > 2) {
+                $sheet->setCellValue('F' . $row, 'TOTAL');
+                $sheet->setCellValue('G' . $row, $records->sum('total_amount'));
+                $sheet->getStyle('F' . $row . ':G' . $row)->applyFromArray([
+                    'font' => ['bold' => true],
+                    'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'D9E2F3']],
+                    'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]],
+                ]);
+            }
+
+            $filename = 'laporan_jasa_peralatan_' . $dateFrom . '_sd_' . $dateTo . '.xlsx';
 
         } else if ($serviceType === 'ice_cruiser') {
             $records = EquipmentService::query()
@@ -264,36 +287,51 @@ class ReportServiceController extends Controller
                 ->whereDate('service_date', '<=', $dateTo)
                 ->orderBy('service_date', 'desc')
                 ->get();
-                
-            $filename = 'laporan_jasa_ice_cruiser_' . $dateFrom . '_sd_' . $dateTo . '.csv';
-            $headers = [
-                'Content-Type' => 'text/csv; charset=UTF-8',
-                'Content-Disposition' => 'attachment; filename="' . $filename . '"',
-            ];
-            
-            $callback = function () use ($records) {
-                $file = fopen('php://output', 'w');
-                fprintf($file, chr(0xEF) . chr(0xBB) . chr(0xBF));
-                fputcsv($file, ['No', 'No. Order', 'Nama Penyewa', 'Nama Kapal', 'Tanggal Pelayanan', 'Total Biaya (Rp)', 'Status', 'Petugas', 'Bendahara']);
-                
-                foreach ($records as $index => $record) {
-                    fputcsv($file, [
-                        $index + 1,
-                        $record->order_number,
-                        $record->renter_name ?? '-',
-                        $record->vessel->vessel_name ?? '-',
-                        Carbon::parse($record->service_date)->format('d/m/Y'),
-                        number_format($record->total_amount, 0, ',', '.'),
-                        ucfirst($record->status),
-                        $record->officer ?? '-',
-                        $record->treasurer ?? '-',
-                    ]);
-                }
-                fclose($file);
-            };
-            return response()->stream($callback, 200, $headers);
 
-        } else if ($serviceType === 'water') {
+            $sheet->setTitle('Jasa Ice Cruiser');
+
+            $headers = [
+                'No', 'No. Order', 'Nama Penyewa', 'Nama Kapal',
+                'Tanggal Pelayanan', 'Total Biaya (Rp)', 'Status',
+                'Petugas', 'Bendahara',
+            ];
+
+            $col = 'A';
+            foreach ($headers as $header) {
+                $sheet->setCellValue($col . '1', $header);
+                $col++;
+            }
+
+            $lastCol = chr(ord('A') + count($headers) - 1);
+
+            $row = 2;
+            foreach ($records as $index => $record) {
+                $sheet->setCellValue('A' . $row, $index + 1);
+                $sheet->setCellValue('B' . $row, $record->order_number);
+                $sheet->setCellValue('C' . $row, $record->renter_name ?? '-');
+                $sheet->setCellValue('D' . $row, $record->vessel->vessel_name ?? '-');
+                $sheet->setCellValue('E' . $row, Carbon::parse($record->service_date)->format('d/m/Y'));
+                $sheet->setCellValue('F' . $row, $record->total_amount ?? 0);
+                $sheet->setCellValue('G' . $row, ucfirst($record->status));
+                $sheet->setCellValue('H' . $row, $record->officer ?? '-');
+                $sheet->setCellValue('I' . $row, $record->treasurer ?? '-');
+                $row++;
+            }
+
+            // Totals row
+            if ($row > 2) {
+                $sheet->setCellValue('E' . $row, 'TOTAL');
+                $sheet->setCellValue('F' . $row, $records->sum('total_amount'));
+                $sheet->getStyle('E' . $row . ':F' . $row)->applyFromArray([
+                    'font' => ['bold' => true],
+                    'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'D9E2F3']],
+                    'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]],
+                ]);
+            }
+
+            $filename = 'laporan_jasa_ice_cruiser_' . $dateFrom . '_sd_' . $dateTo . '.xlsx';
+
+        } else { // water
             $records = WaterService::query()
                 ->with(['vessel'])
                 ->when($search, function ($q, $search) {
@@ -312,36 +350,82 @@ class ReportServiceController extends Controller
                 ->whereDate('request_date', '<=', $dateTo)
                 ->orderBy('request_date', 'desc')
                 ->get();
-                
-            $filename = 'laporan_jasa_air_' . $dateFrom . '_sd_' . $dateTo . '.csv';
+
+            $sheet->setTitle('Jasa Air');
+
             $headers = [
-                'Content-Type' => 'text/csv; charset=UTF-8',
-                'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+                'No', 'No. Order', 'Pemohon', 'Nama Kapal',
+                'Tanggal Permohonan', 'Volume (Ton)', 'Total Biaya (Rp)',
+                'Status', 'Petugas Lapangan', 'Bendahara PNBP',
             ];
-            
-            $callback = function () use ($records) {
-                $file = fopen('php://output', 'w');
-                fprintf($file, chr(0xEF) . chr(0xBB) . chr(0xBF));
-                fputcsv($file, ['No', 'No. Order', 'Pemohon', 'Nama Kapal', 'Tanggal Permohonan', 'Volume (Ton)', 'Total Biaya (Rp)', 'Status', 'Petugas Lapangan', 'Bendahara PNBP']);
-                
-                foreach ($records as $index => $record) {
-                    fputcsv($file, [
-                        $index + 1,
-                        $record->order_number,
-                        $record->requester ?? '-',
-                        $record->vessel->vessel_name ?? '-',
-                        Carbon::parse($record->request_date)->format('d/m/Y'),
-                        $record->volume ?? 0,
-                        number_format($record->total_payment, 0, ',', '.'),
-                        ucfirst($record->status),
-                        $record->field_officer ?? '-',
-                        $record->treasurer ?? '-',
-                    ]);
-                }
-                fclose($file);
-            };
-            return response()->stream($callback, 200, $headers);
+
+            $col = 'A';
+            foreach ($headers as $header) {
+                $sheet->setCellValue($col . '1', $header);
+                $col++;
+            }
+
+            $lastCol = chr(ord('A') + count($headers) - 1);
+
+            $row = 2;
+            foreach ($records as $index => $record) {
+                $sheet->setCellValue('A' . $row, $index + 1);
+                $sheet->setCellValue('B' . $row, $record->order_number);
+                $sheet->setCellValue('C' . $row, $record->requester ?? '-');
+                $sheet->setCellValue('D' . $row, $record->vessel->vessel_name ?? '-');
+                $sheet->setCellValue('E' . $row, Carbon::parse($record->request_date)->format('d/m/Y'));
+                $sheet->setCellValue('F' . $row, $record->volume ?? 0);
+                $sheet->setCellValue('G' . $row, $record->total_payment ?? 0);
+                $sheet->setCellValue('H' . $row, ucfirst($record->status));
+                $sheet->setCellValue('I' . $row, $record->field_officer ?? '-');
+                $sheet->setCellValue('J' . $row, $record->treasurer ?? '-');
+                $row++;
+            }
+
+            // Totals row
+            if ($row > 2) {
+                $sheet->setCellValue('F' . $row, 'TOTAL');
+                $sheet->setCellValue('G' . $row, $records->sum('total_payment'));
+                $sheet->getStyle('F' . $row . ':G' . $row)->applyFromArray([
+                    'font' => ['bold' => true],
+                    'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'D9E2F3']],
+                    'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]],
+                ]);
+            }
+
+            $filename = 'laporan_jasa_air_' . $dateFrom . '_sd_' . $dateTo . '.xlsx';
         }
+
+        // Style header row
+        $headerRange = 'A1:' . $lastCol . '1';
+        $sheet->getStyle($headerRange)->applyFromArray([
+            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '4472C4']],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
+            'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]],
+        ]);
+
+        // Style data rows
+        if ($row > 2) {
+            $dataRange = 'A2:' . $lastCol . ($row - 1);
+            $sheet->getStyle($dataRange)->applyFromArray([
+                'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]],
+                'alignment' => ['vertical' => Alignment::VERTICAL_TOP, 'wrapText' => true],
+            ]);
+        }
+
+        // Auto-size columns
+        foreach (range('A', $lastCol) as $columnID) {
+            $sheet->getColumnDimension($columnID)->setAutoSize(true);
+        }
+
+        $tempFile = tempnam(sys_get_temp_dir(), 'xlsx_');
+        $writer = new Xlsx($spreadsheet);
+        $writer->save($tempFile);
+
+        return response()->download($tempFile, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ])->deleteFileAfterSend(true);
     }
 
     /**
@@ -355,7 +439,7 @@ class ReportServiceController extends Controller
         $status = $request->input('status');
         $search = $request->input('search');
 
-        $records = [];
+        $records = collect();
         $serviceName = '';
         $totalRevenue = 0;
 

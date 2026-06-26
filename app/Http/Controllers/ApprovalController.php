@@ -8,45 +8,6 @@ use Inertia\Inertia;
 
 class ApprovalController extends Controller
 {
-    public function index(Request $request)
-    {
-        $user = auth()->user();
-        
-        // Only syahbandar can access this page
-        if ($user->role !== 'syahbandar') {
-            abort(403, 'Anda tidak memiliki akses ke halaman ini');
-        }
-        
-        $unloadings = Unloading::with(['arrival.vessel', 'landingSite', 'syahbandar'])
-            ->where('approval_status', false) // Only show pending approvals
-            ->orderBy('unloading_date', 'desc')
-            ->orderBy('unloading_time', 'desc')
-            ->paginate(10)
-            ->withQueryString();
-
-        return Inertia::render('Approval/Index', [
-            'unloadings' => $unloadings,
-            'currentUser' => $user,
-        ]);
-    }
-
-    public function show(Unloading $unloading)
-    {
-        $user = auth()->user();
-        
-        // Only syahbandar can access this page
-        if ($user->role !== 'syahbandar') {
-            abort(403, 'Anda tidak memiliki akses ke halaman ini');
-        }
-
-        // Load relations
-        $unloading->load(['arrival.vessel', 'landingSite', 'syahbandar']);
-
-        return Inertia::render('Approval/Show', [
-            'unloading' => $unloading,
-            'currentUser' => $user,
-        ]);
-    }
 
     public function approve(Unloading $unloading)
     {
@@ -68,7 +29,7 @@ class ApprovalController extends Controller
             'approved_at' => now(),
         ]);
 
-        return redirect()->route('approval.index')->with('success', 'Data penimbangan ikan berhasil disetujui');
+        return redirect()->back()->with('success', 'Data penimbangan ikan berhasil disetujui');
     }
 
     public function reject(Unloading $unloading)
@@ -87,6 +48,6 @@ class ApprovalController extends Controller
         
         $unloading->update(['approval_status' => false]);
 
-        return redirect()->route('approval.index')->with('success', 'Data penimbangan ikan berhasil ditolak');
+        return redirect()->back()->with('success', 'Data penimbangan ikan berhasil ditolak');
     }
 }

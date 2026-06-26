@@ -86,7 +86,8 @@ class DepartureController extends Controller
         // Generate Nomor
         $validated['nomor'] = $this->generateNextNomor();
         $validated['input_by'] = auth()->id();
-        $validated['approval_status'] = 1;
+        $validated['approval_status'] = '0';
+        $validated['is_processed'] = false;
         $validated['status'] = $validated['status'] ?? 'Sesuai Jadwal';
 
         $departure = Departure::create($validated);

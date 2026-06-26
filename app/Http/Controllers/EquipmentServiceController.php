@@ -126,6 +126,7 @@ class EquipmentServiceController extends Controller
             'items.*.equipment_name' => 'required|string',
             'items.*.quantity' => 'required|integer|min:1',
             'items.*.unit_price' => 'required|numeric|min:0',
+            'billing_number' => 'nullable|string|max:255',
         ]);
 
         $service = EquipmentService::findOrFail($id);
@@ -146,6 +147,7 @@ class EquipmentServiceController extends Controller
             'total_amount' => $totalAmount,
             'notes' => $request->notes,
             'status' => $request->status,
+            'billing_number' => $request->billing_number,
         ]);
 
         // Delete old items and create new ones
@@ -242,6 +244,7 @@ class EquipmentServiceController extends Controller
             'total_amount' => 'required|numeric|min:0',
             'officer' => 'nullable|string|max:255',
             'treasurer' => 'nullable|string|max:255',
+            'billing_number' => 'nullable|string|max:255',
         ]);
 
         $service = EquipmentService::findOrFail($id);
@@ -253,7 +256,8 @@ class EquipmentServiceController extends Controller
             'officer' => $request->officer,
             'treasurer' => $request->treasurer,
             'total_amount' => $request->total_amount,
-            'status' => 'processed'
+            'status' => 'processed',
+            'billing_number' => $request->billing_number,
         ]);
 
         foreach ($request->items as $itemData) {

@@ -114,6 +114,8 @@ Route::middleware('auth')->group(function () {
         Route::delete('/{arrival}', [ArrivalController::class, 'destroy'])->name('arrivals.destroy');
         Route::put('/{arrival}/approve', [ArrivalController::class, 'approve'])->name('arrivals.approve');
         Route::put('/{arrival}/reject', [ArrivalController::class, 'reject'])->name('arrivals.reject');
+        Route::put('/{arrival}/forward', [ArrivalController::class, 'forward'])->name('arrivals.forward');
+        Route::get('/{arrival}/print', [ArrivalController::class, 'print'])->name('arrivals.print');
     });
     
     // Departures routes
@@ -128,15 +130,13 @@ Route::middleware('auth')->group(function () {
         Route::get('/{departure}/print', [DepartureController::class, 'print'])->name('departures.print');
         Route::post('/{departure}/approve', [DepartureController::class, 'approve'])->name('departures.approve');
         Route::post('/{departure}/reject', [DepartureController::class, 'reject'])->name('departures.reject');
+        Route::post('/{departure}/forward', [DepartureController::class, 'forward'])->name('departures.forward');
     });
 
     // SPR Departures routes
     Route::prefix('spr-departures')->group(function () {
         Route::get('/', [App\Http\Controllers\SprDepartureController::class, 'index'])->name('spr-departures.index');
         Route::get('/{sprDeparture}', [App\Http\Controllers\SprDepartureController::class, 'show'])->name('spr-departures.show');
-        Route::post('/{sprDeparture}/forward', [App\Http\Controllers\SprDepartureController::class, 'forward'])->name('spr-departures.forward');
-        Route::post('/{sprDeparture}/approve', [App\Http\Controllers\SprDepartureController::class, 'approve'])->name('spr-departures.approve');
-        Route::post('/{sprDeparture}/reject', [App\Http\Controllers\SprDepartureController::class, 'reject'])->name('spr-departures.reject');
     });
     
     // Unloadings routes
@@ -152,8 +152,6 @@ Route::middleware('auth')->group(function () {
     
     // Approval routes (syahbandar only)
     Route::prefix('approval')->group(function () {
-        Route::get('/', [ApprovalController::class, 'index'])->name('approval.index');
-        Route::get('/{unloading}', [ApprovalController::class, 'show'])->name('approval.show');
         Route::post('/{unloading}/approve', [ApprovalController::class, 'approve'])->name('approval.approve');
         Route::post('/{unloading}/reject', [ApprovalController::class, 'reject'])->name('approval.reject');
     });

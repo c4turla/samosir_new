@@ -16,8 +16,15 @@ class UnloadingController extends Controller
 {
     public function index(Request $request)
     {
-        $unloadings = Unloading::with(['arrival.vessel', 'landingSite', 'syahbandar'])
-            ->filter(
+        $user = auth()->user();
+        $query = Unloading::with(['arrival.vessel', 'arrival.catches.fishSpecies', 'landingSite', 'syahbandar']);
+
+        // If the user is a syahbandar, only show unloadings assigned to them
+        if ($user->role === 'syahbandar') {
+            $query->where('syahbandar_id', $user->id);
+        }
+
+        $unloadings = $query->filter(
                 $request->search,
                 $request->status,
                 $request->date_from,
@@ -38,7 +45,6 @@ class UnloadingController extends Controller
         // Get arrivals that don't have unloading yet
         $arrivals = Arrival::with('vessel', 'landingSite')
             ->whereDoesntHave('unloading')
-            ->where('status', 'SELESAI')
             ->get();
 
         $landingSites = LandingSite::all();
@@ -106,7 +112,6 @@ class UnloadingController extends Controller
         $unloading->load(['arrival.vessel', 'landingSite', 'syahbandar']);
 
         $arrivals = Arrival::with('vessel', 'landingSite')
-            ->where('status', 'SELESAI')
             ->get();
 
         $landingSites = LandingSite::all();

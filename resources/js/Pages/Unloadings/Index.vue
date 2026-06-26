@@ -31,10 +31,73 @@ watch([search, status, dateFrom, dateTo], () => {
     })
 })
 
-const deleteUnloading = (id) => {
-    if (confirm('Apakah Anda yakin ingin menghapus data penimbangan ikan ini?')) {
-        router.delete(`/unloadings/${id}`)
+const confirmModal = ref({
+    show: false,
+    title: '',
+    message: '',
+    type: 'info',
+    onConfirm: null
+})
+
+const triggerConfirm = (title, message, type, callback) => {
+    confirmModal.value = {
+        show: true,
+        title,
+        message,
+        type,
+        onConfirm: callback
     }
+}
+
+const handleConfirmAction = () => {
+    if (confirmModal.value.onConfirm) {
+        confirmModal.value.onConfirm()
+    }
+    confirmModal.value.show = false
+}
+
+const closeConfirmModal = () => {
+    confirmModal.value.show = false
+}
+
+const deleteUnloading = (id) => {
+    triggerConfirm(
+        'Hapus Penimbangan',
+        'Apakah Anda yakin ingin menghapus data penimbangan ikan ini? Tindakan ini tidak dapat dibatalkan.',
+        'danger',
+        () => router.delete(`/unloadings/${id}`)
+    )
+}
+
+const approveUnloading = (id) => {
+    triggerConfirm(
+        'Setujui Penimbangan',
+        'Apakah Anda yakin ingin menyetujui penimbangan ikan ini? Data akan disimpan sebagai berkas yang sah.',
+        'success',
+        () => router.post(`/approval/${id}/approve`)
+    )
+}
+
+const rejectUnloading = (id) => {
+    triggerConfirm(
+        'Tolak Penimbangan',
+        'Apakah Anda yakin ingin menolak data penimbangan ini? Data akan dikembalikan ke status menunggu.',
+        'danger',
+        () => router.post(`/approval/${id}/reject`)
+    )
+}
+
+const showDetailModal = ref(false)
+const selectedUnloading = ref(null)
+
+const openDetailModal = (unloading) => {
+    selectedUnloading.value = unloading
+    showDetailModal.value = true
+}
+
+const closeDetailModal = () => {
+    showDetailModal.value = false
+    selectedUnloading.value = null
 }
 
 const getApprovalBadgeClass = (status) => {
@@ -248,9 +311,36 @@ const userRole = computed(() => page.props.auth?.user?.role)
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                                             </svg>
                                         </a>
-                                        <!-- Edit button only for unapproved records and NOT for kepala_pelabuhan -->
+
+                                        <!-- Periksa Button for Syahbandar (Pending Approval) -->
+                                        <button
+                                            v-if="userRole === 'syahbandar' && !unloading.approval_status && unloading.syahbandar_id === user.id"
+                                            @click="openDetailModal(unloading)"
+                                            class="inline-flex items-center px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-[10px] font-semibold transition-colors cursor-pointer animate-pulse"
+                                            title="Periksa & Setujui"
+                                        >
+                                            <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                            Periksa
+                                        </button>
+
+                                        <!-- General Detail Eye Button for others, or if already approved -->
+                                        <button
+                                            v-if="unloading.approval_status || userRole !== 'syahbandar' || unloading.syahbandar_id !== user.id"
+                                            @click="openDetailModal(unloading)"
+                                            class="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-300 cursor-pointer"
+                                            title="Detail Penimbangan"
+                                        >
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                            </svg>
+                                        </button>
+
+                                        <!-- Edit button only for unapproved records and NOT for kepala_pelabuhan/syahbandar -->
                                         <Link
-                                            v-if="!unloading.approval_status && userRole !== 'kepala_pelabuhan'"
+                                            v-if="!unloading.approval_status && userRole !== 'kepala_pelabuhan' && userRole !== 'syahbandar'"
                                             :href="`/unloadings/${unloading.id}/edit`"
                                             class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
                                             title="Edit"
@@ -259,9 +349,9 @@ const userRole = computed(() => page.props.auth?.user?.role)
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 0L11.828 15H9v-2.828l8.586-8.586z" />
                                             </svg>
                                         </Link>
-                                        <!-- Delete button only for unapproved records and NOT for kepala_pelabuhan -->
+                                        <!-- Delete button only for unapproved records and NOT for kepala_pelabuhan/syahbandar -->
                                         <button
-                                            v-if="!unloading.approval_status && userRole !== 'kepala_pelabuhan'"
+                                            v-if="!unloading.approval_status && userRole !== 'kepala_pelabuhan' && userRole !== 'syahbandar'"
                                             @click="deleteUnloading(unloading.id)"
                                             class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
                                             title="Hapus"
@@ -318,5 +408,241 @@ const userRole = computed(() => page.props.auth?.user?.role)
                 </div>
             </div>
         </div>
+
+        <!-- Detail & Approval Modal -->
+        <Teleport to="body">
+        <div v-if="showDetailModal && selectedUnloading">
+            <!-- Backdrop -->
+            <div class="fixed inset-0 z-[50] bg-gray-900/60 backdrop-blur-sm" @click="closeDetailModal"></div>
+            <!-- Modal wrapper -->
+            <div class="fixed inset-0 z-[51] flex items-center justify-center p-4" aria-modal="true">
+                <!-- Modal panel -->
+                <div class="relative bg-white dark:bg-gray-800 rounded-xl text-left overflow-hidden shadow-2xl w-full max-w-2xl border border-gray-200 dark:border-gray-700">
+                    <!-- Modal Header -->
+                    <div class="bg-gray-50 dark:bg-gray-700/50 px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                        <div>
+                            <h3 class="text-sm font-bold text-gray-900 dark:text-white" id="modal-title">
+                                Detail Penimbangan Ikan
+                            </h3>
+                            <p class="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">
+                                No. Surat: {{ selectedUnloading.reference_number || '-' }}
+                            </p>
+                        </div>
+                        <button @click="closeDetailModal" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-305 cursor-pointer">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <!-- Modal Body -->
+                    <div class="px-6 py-4 max-h-[460px] overflow-y-auto space-y-4">
+
+                        <!-- Data Kapal -->
+                        <div>
+                            <p class="text-[10px] font-bold text-blue-500 uppercase tracking-widest mb-2 flex items-center gap-1">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                                Data Kapal
+                            </p>
+                            <div class="grid grid-cols-2 gap-x-6 gap-y-3">
+                                <div>
+                                    <span class="block text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Nama Kapal</span>
+                                    <span class="text-xs font-semibold text-gray-900 dark:text-white">{{ selectedUnloading.arrival?.vessel?.vessel_name || '-' }}</span>
+                                </div>
+                                <div>
+                                    <span class="block text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">No. Izin Kapal</span>
+                                    <span class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ selectedUnloading.arrival?.vessel?.license_number || '-' }}</span>
+                                </div>
+                                <div>
+                                    <span class="block text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Nama Nakhoda / Nelayan</span>
+                                    <span class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ selectedUnloading.captain_name || '-' }}</span>
+                                </div>
+                                <div>
+                                    <span class="block text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Tanda Pengenal / Tanda Selar</span>
+                                    <span class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ selectedUnloading.identification_mark || '-' }}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Informasi Dokumen -->
+                        <div class="border-t border-gray-100 dark:border-gray-700 pt-3">
+                            <p class="text-[10px] font-bold text-blue-500 uppercase tracking-widest mb-2 flex items-center gap-1">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                Informasi Dokumen
+                            </p>
+                            <div class="grid grid-cols-2 gap-x-6 gap-y-3">
+                                <div>
+                                    <span class="block text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Nomor Surat</span>
+                                    <span class="text-xs font-mono font-semibold text-gray-900 dark:text-white">{{ selectedUnloading.reference_number || '-' }}</span>
+                                </div>
+                                <div>
+                                    <span class="block text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Syahbandar</span>
+                                    <span class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ selectedUnloading.syahbandar?.name || '-' }}</span>
+                                </div>
+                                <div>
+                                    <span class="block text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Tanggal Surat</span>
+                                    <span class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ formatTanggal(selectedUnloading.registration_date) }}</span>
+                                </div>
+                                <div>
+                                    <span class="block text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">No. STBL Kedatangan</span>
+                                    <span class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ selectedUnloading.bl_code || '-' }}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Waktu Bongkar -->
+                        <div class="border-t border-gray-100 dark:border-gray-700 pt-3">
+                            <p class="text-[10px] font-bold text-blue-500 uppercase tracking-widest mb-2 flex items-center gap-1">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                Waktu Bongkar
+                            </p>
+                            <div class="grid grid-cols-3 gap-x-6 gap-y-3">
+                                <div>
+                                    <span class="block text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Tanggal Bongkar</span>
+                                    <span class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ formatTanggal(selectedUnloading.unloading_date) }}</span>
+                                </div>
+                                <div>
+                                    <span class="block text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Jam Bongkar</span>
+                                    <span class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ formatWaktu(selectedUnloading.unloading_time) || '-' }} WIB</span>
+                                </div>
+                                <div>
+                                    <span class="block text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">No. Urut Bongkar</span>
+                                    <span class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ selectedUnloading.sequence_number || '-' }}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Informasi Tambahan -->
+                        <div class="border-t border-gray-100 dark:border-gray-700 pt-3">
+                            <p class="text-[10px] font-bold text-blue-500 uppercase tracking-widest mb-2 flex items-center gap-1">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                Informasi Tambahan
+                            </p>
+                            <div>
+                                <span class="block text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Lokasi Penimbangan</span>
+                                <span class="text-xs font-semibold text-gray-900 dark:text-white">{{ selectedUnloading.landing_site?.site_name || '-' }}</span>
+                            </div>
+                        </div>
+
+                        <!-- Catatan -->
+                        <div v-if="selectedUnloading.notes" class="border-t border-gray-100 dark:border-gray-700 pt-3">
+                            <span class="block text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">Catatan Tambahan</span>
+                            <p class="text-xs text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-900/30 p-2.5 rounded border border-gray-100 dark:border-gray-700">
+                                {{ selectedUnloading.notes }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Modal Footer -->
+                    <div class="bg-gray-50 dark:bg-gray-700/50 px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row justify-between items-center gap-2">
+                        <div>
+                            <span class="text-[10px] font-bold text-gray-400 dark:text-gray-505 uppercase tracking-wider block">Status Approval</span>
+                            <span :class="['inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold mt-0.5', getApprovalBadgeClass(selectedUnloading.approval_status)]">
+                                {{ selectedUnloading.approval_status ? 'Disetujui' : 'Menunggu Approval' }}
+                            </span>
+                        </div>
+                        <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+                            <button 
+                                @click="closeDetailModal" 
+                                class="w-full sm:w-auto px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors cursor-pointer"
+                            >
+                                Tutup
+                            </button>
+                            
+                            <!-- Syahbandar Approval actions in footer -->
+                            <button
+                                v-if="userRole === 'syahbandar' && !selectedUnloading.approval_status && selectedUnloading.syahbandar_id === user?.id"
+                                @click="approveUnloading(selectedUnloading.id); closeDetailModal()"
+                                class="w-full sm:w-auto px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-xs font-semibold shadow transition-colors flex items-center justify-center cursor-pointer"
+                            >
+                                <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                </svg>
+                                Setujui
+                            </button>
+                            <button
+                                v-if="userRole === 'syahbandar' && !selectedUnloading.approval_status && selectedUnloading.syahbandar_id === user?.id"
+                                @click="rejectUnloading(selectedUnloading.id); closeDetailModal()"
+                                class="w-full sm:w-auto px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-semibold shadow transition-colors flex items-center justify-center cursor-pointer"
+                            >
+                                <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                                Tolak
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        </Teleport>
+
+        <!-- Modern Confirmation Modal -->
+        <Teleport to="body">
+        <div v-if="confirmModal.show">
+            <!-- Backdrop -->
+            <div class="fixed inset-0 z-[60] bg-gray-900/60 backdrop-blur-sm" @click="closeConfirmModal"></div>
+            <!-- Modal wrapper -->
+            <div class="fixed inset-0 z-[61] flex items-center justify-center p-4" aria-modal="true">
+                <!-- Modal panel -->
+                <div class="relative bg-white dark:bg-gray-800 rounded-xl text-left overflow-hidden shadow-2xl w-full max-w-md border border-gray-200 dark:border-gray-700">
+                    <div class="px-6 pt-6 pb-4">
+                        <div class="flex items-start">
+                            <!-- Icon depending on type -->
+                            <div class="flex-shrink-0 flex items-center justify-center h-10 w-10 rounded-full sm:mx-0 sm:h-12 sm:w-12"
+                                 :class="{
+                                     'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400': confirmModal.type === 'danger',
+                                     'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400': confirmModal.type === 'success',
+                                     'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400': confirmModal.type === 'info'
+                                 }">
+                                <!-- Exclamation/Warning for danger -->
+                                <svg v-if="confirmModal.type === 'danger'" class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                                <!-- Checkmark for success -->
+                                <svg v-if="confirmModal.type === 'success'" class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                </svg>
+                                <!-- Info for info -->
+                                <svg v-if="confirmModal.type === 'info'" class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                            <div class="ml-4 text-left">
+                                <h3 class="text-sm font-bold text-gray-900 dark:text-white" id="modal-title">
+                                    {{ confirmModal.title }}
+                                </h3>
+                                <div class="mt-2">
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed font-medium">
+                                        {{ confirmModal.message }}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Footer Actions -->
+                    <div class="bg-gray-50 dark:bg-gray-700/50 px-6 py-4 flex justify-end gap-2 border-t border-gray-100 dark:border-gray-700">
+                        <button 
+                            @click="closeConfirmModal" 
+                            class="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors cursor-pointer"
+                        >
+                            Batal
+                        </button>
+                        <button 
+                            @click="handleConfirmAction" 
+                            class="px-4 py-2 text-white rounded-lg text-xs font-semibold shadow transition-colors cursor-pointer"
+                            :class="{
+                                'bg-red-600 hover:bg-red-700': confirmModal.type === 'danger',
+                                'bg-green-600 hover:bg-green-700': confirmModal.type === 'success',
+                                'bg-blue-600 hover:bg-blue-700': confirmModal.type === 'info'
+                            }"
+                        >
+                            Konfirmasi
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        </Teleport>
     </AppLayout>
 </template>

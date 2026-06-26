@@ -135,7 +135,15 @@ class DashboardController extends Controller{
 
         // Create array for each day of the week
         $days = [];
-        $dayNames = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+        $dayNames = [
+            0 => 'Minggu',
+            1 => 'Senin',
+            2 => 'Selasa',
+            3 => 'Rabu',
+            4 => 'Kamis',
+            5 => 'Jumat',
+            6 => 'Sabtu'
+        ];
         
         for ($i = 0; $i < 7; $i++) {
             $date = $startOfWeek->copy()->addDays($i);
@@ -143,7 +151,7 @@ class DashboardController extends Controller{
             
             $days[] = [
                 'day' => $i + 1,
-                'day_name' => $dayNames[$i],
+                'day_name' => $dayNames[$date->dayOfWeek],
                 'date' => $dateString,
                 'arrivals' => $arrivals->get($dateString, 0),
                 'departures' => $departures->get($dateString, 0),

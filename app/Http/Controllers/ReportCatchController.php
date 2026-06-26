@@ -9,6 +9,11 @@ use Inertia\Inertia;
 use Carbon\Carbon;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
 
 class ReportCatchController extends Controller
 {
@@ -68,7 +73,7 @@ class ReportCatchController extends Controller
     }
 
     /**
-     * Export catches data to Excel (CSV format).
+     * Export catches data to Excel (XLSX format).
      */
     public function exportExcel(Request $request)
     {
@@ -93,43 +98,94 @@ class ReportCatchController extends Controller
             )
             ->get();
 
-        $filename = 'laporan_tangkapan_' . $dateFrom . '_sd_' . $dateTo . '.csv';
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Laporan Tangkapan');
 
+        // Header columns
         $headers = [
-            'Content-Type' => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'No',
+            'Tanggal Kedatangan',
+            'Nama Kapal',
+            'Jenis Ikan',
+            'Nama Lokal',
+            'Berat (kg)',
+            'Estimasi Nilai (Rp)',
         ];
 
-        $callback = function () use ($catches) {
-            $file = fopen('php://output', 'w');
-            fprintf($file, chr(0xEF) . chr(0xBB) . chr(0xBF));
+        $col = 'A';
+        foreach ($headers as $header) {
+            $sheet->setCellValue($col . '1', $header);
+            $col++;
+        }
 
-            fputcsv($file, [
-                'No',
-                'Tanggal Kedatangan',
-                'Nama Kapal',
-                'Jenis Ikan',
-                'Nama Lokal',
-                'Berat (kg)',
-                'Estimasi Nilai (Rp)',
+        // Style header
+        $lastCol = chr(ord('A') + count($headers) - 1);
+        $headerRange = 'A1:' . $lastCol . '1';
+        $sheet->getStyle($headerRange)->applyFromArray([
+            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '4472C4']],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
+            'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]],
+        ]);
+
+        // Data rows
+        $row = 2;
+        foreach ($catches as $index => $catch) {
+            $arrivalDate = $catch->arrival->arrival_date instanceof Carbon
+                ? $catch->arrival->arrival_date->format('d/m/Y')
+                : Carbon::parse($catch->arrival->arrival_date)->format('d/m/Y');
+
+            $sheet->setCellValue('A' . $row, $index + 1);
+            $sheet->setCellValue('B' . $row, $arrivalDate);
+            $sheet->setCellValue('C' . $row, $catch->arrival->vessel->vessel_name ?? '-');
+            $sheet->setCellValue('D' . $row, $catch->fishSpecies->species_name ?? '-');
+            $sheet->setCellValue('E' . $row, $catch->fishSpecies->local_name ?? '-');
+            $sheet->setCellValue('F' . $row, $catch->weight_kg);
+            $sheet->setCellValue('G' . $row, $catch->estimated_value);
+
+            $row++;
+        }
+
+        // Style data rows with borders
+        if ($row > 2) {
+            $dataRange = 'A2:' . $lastCol . ($row - 1);
+            $sheet->getStyle($dataRange)->applyFromArray([
+                'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]],
+                'alignment' => ['vertical' => Alignment::VERTICAL_TOP, 'wrapText' => true],
             ]);
+        }
 
-            foreach ($catches as $index => $catch) {
-                fputcsv($file, [
-                    $index + 1,
-                    $catch->arrival->arrival_date->format('d/m/Y'),
-                    $catch->arrival->vessel->vessel_name ?? '-',
-                    $catch->fishSpecies->species_name ?? '-',
-                    $catch->fishSpecies->local_name ?? '-',
-                    $catch->weight_kg,
-                    number_format($catch->estimated_value, 0, ',', '.'),
-                ]);
-            }
+        // Number format for weight and value columns
+        $sheet->getStyle('F2:F' . max($row - 1, 2))->getNumberFormat()->setFormatCode('#,##0.00');
+        $sheet->getStyle('G2:G' . max($row - 1, 2))->getNumberFormat()->setFormatCode('#,##0');
 
-            fclose($file);
-        };
+        // Add totals row
+        if ($row > 2) {
+            $sheet->setCellValue('E' . $row, 'TOTAL');
+            $sheet->setCellValue('F' . $row, $catches->sum('weight_kg'));
+            $sheet->setCellValue('G' . $row, $catches->sum('estimated_value'));
+            $sheet->getStyle('E' . $row . ':' . $lastCol . $row)->applyFromArray([
+                'font' => ['bold' => true],
+                'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]],
+                'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'D9E2F3']],
+            ]);
+        }
 
-        return response()->stream($callback, 200, $headers);
+        // Auto-size columns
+        foreach (range('A', $lastCol) as $columnID) {
+            $sheet->getColumnDimension($columnID)->setAutoSize(true);
+        }
+
+        $filename = 'laporan_tangkapan_' . $dateFrom . '_sd_' . $dateTo . '.xlsx';
+
+        $tempFile = tempnam(sys_get_temp_dir(), 'xlsx_');
+        $writer = new Xlsx($spreadsheet);
+        $writer->save($tempFile);
+
+        return response()->download($tempFile, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ])->deleteFileAfterSend(true);
     }
 
     /**

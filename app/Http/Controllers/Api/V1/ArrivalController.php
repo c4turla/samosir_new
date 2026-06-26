@@ -77,7 +77,8 @@ class ArrivalController extends Controller
 
         $validated = $validator->validated();
         $validated['input_by'] = auth()->id();
-        $validated['approval_status'] = 0;
+        $validated['approval_status'] = '0';
+        $validated['is_processed'] = false;
 
         $catchesData = $validated['catches'] ?? [];
         unset($validated['catches']);

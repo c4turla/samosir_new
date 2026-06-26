@@ -8,6 +8,11 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Carbon\Carbon;
 use Barryvdh\DomPDF\Facade\Pdf;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
 
 class ReportArrivalController extends Controller
 {
@@ -73,7 +78,7 @@ class ReportArrivalController extends Controller
     }
 
     /**
-     * Export arrivals data to Excel (CSV format).
+     * Export arrivals data to Excel (XLSX format).
      */
     public function exportExcel(Request $request)
     {
@@ -102,84 +107,104 @@ class ReportArrivalController extends Controller
             ->orderBy('arrival_time', 'desc')
             ->get();
 
-        $filename = 'laporan_kedatangan_' . $dateFrom . '_sd_' . $dateTo . '.csv';
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Laporan Kedatangan');
 
+        // Header columns
         $headers = [
-            'Content-Type' => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'No', 'Tanggal Kedatangan', 'Waktu', 'Nama Kapal', 'No. Izin', 'Asal',
+            'Lokasi Pendaratan', 'Mutu Ikan', 'Kualitas Ikan', 'Harga Rata-rata',
+            'Volume Limbah (kg)', 'Suhu Ikan (°C)', 'Suhu Palka (°C)',
+            'Detail Ikan (Jenis - Berat - Nilai)', 'Total Berat Ikan (kg)',
+            'Total Nilai Ikan', 'Status', 'Input Oleh', 'Catatan',
         ];
 
-        $callback = function () use ($arrivals) {
-            $file = fopen('php://output', 'w');
-            // BOM for UTF-8 Excel compatibility
-            fprintf($file, chr(0xEF) . chr(0xBB) . chr(0xBF));
+        $col = 'A';
+        foreach ($headers as $header) {
+            $sheet->setCellValue($col . '1', $header);
+            $col++;
+        }
 
-            fputcsv($file, [
-                'No',
-                'Tanggal Kedatangan',
-                'Waktu',
-                'Nama Kapal',
-                'No. Izin',
-                'Asal',
-                'Lokasi Pendaratan',
-                'Mutu Ikan',
-                'Kualitas Ikan',
-                'Harga Rata-rata',
-                'Volume Limbah (kg)',
-                'Suhu Ikan (°C)',
-                'Suhu Palka (°C)',
-                'Detail Ikan (Jenis - Berat - Nilai)',
-                'Total Berat Ikan (kg)',
-                'Total Nilai Ikan',
-                'Status',
-                'Input Oleh',
-                'Catatan',
+        // Style header
+        $lastCol = chr(ord('A') + count($headers) - 1);
+        $headerRange = 'A1:' . $lastCol . '1';
+        $sheet->getStyle($headerRange)->applyFromArray([
+            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '4472C4']],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
+            'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]],
+        ]);
+
+        // Data rows
+        $row = 2;
+        foreach ($arrivals as $index => $arrival) {
+            $arrivalDate = $arrival->arrival_date instanceof Carbon
+                ? $arrival->arrival_date->format('d/m/Y')
+                : Carbon::parse($arrival->arrival_date)->format('d/m/Y');
+
+            $arrivalTime = $arrival->arrival_time instanceof Carbon
+                ? $arrival->arrival_time->format('H:i')
+                : $arrival->arrival_time;
+
+            $fishDetails = $arrival->catches->map(function ($c) {
+                $name = $c->fishSpecies->species_name ?? $c->fishSpecies->local_name ?? '-';
+                return $name . ': ' . number_format($c->weight_kg) . 'kg (Rp ' . number_format($c->estimated_value, 0, ',', '.') . ')';
+            })->implode('; ');
+
+            $totalWeight = $arrival->catches->sum('weight_kg');
+            $totalValue = $arrival->catches->sum('estimated_value');
+
+            $sheet->setCellValue('A' . $row, $index + 1);
+            $sheet->setCellValue('B' . $row, $arrivalDate);
+            $sheet->setCellValue('C' . $row, $arrivalTime);
+            $sheet->setCellValue('D' . $row, $arrival->vessel->vessel_name ?? '-');
+            $sheet->setCellValue('E' . $row, $arrival->vessel->license_number ?? '-');
+            $sheet->setCellValue('F' . $row, $arrival->origin ?? '-');
+            $sheet->setCellValue('G' . $row, $arrival->landingSite->site_name ?? '-');
+            $sheet->setCellValue('H' . $row, $arrival->mutu ?? '-');
+            $sheet->setCellValue('I' . $row, $arrival->fish_quality ?? '-');
+            $sheet->setCellValue('J' . $row, $arrival->average_price ?? 0);
+            $sheet->setCellValue('K' . $row, $arrival->waste_volume ?? 0);
+            $sheet->setCellValue('L' . $row, $arrival->fish_temperature ?? 0);
+            $sheet->setCellValue('M' . $row, $arrival->hold_temperature ?? 0);
+            $sheet->setCellValue('N' . $row, $fishDetails ?: 'Tidak ada');
+            $sheet->setCellValue('O' . $row, $totalWeight);
+            $sheet->setCellValue('P' . $row, $totalValue);
+            $sheet->setCellValue('Q' . $row, $arrival->status ?? '-');
+            $sheet->setCellValue('R' . $row, $arrival->inputBy->name ?? '-');
+            $sheet->setCellValue('S' . $row, $arrival->notes ?? '-');
+
+            $row++;
+        }
+
+        // Style data rows with borders
+        if ($row > 2) {
+            $dataRange = 'A2:' . $lastCol . ($row - 1);
+            $sheet->getStyle($dataRange)->applyFromArray([
+                'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]],
+                'alignment' => ['vertical' => Alignment::VERTICAL_TOP, 'wrapText' => true],
             ]);
+        }
 
-            foreach ($arrivals as $index => $arrival) {
-                $arrivalDate = $arrival->arrival_date instanceof Carbon
-                    ? $arrival->arrival_date->format('d/m/Y')
-                    : Carbon::parse($arrival->arrival_date)->format('d/m/Y');
+        // Auto-size columns
+        foreach (range('A', $lastCol) as $columnID) {
+            $sheet->getColumnDimension($columnID)->setAutoSize(true);
+        }
 
-                $arrivalTime = $arrival->arrival_time instanceof Carbon
-                    ? $arrival->arrival_time->format('H:i')
-                    : $arrival->arrival_time;
+        // Number format for currency columns
+        $sheet->getStyle('J2:J' . max($row - 1, 2))->getNumberFormat()->setFormatCode('#,##0.00');
+        $sheet->getStyle('P2:P' . max($row - 1, 2))->getNumberFormat()->setFormatCode('#,##0');
 
-                $fishDetails = $arrival->catches->map(function ($c) {
-                    $name = $c->fishSpecies->species_name ?? $c->fishSpecies->local_name ?? '-';
-                    return $name . ': ' . number_format($c->weight_kg) . 'kg (Rp ' . number_format($c->estimated_value, 0, ',', '.') . ')';
-                })->implode('; ');
+        $filename = 'laporan_kedatangan_' . $dateFrom . '_sd_' . $dateTo . '.xlsx';
 
-                $totalWeight = $arrival->catches->sum('weight_kg');
-                $totalValue = $arrival->catches->sum('estimated_value');
+        $tempFile = tempnam(sys_get_temp_dir(), 'xlsx_');
+        $writer = new Xlsx($spreadsheet);
+        $writer->save($tempFile);
 
-                fputcsv($file, [
-                    $index + 1,
-                    $arrivalDate,
-                    $arrivalTime,
-                    $arrival->vessel->vessel_name ?? '-',
-                    $arrival->vessel->license_number ?? '-',
-                    $arrival->origin ?? '-',
-                    $arrival->landingSite->site_name ?? '-',
-                    $arrival->mutu ?? '-',
-                    $arrival->fish_quality ?? '-',
-                    number_format($arrival->average_price ?? 0, 2, ',', '.'),
-                    $arrival->waste_volume ?? 0,
-                    $arrival->fish_temperature ?? 0,
-                    $arrival->hold_temperature ?? 0,
-                    $fishDetails ?: 'Tidak ada',
-                    $totalWeight,
-                    number_format($totalValue, 0, ',', '.'),
-                    $arrival->status ?? '-',
-                    $arrival->inputBy->name ?? '-',
-                    $arrival->notes ?? '-',
-                ]);
-            }
-
-            fclose($file);
-        };
-
-        return response()->stream($callback, 200, $headers);
+        return response()->download($tempFile, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ])->deleteFileAfterSend(true);
     }
 
     /**

@@ -24,6 +24,7 @@ class EquipmentService extends Model
         'total_amount',
         'status',
         'notes',
+        'billing_number',
     ];
 
     protected $casts = [

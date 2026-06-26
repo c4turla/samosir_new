@@ -12,18 +12,37 @@
             padding: 20px;
         }
         .header {
-            text-align: center;
             margin-bottom: 20px;
+            border-bottom: 2px solid #000;
+            padding-bottom: 10px;
         }
-        .header h1 {
-            font-size: 14pt;
+        .header-inner {
+            display: table;
+            width: 100%;
+        }
+        .header-logo {
+            display: table-cell;
+            width: 80px;
+            vertical-align: middle;
+        }
+        .header-logo img {
+            width: 70px;
+            height: auto;
+        }
+        .header-text {
+            display: table-cell;
+            vertical-align: middle;
+            text-align: center;
+        }
+        .header-text h1 {
+            font-size: 13pt;
             margin: 0;
             padding: 0;
             text-transform: uppercase;
         }
-        .header h2 {
-            font-size: 14pt;
-            margin: 10px 0;
+        .header-text h2 {
+            font-size: 12pt;
+            margin: 6px 0 0;
             padding: 0;
             text-decoration: underline;
             text-transform: uppercase;
@@ -78,8 +97,16 @@
 </head>
 <body>
     <div class="header">
-        <h1>PELABUHAN PERIKANAN NUSANTARA SIBOLGA</h1>
-        <h2>ORDER PEMAKAIAN AIR TAWAR</h2>
+        <div class="header-inner">
+            <div class="header-logo">
+                <img src="{{ public_path('img/logo_kkp.png') }}" alt="Logo KKP">
+            </div>
+            <div class="header-text">
+                <h1>PELABUHAN PERIKANAN NUSANTARA SIBOLGA</h1>
+                <h2>ORDER PEMAKAIAN AIR TAWAR</h2>
+            </div>
+            <div style="display: table-cell; width: 80px;"></div>
+        </div>
     </div>
 
     <div class="order-info">

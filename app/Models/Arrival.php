@@ -77,4 +77,14 @@ class Arrival extends Model
     {
         return $query->whereDate('arrival_date', today());
     }
+
+    public function setApprovalStatusAttribute($value)
+    {
+        if ($value === true || $value === '1' || $value === 1) {
+            $this->attributes['approval_status'] = '1';
+        } else {
+            $this->attributes['approval_status'] = '0';
+        }
+    }
 }
+

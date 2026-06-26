@@ -8,6 +8,11 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Carbon\Carbon;
 use Barryvdh\DomPDF\Facade\Pdf;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
 
 class ReportDepartureController extends Controller
 {
@@ -69,7 +74,7 @@ class ReportDepartureController extends Controller
     }
 
     /**
-     * Export departures data to Excel (CSV format).
+     * Export departures data to Excel (XLSX format).
      */
     public function exportExcel(Request $request)
     {
@@ -98,74 +103,92 @@ class ReportDepartureController extends Controller
             ->orderBy('departure_time', 'desc')
             ->get();
 
-        $filename = 'laporan_keberangkatan_' . $dateFrom . '_sd_' . $dateTo . '.csv';
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Laporan Keberangkatan');
 
+        // Header columns
         $headers = [
-            'Content-Type' => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'No', 'Nomor SKP', 'Tanggal Masuk', 'Tanggal Keluar', 'Nama Kapal',
+            'Nakhoda', 'No. Izin', 'Tujuan', 'Etmal (Hari)', 'Etmal (Jam)',
+            'Jumlah ABK', 'Floating', 'Bongkar Ikan', 'Penyelesaian Administrasi',
+            'Syahbandar', 'Status', 'Input Oleh', 'Catatan',
         ];
 
-        $callback = function () use ($departures) {
-            $file = fopen('php://output', 'w');
-            // BOM for UTF-8 Excel compatibility
-            fprintf($file, chr(0xEF) . chr(0xBB) . chr(0xBF));
+        $col = 'A';
+        foreach ($headers as $header) {
+            $sheet->setCellValue($col . '1', $header);
+            $col++;
+        }
 
-            fputcsv($file, [
-                'No',
-                'Nomor SKP',
-                'Tanggal Masuk',
-                'Tanggal Keluar',
-                'Nama Kapal',
-                'Nakhoda',
-                'No. Izin',
-                'Tujuan',
-                'Etmal (Hari)',
-                'Etmal (Jam)',
-                'Jumlah ABK',
-                'Floating',
-                'Bongkar Ikan',
-                'Penyelesaian Administrasi',
-                'Syahbandar',
-                'Status',
-                'Input Oleh',
-                'Catatan',
+        // Style header
+        $lastCol = chr(ord('A') + count($headers) - 1);
+        $headerRange = 'A1:' . $lastCol . '1';
+        $sheet->getStyle($headerRange)->applyFromArray([
+            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '4472C4']],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
+            'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]],
+        ]);
+
+        // Data rows
+        $row = 2;
+        foreach ($departures as $index => $departure) {
+            $arrivalDate = $departure->arrival_datetime
+                ? Carbon::parse($departure->arrival_datetime)->format('d/m/Y H:i')
+                : '-';
+
+            $departureDate = $departure->departure_datetime
+                ? Carbon::parse($departure->departure_datetime)->format('d/m/Y H:i')
+                : ($departure->departure_date instanceof Carbon
+                    ? $departure->departure_date->format('d/m/Y')
+                    : Carbon::parse($departure->departure_date)->format('d/m/Y'));
+
+            $sheet->setCellValue('A' . $row, $index + 1);
+            $sheet->setCellValue('B' . $row, $departure->nomor ?? '-');
+            $sheet->setCellValue('C' . $row, $arrivalDate);
+            $sheet->setCellValue('D' . $row, $departureDate);
+            $sheet->setCellValue('E' . $row, $departure->vessel->vessel_name ?? '-');
+            $sheet->setCellValue('F' . $row, $departure->nakhoda_name ?? '-');
+            $sheet->setCellValue('G' . $row, $departure->vessel->license_number ?? '-');
+            $sheet->setCellValue('H' . $row, $departure->destination ?? '-');
+            $sheet->setCellValue('I' . $row, $departure->etmal_days ?? 0);
+            $sheet->setCellValue('J' . $row, $departure->etmal_hours ?? 0);
+            $sheet->setCellValue('K' . $row, $departure->crew_count ?? 0);
+            $sheet->setCellValue('L' . $row, $departure->floating_status ?? '-');
+            $sheet->setCellValue('M' . $row, $departure->unloading_status ?? '-');
+            $sheet->setCellValue('N' . $row, $departure->admin_completion ?? '-');
+            $sheet->setCellValue('O' . $row, $departure->syahbandar ?? '-');
+            $sheet->setCellValue('P' . $row, $departure->status ?? '-');
+            $sheet->setCellValue('Q' . $row, $departure->inputBy->name ?? '-');
+            $sheet->setCellValue('R' . $row, $departure->notes ?? '-');
+
+            $row++;
+        }
+
+        // Style data rows with borders
+        if ($row > 2) {
+            $dataRange = 'A2:' . $lastCol . ($row - 1);
+            $sheet->getStyle($dataRange)->applyFromArray([
+                'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]],
+                'alignment' => ['vertical' => Alignment::VERTICAL_TOP, 'wrapText' => true],
             ]);
+        }
 
-            foreach ($departures as $index => $departure) {
-                $arrivalDate = $departure->arrival_datetime 
-                    ? Carbon::parse($departure->arrival_datetime)->format('d/m/Y H:i') 
-                    : '-';
+        // Auto-size columns
+        foreach (range('A', $lastCol) as $columnID) {
+            $sheet->getColumnDimension($columnID)->setAutoSize(true);
+        }
 
-                $departureDate = $departure->departure_datetime 
-                    ? Carbon::parse($departure->departure_datetime)->format('d/m/Y H:i') 
-                    : ($departure->departure_date instanceof Carbon ? $departure->departure_date->format('d/m/Y') : Carbon::parse($departure->departure_date)->format('d/m/Y'));
+        $filename = 'laporan_keberangkatan_' . $dateFrom . '_sd_' . $dateTo . '.xlsx';
 
-                fputcsv($file, [
-                    $index + 1,
-                    $departure->nomor ?? '-',
-                    $arrivalDate,
-                    $departureDate,
-                    $departure->vessel->vessel_name ?? '-',
-                    $departure->nakhoda_name ?? '-',
-                    $departure->vessel->license_number ?? '-',
-                    $departure->destination ?? '-',
-                    $departure->etmal_days ?? 0,
-                    $departure->etmal_hours ?? 0,
-                    $departure->crew_count ?? 0,
-                    $departure->floating_status ?? '-',
-                    $departure->unloading_status ?? '-',
-                    $departure->admin_completion ?? '-',
-                    $departure->syahbandar ?? '-',
-                    $departure->status ?? '-',
-                    $departure->inputBy->name ?? '-',
-                    $departure->notes ?? '-',
-                ]);
-            }
+        $tempFile = tempnam(sys_get_temp_dir(), 'xlsx_');
+        $writer = new Xlsx($spreadsheet);
+        $writer->save($tempFile);
 
-            fclose($file);
-        };
-
-        return response()->stream($callback, 200, $headers);
+        return response()->download($tempFile, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ])->deleteFileAfterSend(true);
     }
 
     /**

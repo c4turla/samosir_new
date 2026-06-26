@@ -106,6 +106,7 @@ class WaterServiceController extends Controller
             'treasurer' => 'nullable|string|max:255',
             'notes' => 'nullable|string',
             'status' => 'required|in:order,processed,completed,cancelled',
+            'billing_number' => 'nullable|string|max:255',
         ]);
 
         $service = WaterService::findOrFail($id);
@@ -122,6 +123,7 @@ class WaterServiceController extends Controller
             'treasurer' => $request->treasurer,
             'notes' => $request->notes,
             'status' => $request->status,
+            'billing_number' => $request->billing_number,
         ]);
 
         $this->notifyManagers($service);
@@ -167,6 +169,7 @@ class WaterServiceController extends Controller
             'field_officer' => 'nullable|string|max:255',
             'treasurer' => 'nullable|string|max:255',
             'notes' => 'nullable|string',
+            'billing_number' => 'nullable|string|max:255',
         ]);
 
         $service = WaterService::findOrFail($id);
@@ -180,6 +183,7 @@ class WaterServiceController extends Controller
             'treasurer' => $request->treasurer,
             'notes' => $request->notes,
             'status' => 'processed',
+            'billing_number' => $request->billing_number,
         ]);
 
         $this->notifyManagers($service);

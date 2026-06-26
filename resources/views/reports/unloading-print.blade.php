@@ -120,23 +120,8 @@
     </style>
 </head>
 <body>
-    <div class="header">
-        <table>
-            <tr>
-                <td class="logo">
-                    <img src="{{ public_path('img/logobaru.png') }}" style="width: 80px;">
-                </td>
-                <td class="header-text">
-                    <h1>KEMENTERIAN KELAUTAN DAN PERIKANAN</h1>
-                    <h2>DIREKTORAT JENDERAL PERIKANAN TANGKAP</h2>
-                    <h3>PELABUHAN PERIKANAN NUSANTARA SIBOLGA</h3>
-                    <p>JALAN JENDERAL GATOT SUBROTO, PONDOK BATU, KECAMATAN SARUDIK,</p>
-                    <p>KABUPATEN TAPANULI TENGAH, PROVINSI SUMATERA UTARA 22616</p>
-                    <p>TELEPON (0631) 22129, FAKSIMILI (0631) 22129</p>
-                    <p>LAMAN https://kkp.go.id/djpt/ppnsibolga, EMAIL ppn.sibolga@kkp.go.id</p>
-                </td>
-            </tr>
-        </table>
+    <div class="header" style="border-bottom: none; padding-bottom: 0; margin-bottom: 10px;">
+        <img src="{{ public_path('img/kop.png') }}" style="width: 100%; height: auto;">
     </div>
 
     <div class="title-section">
@@ -201,7 +186,7 @@
 
     <div class="clearfix">
         <div class="signature-section">
-            <p>Sibolga, {{ $unloading->registration_date ? \Carbon\Carbon::parse($unloading->registration_date)->isoFormat('D MMMM Y') : $today }}</p>
+            <p>Sibolga, {{ $unloading->registration_date ? \Carbon\Carbon::parse($unloading->registration_date)->isoFormat('D MMMM Y') : \Carbon\Carbon::now()->isoFormat('D MMMM Y') }}</p>
             <br>
             <p>A.n Kepala Pelabuhan Perikanan</p>
             <p>Nusantara Sibolga,</p>
