@@ -29,6 +29,7 @@ class Arrival extends Model
         'hold_temperature' => 'integer',
         'approved_at' => 'datetime',
         'is_processed' => 'boolean',
+        'approval_status' => 'boolean',
     ];
 
     // Relationships
@@ -65,26 +66,17 @@ class Arrival extends Model
     // Scopes
     public function scopePending($query)
     {
-        return $query->where('approval_status', '0');
+        return $query->where('approval_status', false);
     }
 
     public function scopeApproved($query)
     {
-        return $query->where('approval_status', '1');
+        return $query->where('approval_status', true);
     }
 
     public function scopeToday($query)
     {
         return $query->whereDate('arrival_date', today());
-    }
-
-    public function setApprovalStatusAttribute($value)
-    {
-        if ($value === true || $value === '1' || $value === 1) {
-            $this->attributes['approval_status'] = '1';
-        } else {
-            $this->attributes['approval_status'] = '0';
-        }
     }
 }
 

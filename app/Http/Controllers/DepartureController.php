@@ -301,11 +301,21 @@ class DepartureController extends Controller
 
     public function approve(Request $request, Departure $departure)
     {
+        $syahbandarName = $request->input('syahbandar');
+        
+        if (!$syahbandarName && auth()->user()->role === 'syahbandar') {
+            $syahbandarName = auth()->user()->name;
+        }
+
+        if (!$syahbandarName) {
+            return redirect()->back()->with('error', 'Nama Syahbandar wajib diisi.');
+        }
+
         $departure->update([
             'approval_status' => '1',
             'approved_by' => auth()->id(),
             'approved_at' => now(),
-            'syahbandar' => $validated['syahbandar'],
+            'syahbandar' => $syahbandarName,
         ]);
 
         if ($departure->inputBy) {
