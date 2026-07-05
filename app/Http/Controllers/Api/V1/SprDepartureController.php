@@ -81,7 +81,7 @@ class SprDepartureController extends Controller
             'physical_arrival_stbl' => $request->physical_arrival_stbl,
             'physical_departure_date' => $request->physical_departure_date,
             'physical_departure_stbl' => $request->physical_departure_stbl,
-            'status' => 'pending'
+            'status' => 'approved'
         ]);
 
         // Notify
@@ -91,10 +91,17 @@ class SprDepartureController extends Controller
         // Notify Syahbandar & Others
         $users = User::where('is_active', true)->get();
         foreach ($users as $user) {
-            if (in_array($user->role, ['syahbandar', 'petugas'])) {
+            if ($user->role === 'syahbandar') {
                 $user->notify(new DataInputNotification(
-                    'Pemberitahuan SPR Keberangkatan',
-                    "Pemberitahuan SPR Keberangkatan Kapal {$vesselName} baru saja ditambahkan oleh Pengelola.",
+                    'Menunggu Approval SPR',
+                    "Permohonan SPR Keberangkatan Kapal {$vesselName} menunggu approval Anda.",
+                    '/spr-departures',
+                    'warning'
+                ));
+            } else {
+                $user->notify(new DataInputNotification(
+                    'Permohonan SPR Keberangkatan',
+                    "Permohonan SPR Keberangkatan Kapal {$vesselName} baru saja ditambahkan.",
                     '/spr-departures',
                     'info'
                 ));

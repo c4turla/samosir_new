@@ -83,7 +83,6 @@ class DepartureController extends Controller
 
         $validated = $validator->validated();
 
-        // Generate Nomor
         $validated['nomor'] = $this->generateNextNomor();
         $validated['input_by'] = auth()->id();
         $validated['approval_status'] = '0';
@@ -164,7 +163,8 @@ class DepartureController extends Controller
             $nextSeq = intval($matches[1]) + 1;
         }
 
-        return sprintf('%03d/PPNS-SKP/%s/%d',
+        return sprintf(
+            '%03d/PPNS-SKP/%s/%d',
             $nextSeq,
             $this->getRomanMonth(now()->month),
             now()->year
@@ -177,9 +177,18 @@ class DepartureController extends Controller
     private function getRomanMonth($month)
     {
         $map = [
-            1 => 'I', 2 => 'II', 3 => 'III', 4 => 'IV',
-            5 => 'V', 6 => 'VI', 7 => 'VII', 8 => 'VIII',
-            9 => 'IX', 10 => 'X', 11 => 'XI', 12 => 'XII'
+            1 => 'I',
+            2 => 'II',
+            3 => 'III',
+            4 => 'IV',
+            5 => 'V',
+            6 => 'VI',
+            7 => 'VII',
+            8 => 'VIII',
+            9 => 'IX',
+            10 => 'X',
+            11 => 'XI',
+            12 => 'XII'
         ];
         return $map[$month] ?? 'I';
     }

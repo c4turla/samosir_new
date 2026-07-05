@@ -10,6 +10,10 @@ const props = defineProps({
     departures: {
         type: Object,
         required: true
+    },
+    syahbandars: {
+        type: Array,
+        default: () => []
     }
 })
 
@@ -54,6 +58,7 @@ const deleteDeparture = (id) => {
 const approveDeparture = (id) => {
     closeDetailModal()
     router.post(`/departures/${id}/approve`)
+}
 }
 
 const rejectDeparture = (id) => {
@@ -302,7 +307,7 @@ const isApproved = (departure) => {
                                 </td>
                                 <td v-if="userRole !== 'kepala_pelabuhan'" class="px-4 py-3 whitespace-nowrap text-right">
                                     <div class="flex items-center justify-end gap-2">
-                                        <!-- Teruskan Button (for petugas/admin to forward to syahbandar) -->
+                                         <!-- Teruskan Button (for petugas/admin to forward to syahbandar) -->
                                         <button
                                             v-if="userRole !== 'syahbandar' && !isApproved(departure) && !departure.is_processed"
                                             @click.prevent="forwardDeparture(departure.id)"
@@ -422,6 +427,7 @@ const isApproved = (departure) => {
                 </div>
             </div>
         </div>
+<<<<<<< HEAD
         <!-- Detail & Approval Modal -->
         <Teleport to="body">
         <div v-if="showDetailModal && selectedDeparture">
@@ -581,10 +587,6 @@ const isApproved = (departure) => {
                                  Setujui
                              </button>
                         </div>
-                    </div>
-                </div>
-            </div>
-        </div>
         </Teleport>
     </AppLayout>
 </template>

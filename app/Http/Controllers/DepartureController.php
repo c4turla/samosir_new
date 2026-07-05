@@ -18,7 +18,7 @@ class DepartureController extends Controller
         $status = $request->input('status');
         $dateFrom = $request->input('date_from');
         $dateTo = $request->input('date_to');
-        
+
         $departures = Departure::query()
             ->with(['vessel', 'landingSite', 'inputBy', 'approvedBy'])
             ->when($search, function ($query, $search) {
@@ -40,9 +40,14 @@ class DepartureController extends Controller
             ->orderBy('departure_time', 'desc')
             ->paginate(10)
             ->withQueryString();
-        
+
         return Inertia::render('Departures/Index', [
             'departures' => $departures,
+            'syahbandars' => \App\Models\User::where('role', 'syahbandar')
+                ->where('is_active', true)
+                ->select('id', 'name')
+                ->orderBy('name')
+                ->get(),
         ]);
     }
 
@@ -53,7 +58,7 @@ class DepartureController extends Controller
     {
         // Get vessels that are currently "at port" (ArrivalsCount > departuresCount)
         $vesselsAtPort = \App\Models\Vessel::whereHas('arrivals')
-            ->where(function($query) {
+            ->where(function ($query) {
                 $query->whereRaw('(SELECT COUNT(*) FROM arrivals WHERE arrivals.vessel_id = vessels.id) > (SELECT COUNT(*) FROM departures WHERE departures.vessel_id = vessels.id AND departures.deleted_at IS NULL)');
             })
             ->select('id', 'vessel_name', 'license_number')
@@ -121,7 +126,7 @@ class DepartureController extends Controller
         // Notify Users
         $departure->load('vessel');
         $vesselName = $departure->vessel ? $departure->vessel->vessel_name : 'Tidak Diketahui';
-        
+
         $users = \App\Models\User::where('is_active', true)->get();
         foreach ($users as $user) {
             if ($user->role === 'syahbandar') {
@@ -151,11 +156,11 @@ class DepartureController extends Controller
     public function show(\Illuminate\Http\Request $request, Departure $departure)
     {
         $departure->load(['vessel', 'landingSite']);
-        
+
         if (($request->wantsJson() || $request->ajax()) && !$request->header('X-Inertia')) {
             return response()->json($departure);
         }
-        
+
         return Inertia::render('Departures/Show', [
             'departure' => $departure
         ]);
@@ -224,7 +229,7 @@ class DepartureController extends Controller
             if ($request->approval_status) {
                 $validated['approved_by'] = auth()->id();
                 $validated['approved_at'] = now();
-                
+
                 if ($departure->inputBy) {
                     $departure->load('vessel');
                     $vesselName = $departure->vessel ? $departure->vessel->vessel_name : 'Tidak Diketahui';
@@ -238,7 +243,7 @@ class DepartureController extends Controller
             } else {
                 $validated['approved_by'] = null;
                 $validated['approved_at'] = null;
-                
+
                 if ($departure->inputBy) {
                     $departure->load('vessel');
                     $vesselName = $departure->vessel ? $departure->vessel->vessel_name : 'Tidak Diketahui';
@@ -294,16 +299,13 @@ class DepartureController extends Controller
         return $pdf->download($filename);
     }
 
-    public function approve(Departure $departure)
+    public function approve(Request $request, Departure $departure)
     {
-        if (auth()->user()->role !== 'syahbandar') {
-            return redirect()->route('departures.index')->with('error', 'Hanya Syahbandar yang dapat menyetujui laporan ini.');
-        }
-
         $departure->update([
             'approval_status' => '1',
             'approved_by' => auth()->id(),
             'approved_at' => now(),
+            'syahbandar' => $validated['syahbandar'],
         ]);
 
         if ($departure->inputBy) {
@@ -386,15 +388,16 @@ class DepartureController extends Controller
             ->whereMonth('created_at', now()->month)
             ->orderBy('id', 'desc')
             ->first();
-        
+
         $nextSeq = 1;
         if ($lastNomor && preg_match('/^(\d+)/', $lastNomor->nomor, $matches)) {
             $nextSeq = intval($matches[1]) + 1;
         }
-        
-        return sprintf('%03d/PPNS-SKP/%s/%d', 
-            $nextSeq, 
-            $this->getRomanMonth(now()->month), 
+
+        return sprintf(
+            '%03d/PPNS-SKP/%s/%d',
+            $nextSeq,
+            $this->getRomanMonth(now()->month),
             now()->year
         );
     }
@@ -405,9 +408,18 @@ class DepartureController extends Controller
     private function getRomanMonth($month)
     {
         $map = [
-            1 => 'I', 2 => 'II', 3 => 'III', 4 => 'IV', 
-            5 => 'V', 6 => 'VI', 7 => 'VII', 8 => 'VIII', 
-            9 => 'IX', 10 => 'X', 11 => 'XI', 12 => 'XII'
+            1 => 'I',
+            2 => 'II',
+            3 => 'III',
+            4 => 'IV',
+            5 => 'V',
+            6 => 'VI',
+            7 => 'VII',
+            8 => 'VIII',
+            9 => 'IX',
+            10 => 'X',
+            11 => 'XI',
+            12 => 'XII'
         ];
         return $map[$month] ?? 'I';
     }
