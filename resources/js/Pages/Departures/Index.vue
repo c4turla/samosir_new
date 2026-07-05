@@ -59,7 +59,6 @@ const approveDeparture = (id) => {
     closeDetailModal()
     router.post(`/departures/${id}/approve`)
 }
-}
 
 const rejectDeparture = (id) => {
     closeDetailModal()
@@ -587,6 +586,10 @@ const isApproved = (departure) => {
                                  Setujui
                              </button>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
         </Teleport>
     </AppLayout>
 </template>
