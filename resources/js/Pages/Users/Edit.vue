@@ -92,6 +92,7 @@ const updateUser = () => {
                 <option value="syahbandar">Syahbandar</option>
                 <option value="kepala_pelabuhan">Kepala Pelabuhan</option>
                 <option value="pengelola">Pengelola Kapal</option>
+                <option value="umum">Umum (Masyarakat/Pengunjung)</option>
                 <option value="admin">Admin</option>
               </select>
               <div v-if="form.errors.role" class="mt-1 text-sm text-red-600 dark:text-red-400">
