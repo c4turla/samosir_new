@@ -185,10 +185,10 @@ onMounted(() => {
                         <div class="bg-gray-50 dark:bg-gray-800/60 rounded-xl p-4 border border-gray-200 dark:border-gray-700/50 space-y-2 mt-3">
                             <p class="font-semibold text-gray-900 dark:text-white">Pelabuhan Perikanan Nusantara (PPN) Sibolga</p>
                             <p class="text-xs flex items-center text-gray-600 dark:text-gray-400">
-                                <i class="ri-map-pin-line mr-2 text-blue-500"></i> Jl. Ph. Tobing, Kota Sibolga, Sumatera Utara
+                                <i class="ri-map-pin-line mr-2 text-blue-500"></i> Jl. Gatot Subroto Pondok Batu Sarudik Tapanuli Tengah (0631) 22129
                             </p>
                             <p class="text-xs flex items-center text-gray-600 dark:text-gray-400">
-                                <i class="ri-global-line mr-2 text-blue-500"></i> Website: <a href="https://kendariweb.com" target="_blank" class="text-blue-600 dark:text-blue-400 hover:underline ml-1">kendariweb.com</a>
+                                <i class="ri-global-line mr-2 text-blue-500"></i> Website: <a href="https://ppnsibolga.com" target="_blank" class="text-blue-600 dark:text-blue-400 hover:underline ml-1">ppnsibolga.com</a>
                             </p>
                         </div>
                     </div>
