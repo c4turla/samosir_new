@@ -1,5 +1,5 @@
 <script setup>
-import { Head, useForm } from '@inertiajs/vue3';
+import { Head, Link, useForm } from '@inertiajs/vue3';
 import { ref, onMounted } from 'vue';
 import { route } from 'ziggy-js'
 
@@ -270,7 +270,16 @@ onMounted(() => {
                 </div>
 
                 <!-- Footer -->
-                <div class="mt-8 text-center">
+                <div class="mt-8 text-center space-y-2">
+                    <div class="flex items-center justify-center space-x-3 text-xs text-gray-500 dark:text-gray-400">
+                        <Link :href="route('privacy-policy')" class="hover:text-blue-600 dark:hover:text-blue-400 transition-colors hover:underline">
+                            Kebijakan Privasi
+                        </Link>
+                        <span>•</span>
+                        <Link :href="route('terms-conditions')" class="hover:text-blue-600 dark:hover:text-blue-400 transition-colors hover:underline">
+                            Syarat & Ketentuan
+                        </Link>
+                    </div>
                     <p class="text-xs text-gray-400 dark:text-gray-600">
                         © 2022-2026 SAMOSIR <span class="text-[10px] font-bold">v3.0</span> · Pelabuhan Perikanan Nusantara Sibolga
                     </p>

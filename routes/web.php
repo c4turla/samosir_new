@@ -29,6 +29,12 @@ use App\Http\Controllers\FaqController;
 // Guest routes (no authentication required)
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [AuthController::class, 'login'])->name('login.store');
+Route::get('/privacy-policy', function () {
+    return inertia('Legal/PrivacyPolicy');
+})->name('privacy-policy');
+Route::get('/terms-and-conditions', function () {
+    return inertia('Legal/TermsConditions');
+})->name('terms-conditions');
 
 // Protected routes (authentication required)
 Route::middleware('auth')->group(function () {
