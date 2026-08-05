@@ -84,6 +84,10 @@ const getStatusColor = (status) => {
                                 <p class="text-sm font-medium text-gray-900 dark:text-white">{{ arrival.vessel?.vessel_name || '-' }}</p>
                             </div>
                             <div>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Nama Nakhoda</p>
+                                <p class="text-sm font-medium text-gray-900 dark:text-white">{{ arrival.nakhoda_name || '-' }}</p>
+                            </div>
+                            <div>
                                 <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Dermaga Pendaratan</p>
                                 <p class="text-sm font-medium text-gray-900 dark:text-white">{{ arrival.landing_site?.site_name || '-' }}</p>
                             </div>

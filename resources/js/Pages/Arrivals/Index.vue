@@ -281,7 +281,7 @@ const isApproved = (arrival) => {
                                                 {{ arrival.vessel?.vessel_name }}
                                             </p>
                                             <p class="text-[10px] text-gray-500 dark:text-gray-400">
-                                                {{ arrival.vessel?.license_number || '-' }}
+                                                {{ arrival.vessel?.license_number || '-' }} | Nakhoda: {{ arrival.nakhoda_name || '-' }}
                                             </p>
                                         </div>
                                     </div>
@@ -462,6 +462,10 @@ const isApproved = (arrival) => {
                                 <div>
                                     <span class="block text-[10px] font-semibold text-gray-400 dark:text-gray-505 uppercase tracking-wider">Nama Kapal</span>
                                     <span class="text-xs font-semibold text-gray-900 dark:text-white">{{ selectedArrival.vessel?.vessel_name || '-' }}</span>
+                                </div>
+                                <div>
+                                    <span class="block text-[10px] font-semibold text-gray-400 dark:text-gray-505 uppercase tracking-wider">Nama Nakhoda</span>
+                                    <span class="text-xs font-medium text-gray-700 dark:text-gray-300">{{ selectedArrival.nakhoda_name || '-' }}</span>
                                 </div>
                                 <div>
                                     <span class="block text-[10px] font-semibold text-gray-400 dark:text-gray-505 uppercase tracking-wider">Dermaga Pendaratan</span>

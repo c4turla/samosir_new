@@ -50,6 +50,7 @@ class ArrivalController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'vessel_id' => 'required|exists:vessels,id',
+            'nakhoda_name' => 'nullable|string|max:100',
             'origin' => 'nullable|string|max:255',
             'arrival_date' => 'required|date',
             'arrival_time' => 'nullable|date_format:H:i',

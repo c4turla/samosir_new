@@ -108,6 +108,7 @@ const toggleCatchDropdown = (index) => {
 
 const form = useForm({
     vessel_id: '',
+    nakhoda_name: '',
     origin: '',
     arrival_date: new Date().toISOString().split('T')[0],
     arrival_time: '',
@@ -265,6 +266,15 @@ const cancel = () => {
                                         </ul>
                                     </div>
                                 </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Nama Nakhoda</label>
+                                <input
+                                    v-model="form.nakhoda_name"
+                                    type="text"
+                                    placeholder="Nama Nakhoda"
+                                    :class="['w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500', form.errors.nakhoda_name ? 'border-red-500' : 'border-gray-300 dark:border-gray-600', 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white']"
+                                />
                             </div>
                             <div>
                                 <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Asal</label>

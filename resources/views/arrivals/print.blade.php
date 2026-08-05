@@ -167,9 +167,17 @@
             <td class="col-value">{{ strtoupper($arrival->vessel->owner_name ?? '-') }}</td>
         </tr>
 
-        {{-- 3. Tanda Selar & Alat Tangkap --}}
+        {{-- 3. Nama Nakhoda --}}
         <tr>
             <td class="col-no">3.</td>
+            <td class="col-label">Nama Nakhoda</td>
+            <td class="col-sep">:</td>
+            <td class="col-value">{{ strtoupper($arrival->nakhoda_name ?? '-') }}</td>
+        </tr>
+
+        {{-- 4. Tanda Selar & Alat Tangkap --}}
+        <tr>
+            <td class="col-no">4.</td>
             <td class="col-label">Tanda Selar</td>
             <td class="col-sep">:</td>
             <td class="col-value">{{ $arrival->vessel->selar_mark ?? '-' }}</td>
@@ -187,25 +195,25 @@
             <td class="col-value">{{ $arrival->vessel->length ?? '-' }} M (LOA) / {{ $arrival->vessel->gt ?? '-' }} GT</td>
         </tr>
 
-        {{-- 4. Asal Pelabuhan / Fishing Ground --}}
+        {{-- 5. Asal Pelabuhan / Fishing Ground --}}
         <tr>
-            <td class="col-no">4.</td>
+            <td class="col-no">5.</td>
             <td class="col-label">Daerah Penangkapan / Asal</td>
             <td class="col-sep">:</td>
             <td class="col-value">{{ $arrival->origin ?? '-' }}</td>
         </tr>
 
-        {{-- 5. Dermaga Pendaratan --}}
+        {{-- 6. Dermaga Pendaratan --}}
         <tr>
-            <td class="col-no">5.</td>
+            <td class="col-no">6.</td>
             <td class="col-label">Dermaga Pendaratan</td>
             <td class="col-sep">:</td>
             <td class="col-value">{{ $arrival->landingSite->site_name ?? '-' }}</td>
         </tr>
 
-        {{-- 6. Waktu Kedatangan --}}
+        {{-- 7. Waktu Kedatangan --}}
         <tr>
-            <td class="col-no">6.</td>
+            <td class="col-no">7.</td>
             <td class="col-label">Waktu Kedatangan</td>
             <td class="col-sep">:</td>
             <td class="col-value">
@@ -220,9 +228,9 @@
             </td>
         </tr>
 
-        {{-- 7. Kondisi Ikan & Estimasi --}}
+        {{-- 8. Kondisi Ikan & Estimasi --}}
         <tr>
-            <td class="col-no">7.</td>
+            <td class="col-no">8.</td>
             <td class="col-label">Kondisi & Mutu Penanganan</td>
             <td class="col-sep"></td>
             <td class="col-value"></td>
@@ -258,9 +266,9 @@
             <td class="col-value">Rp {{ number_format($arrival->average_price, 0, ',', '.') }} / Kg</td>
         </tr>
 
-        {{-- 8. Hasil Tangkapan Ikan --}}
+        {{-- 9. Hasil Tangkapan Ikan --}}
         <tr>
-            <td class="col-no">8.</td>
+            <td class="col-no">9.</td>
             <td class="col-label" colspan="3">Daftar Hasil Tangkapan Ikan :</td>
         </tr>
     </table>
@@ -309,7 +317,7 @@
                             <img src="{{ public_path('storage/' . $arrival->inputBy->signature) }}" class="sig-img" alt="Tanda Tangan">
                         @endif
                     </div>
-                    <p class="sig-name">( {{ strtoupper($arrival->inputBy->name ?? '....................................') }} )</p>
+                    <p class="sig-name">( {{ strtoupper($arrival->nakhoda_name ?? $arrival->inputBy->name ?? '....................................') }} )</p>
                 </td>
 
                 {{-- Kanan: Syahbandar --}}

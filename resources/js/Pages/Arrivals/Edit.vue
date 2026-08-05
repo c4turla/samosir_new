@@ -35,6 +35,7 @@ const formatTime = (val) => {
 
 const form = useForm({
     vessel_id: props.arrival.vessel_id,
+    nakhoda_name: props.arrival.nakhoda_name || '',
     origin: props.arrival.origin || '',
     arrival_date: formatDate(props.arrival.arrival_date),
     arrival_time: formatTime(props.arrival.arrival_time),
@@ -109,6 +110,10 @@ const cancel = () => (window.location.href = '/arrivals')
                                         {{ vessel.vessel_name }} ({{ vessel.selar_mark }})
                                     </option>
                                 </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Nama Nakhoda</label>
+                                <input v-model="form.nakhoda_name" type="text" placeholder="Nama Nakhoda" :class="['w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500', form.errors.nakhoda_name ? 'border-red-500' : 'border-gray-300 dark:border-gray-600', 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white']" />
                             </div>
                             <div>
                                 <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Asal</label>
