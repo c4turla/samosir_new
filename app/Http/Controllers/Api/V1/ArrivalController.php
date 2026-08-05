@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Notifications\DataInputNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class ArrivalController extends Controller
 {
@@ -148,6 +149,50 @@ class ArrivalController extends Controller
         return response()->json([
             'status' => 'success',
             'data' => $arrival
+        ]);
+    }
+
+    /**
+     * Export / stream official PDF report for ship arrival.
+     */
+    public function pdf(Request $request, $id)
+    {
+        $user = $request->user();
+        $arrival = Arrival::with(['vessel', 'landingSite', 'approvedBy', 'inputBy', 'catches.fishSpecies'])->findOrFail($id);
+
+        // Security check for pengelola
+        if ($user->role === 'pengelola') {
+            $vesselIds = $user->vessels()->pluck('vessels.id')->toArray();
+            if (!in_array($arrival->vessel_id, $vesselIds)) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Anda tidak memiliki akses ke dokumen ini.'
+                ], 403);
+            }
+        }
+
+        // Check if approved
+        if (!$arrival->approval_status) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Dokumen PDF hanya dapat diunduh untuk laporan yang telah disetujui (Approved).'
+            ], 400);
+        }
+
+        $syahbandarUser = null;
+        if ($arrival->approvedBy && $arrival->approvedBy->role === 'syahbandar') {
+            $syahbandarUser = $arrival->approvedBy;
+        }
+
+        $pdf = Pdf::loadView('arrivals.print', compact('arrival', 'syahbandarUser'))
+            ->setPaper('a4', 'portrait');
+
+        $vesselName = $arrival->vessel ? str_replace(' ', '_', $arrival->vessel->vessel_name) : 'kapal';
+        $filename = 'stb_kedatangan_' . strtolower($vesselName) . '_' . $arrival->id . '.pdf';
+
+        return response($pdf->output(), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="' . $filename . '"',
         ]);
     }
 }

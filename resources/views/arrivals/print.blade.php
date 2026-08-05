@@ -304,8 +304,12 @@
                     <p>&nbsp;</p>                    
                     <p>&nbsp;</p>
                     <p>Nakhoda / Pengurus Kapal</p>
-                    <div class="sig-space"></div>
-                    <p class="sig-name">( .................................... )</p>
+                    <div class="sig-space">
+                        @if($arrival->inputBy && $arrival->inputBy->signature)
+                            <img src="{{ public_path('storage/' . $arrival->inputBy->signature) }}" class="sig-img" alt="Tanda Tangan">
+                        @endif
+                    </div>
+                    <p class="sig-name">( {{ strtoupper($arrival->inputBy->name ?? '....................................') }} )</p>
                 </td>
 
                 {{-- Kanan: Syahbandar --}}

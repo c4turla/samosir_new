@@ -294,7 +294,8 @@ class ArrivalController extends Controller
                 'Laporan Kedatangan Disetujui',
                 "Laporan Kedatangan Kapal {$vesselName} telah disetujui oleh syahbandar.",
                 '/arrivals',
-                'success'
+                'success',
+                $arrival->pdf_url
             ));
         }
 

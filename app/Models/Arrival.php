@@ -32,6 +32,14 @@ class Arrival extends Model
         'approval_status' => 'boolean',
     ];
 
+    protected $appends = ['pdf_url'];
+
+    // Accessors
+    public function getPdfUrlAttribute()
+    {
+        return url('/api/v1/arrivals/' . $this->id . '/pdf');
+    }
+
     // Relationships
     public function vessel(): BelongsTo
     {

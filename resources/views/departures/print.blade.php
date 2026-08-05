@@ -315,9 +315,15 @@
                 <td class="sig-left" style="vertical-align: top;">
                     <p>&nbsp;</p>                    
                     <p>&nbsp;</p>
-                    <p>Nakhoda</p>
-                    <div class="sig-space"></div>
-                    <p class="sig-name">( {{ $departure->nakhoda_name ?? '-' }} )</p>
+                    <p>Nakhoda / Pengurus Kapal</p>
+                    <div class="sig-space">
+                        @if($departure->signature)
+                            <img src="{{ public_path('storage/' . $departure->signature) }}" class="sig-img" alt="Tanda Tangan">
+                        @elseif($departure->inputBy && $departure->inputBy->signature)
+                            <img src="{{ public_path('storage/' . $departure->inputBy->signature) }}" class="sig-img" alt="Tanda Tangan">
+                        @endif
+                    </div>
+                    <p class="sig-name">( {{ strtoupper($departure->nakhoda_name ?? $departure->inputBy->name ?? '-') }} )</p>
                 </td>
 
                 {{-- Kanan: Syahbandar --}}

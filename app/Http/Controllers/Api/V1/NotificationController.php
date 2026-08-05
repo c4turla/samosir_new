@@ -20,6 +20,7 @@ class NotificationController extends Controller
                 'title' => $notif->data['title'] ?? 'Notifikasi',
                 'message' => $notif->data['message'] ?? '',
                 'url' => $notif->data['url'] ?? '',
+                'pdf_url' => $notif->data['pdf_url'] ?? null,
                 'type' => $notif->data['type'] ?? 'info',
                 'read_at' => $notif->read_at ? $notif->read_at->toISOString() : null,
                 'created_at' => $notif->created_at->toISOString(),

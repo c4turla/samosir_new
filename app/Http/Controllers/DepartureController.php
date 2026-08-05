@@ -237,7 +237,8 @@ class DepartureController extends Controller
                         'Laporan Keberangkatan Disetujui',
                         "Laporan Keberangkatan Kapal {$vesselName} telah disetujui oleh petugas.",
                         '/departures',
-                        'success'
+                        'success',
+                        $departure->pdf_url
                     ));
                 }
             } else {
@@ -325,7 +326,8 @@ class DepartureController extends Controller
                 'Laporan Keberangkatan Disetujui',
                 "Laporan Keberangkatan Kapal {$vesselName} telah disetujui oleh syahbandar.",
                 '/departures',
-                'success'
+                'success',
+                $departure->pdf_url
             ));
         }
 

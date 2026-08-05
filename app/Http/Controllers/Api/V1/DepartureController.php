@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Notifications\DataInputNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class DepartureController extends Controller
 {
@@ -191,5 +192,49 @@ class DepartureController extends Controller
             12 => 'XII'
         ];
         return $map[$month] ?? 'I';
+    }
+
+    /**
+     * Export / stream official PDF report for ship departure.
+     */
+    public function pdf(Request $request, $id)
+    {
+        $user = $request->user();
+        $departure = Departure::with(['vessel', 'landingSite', 'approvedBy', 'inputBy'])->findOrFail($id);
+
+        // Security check for pengelola
+        if ($user->role === 'pengelola') {
+            $vesselIds = $user->vessels()->pluck('vessels.id')->toArray();
+            if (!in_array($departure->vessel_id, $vesselIds)) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Anda tidak memiliki akses ke dokumen ini.'
+                ], 403);
+            }
+        }
+
+        // Check if approved
+        if (!$departure->approval_status) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Dokumen PDF hanya dapat diunduh untuk laporan yang telah disetujui (Approved).'
+            ], 400);
+        }
+
+        $syahbandarUser = null;
+        if ($departure->approvedBy && $departure->approvedBy->role === 'syahbandar') {
+            $syahbandarUser = $departure->approvedBy;
+        }
+
+        $pdf = Pdf::loadView('departures.print', compact('departure', 'syahbandarUser'))
+            ->setPaper('a4', 'portrait');
+
+        $vesselName = $departure->vessel ? str_replace(' ', '_', $departure->vessel->vessel_name) : 'kapal';
+        $filename = 'stb_keberangkatan_' . strtolower($vesselName) . '_' . $departure->id . '.pdf';
+
+        return response($pdf->output(), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="' . $filename . '"',
+        ]);
     }
 }

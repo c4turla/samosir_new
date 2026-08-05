@@ -88,6 +88,7 @@ Route::prefix('v1')->group(function () {
             Route::get('/arrivals', [App\Http\Controllers\Api\V1\ArrivalController::class, 'index']);
             Route::post('/arrivals', [App\Http\Controllers\Api\V1\ArrivalController::class, 'store']);
             Route::get('/arrivals/{id}', [App\Http\Controllers\Api\V1\ArrivalController::class, 'show']);
+            Route::get('/arrivals/{id}/pdf', [App\Http\Controllers\Api\V1\ArrivalController::class, 'pdf']);
         });
 
         // Departures
@@ -95,6 +96,7 @@ Route::prefix('v1')->group(function () {
             Route::get('/departures', [App\Http\Controllers\Api\V1\DepartureController::class, 'index']);
             Route::post('/departures', [App\Http\Controllers\Api\V1\DepartureController::class, 'store']);
             Route::get('/departures/{id}', [App\Http\Controllers\Api\V1\DepartureController::class, 'show']);
+            Route::get('/departures/{id}/pdf', [App\Http\Controllers\Api\V1\DepartureController::class, 'pdf']);
         });
 
         // SPR Departures
