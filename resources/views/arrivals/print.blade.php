@@ -317,7 +317,7 @@
                             <img src="{{ public_path('storage/' . $arrival->inputBy->signature) }}" class="sig-img" alt="Tanda Tangan">
                         @endif
                     </div>
-                    <p class="sig-name">( {{ strtoupper($arrival->nakhoda_name ?? $arrival->inputBy->name ?? '....................................') }} )</p>
+                    <p class="sig-name">( {{ strtoupper($arrival->inputBy->name ?? '....................................') }} )</p>
                 </td>
 
                 {{-- Kanan: Syahbandar --}}
